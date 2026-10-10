@@ -2,6 +2,14 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.18.1] - 2026-10-10
+
+### Düzeltildi
+- Palet: Mod çubuğu pencereye sığmayınca alt satıra geçer (önceden taşıp arama satırını ve sağ kenarı kesiyordu).
+- Palet: Fırça seçili değilken serbest yerleştirme ve mod ayar panelleri gösterilmez.
+- Serbest yerleştirme ayarları dar pencerede taşmaz (ikişer seçenek bir satırda); ayarlar yalnızca değişince kaydedilir.
+- Mod ipuçlarında 0 kısayolu gösterilir.
+
 ## [0.18.0] - 2026-10-10
 
 ### Eklendi

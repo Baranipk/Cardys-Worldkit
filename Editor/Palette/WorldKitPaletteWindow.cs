@@ -422,7 +422,7 @@ namespace WorldKit.Editor
             }
         }
 
-        /// <summary>Mod çubuğu: Yerleştir / Sil / Ölç grupları, ikonlu düğmeler.</summary>
+        /// <summary>Mod çubuğu: Yerleştir / Sil / Ölç-İşaretle grupları. Sığmayan düğmeler alt satıra geçer.</summary>
         void DrawToolModes()
         {
             var context = WorldKitBrush.Context;
@@ -434,39 +434,75 @@ namespace WorldKit.Editor
                 ("ÖLÇ · İŞARETLE", tools.Where(t => !t.ModifiesScene).ToList()),
             };
 
-            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar, GUILayout.Height(26f)))
+            // Satırlara böl: grup etiketi kendi ilk düğmesiyle aynı satırda kalır.
+            const float button = 28f, groupGap = 8f;
+            float available = EditorGUIUtility.currentViewWidth - (Narrow ? 34f : 124f) - 16f;
+            var rows = new List<List<(string label, WorldKitTool tool)>> { new List<(string, WorldKitTool)>() };
+            float x = 0f;
+            foreach (var (label, list) in groups)
+            {
+                if (list.Count == 0)
+                    continue;
+                float labelWidth = Narrow ? 0f : s_GroupLabel.CalcSize(new GUIContent(label)).x + 4f;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    float width = button + (i == 0 ? labelWidth + (x > 0f ? groupGap : 0f) : 0f);
+                    if (x > 0f && x + width > available)
+                    {
+                        rows.Add(new List<(string, WorldKitTool)>());
+                        x = 0f;
+                        width = button + (i == 0 ? labelWidth : 0f);
+                    }
+                    var row = rows[rows.Count - 1];
+                    if (i == 0 && labelWidth > 0f)
+                        row.Add((label, null));
+                    else if (i == 0 && row.Count > 0)
+                        row.Add((null, null)); // dar modda grup arası boşluk
+                    row.Add((null, list[i]));
+                    x += width;
+                }
+            }
+
             using (new EditorGUIUtility.IconSizeScope(new Vector2(16f, 16f)))
             {
-                foreach (var (label, list) in groups)
+                foreach (var row in rows)
                 {
-                    if (list.Count == 0)
-                        continue;
-                    if (!Narrow)
-                        GUILayout.Label(label, s_GroupLabel, GUILayout.ExpandWidth(false));
-
-                    foreach (var tool in list)
+                    using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar, GUILayout.Height(24f)))
                     {
-                        int index = tools.IndexOf(tool);
-                        var key = index < 9 ? $" ({index + 1})" : "";
-                        var content = tool.Icon != null
-                            ? new GUIContent(tool.Icon, $"{tool.DisplayName(context)}{key}\n{tool.Tooltip}")
-                            : new GUIContent(tool.DisplayName(context).Substring(0, 1), $"{tool.DisplayName(context)}{key}\n{tool.Tooltip}");
-
-                        using (new EditorGUI.DisabledScope(!tool.Supports(context)))
+                        for (int i = 0; i < row.Count; i++)
                         {
-                            bool on = WorldKitBrush.Tool == tool;
-                            if (GUILayout.Toggle(on, content, EditorStyles.toolbarButton, GUILayout.Width(28f), GUILayout.Height(22f)) && !on)
-                                WorldKitBrush.Tool = tool;
-                        }
-                    }
-                    GUILayout.Space(6f);
-                }
+                            var (label, tool) = row[i];
+                            if (tool == null)
+                            {
+                                if (i > 0)
+                                    GUILayout.Space(groupGap);
+                                if (label != null)
+                                    GUILayout.Label(label, s_GroupLabel, GUILayout.ExpandWidth(false));
+                                continue;
+                            }
 
-                GUILayout.FlexibleSpace();
-                var current = WorldKitBrush.Tool;
-                if (current != null)
-                    GUILayout.Label(current.DisplayName(context), EditorStyles.miniBoldLabel);
+                            int index = tools.IndexOf(tool);
+                            var key = index < 9 ? $" ({index + 1})" : index == 9 ? " (0)" : "";
+                            var tip = $"{tool.DisplayName(context)}{key}\n{tool.Tooltip}";
+                            var content = tool.Icon != null
+                                ? new GUIContent(tool.Icon, tip)
+                                : new GUIContent(tool.DisplayName(context).Substring(0, 1), tip);
+
+                            using (new EditorGUI.DisabledScope(!tool.Supports(context)))
+                            {
+                                bool on = WorldKitBrush.Tool == tool;
+                                if (GUILayout.Toggle(on, content, EditorStyles.toolbarButton, GUILayout.Width(button), GUILayout.Height(22f)) && !on)
+                                    WorldKitBrush.Tool = tool;
+                            }
+                        }
+                        GUILayout.FlexibleSpace();
+                    }
+                }
             }
+
+            // Fırça kapalıyken ayar panelleri gösterilmez (hangi parçaya uygulanacağı belli değil).
+            if (!WorldKitBrush.IsActive)
+                return;
 
             // Serbest yerleştirme (dekor ve küçük objeler; çizgi parçası ve zeminde yok)
             if (!WorldKitBrush.IsFloorBrush && !context.IsLinear)

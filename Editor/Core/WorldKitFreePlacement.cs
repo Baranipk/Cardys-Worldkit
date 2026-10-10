@@ -129,7 +129,7 @@ namespace WorldKit.Editor
 
         static int Hash(Vector3 p) => unchecked(Mathf.RoundToInt(p.x * 100f) * 73856093 ^ Mathf.RoundToInt(p.y * 100f) * 19349663 ^ Mathf.RoundToInt(p.z * 100f) * 83492791);
 
-        /// <summary>Paletteki serbest yerleştirme ayarları.</summary>
+        /// <summary>Paletteki serbest yerleştirme ayarları (dar pencerede de taşmaz: ikişer seçenek bir satırda).</summary>
         public static void DrawSettingsGUI()
         {
             float spacing = EditorGUILayout.Slider(new GUIContent("Aralık (m)", "Sürükleyerek boyarken iki parça arası en az mesafe."), Spacing, 0.1f, 5f);
@@ -137,27 +137,34 @@ namespace WorldKit.Editor
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                bool yaw = EditorGUILayout.ToggleLeft(new GUIContent("Rastgele dönüş"), RandomYaw, GUILayout.Width(120f));
-                if (yaw != RandomYaw) RandomYaw = yaw;
-                bool surface = EditorGUILayout.ToggleLeft(new GUIContent("Yüzeye otur", "Zemin, platform veya objenin üstüne konur."), SnapToSurface, GUILayout.Width(110f));
-                if (surface != SnapToSurface) SnapToSurface = surface;
-                bool align = EditorGUILayout.ToggleLeft(new GUIContent("Eğime yatır", "Rampa ve eğimlerde parça yüzeye paralel durur."), AlignToSurface);
-                if (align != AlignToSurface) AlignToSurface = align;
+                if (Toggle("Rastgele dönüş", "Her parça farklı açıda.", RandomYaw, out var yaw)) RandomYaw = yaw;
+                if (Toggle("Rastgele boyut", "Her parça farklı boyutta (aşağıdaki aralıkta).", RandomScale, out var scale)) RandomScale = scale;
             }
-
             using (new EditorGUILayout.HorizontalScope())
             {
-                bool scale = EditorGUILayout.ToggleLeft(new GUIContent("Rastgele boyut"), RandomScale, GUILayout.Width(120f));
-                if (scale != RandomScale) RandomScale = scale;
-                using (new EditorGUI.DisabledScope(!RandomScale))
+                if (Toggle("Yüzeye otur", "Zemin, platform veya objenin üstüne konur. Kapalıysa seçili katın düzlemine.", SnapToSurface, out var surface)) SnapToSurface = surface;
+                if (Toggle("Eğime yatır", "Rampa ve eğimlerde parça yüzeye paralel durur.", AlignToSurface, out var align)) AlignToSurface = align;
+            }
+
+            if (RandomScale)
+            {
+                using (new EditorGUILayout.HorizontalScope())
                 {
+                    GUILayout.Label("Boyut", GUILayout.Width(40f));
                     float min = ScaleMin, max = ScaleMax;
-                    EditorGUILayout.MinMaxSlider(ref min, ref max, 0.3f, 2f);
+                    EditorGUILayout.MinMaxSlider(ref min, ref max, 0.3f, 2f, GUILayout.MinWidth(40f));
                     if (!Mathf.Approximately(min, ScaleMin)) ScaleMin = min;
                     if (!Mathf.Approximately(max, ScaleMax)) ScaleMax = max;
-                    GUILayout.Label($"{ScaleMin:0.00}–{ScaleMax:0.00}", EditorStyles.miniLabel, GUILayout.Width(62f));
+                    GUILayout.Label($"{ScaleMin:0.00}–{ScaleMax:0.00}", EditorStyles.miniLabel, GUILayout.Width(58f));
                 }
             }
+        }
+
+        /// <summary>Onay kutusu; değer değiştiyse true döner (ayar her karede yeniden yazılmasın).</summary>
+        static bool Toggle(string label, string tooltip, bool value, out bool result)
+        {
+            result = EditorGUILayout.ToggleLeft(new GUIContent(label, tooltip), value, GUILayout.MinWidth(0f));
+            return result != value;
         }
     }
 }
