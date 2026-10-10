@@ -43,7 +43,8 @@ namespace WorldKit.Editor
 
             Physics.SyncTransforms();
             var sources = new List<NavMeshBuildSource>();
-            NavMeshBuilder.CollectSources(root.transform, ~0, NavMeshCollectGeometry.PhysicsColliders, 0,
+            // Ignore Raycast katmanı (bölgeler vb. tetikleyiciler) hariç
+            NavMeshBuilder.CollectSources(root.transform, ~(1 << 2), NavMeshCollectGeometry.PhysicsColliders, 0,
                 new List<NavMeshBuildMarkup>(), sources);
             if (sources.Count == 0)
             {

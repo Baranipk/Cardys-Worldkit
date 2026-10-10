@@ -2,6 +2,19 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.16.0] - 2026-10-10
+
+### Eklendi
+- **Değiştir** sekmesi (Çıktı, `WorldKitReplace`): Bir prefab'ın sahnedeki (veya seçimdeki) bütün kopyalarını başka bir
+  prefab'la değiştirir. Konum/dönüş korunur; ek dönüş, konum kayması, ölçeği koru; footprint kopyalanır. Tek Undo.
+- **Bölgeler** (`WorldKitZone` runtime bileşeni, `WorldKitZones`): Spawn, görev, tetikleyici, güvenli, tehlikeli, özel.
+  Bölge modu (9) ile çizilir; türüne göre renkli; `onEnter` / `onExit` olayları, `zoneId`, `RandomPoint()`.
+  Bölgeler sekmesinde liste. Ignore Raycast katmanında; NavMesh bake bu katmanı dışarıda bırakır.
+- Eklenti API'si: `WorldKitTool.OnStrokeFinished(context)` (`ModifiesScene = false` modlar için).
+
+### Değişti
+- Mod çubuğundaki "ÖLÇ" grubu "ÖLÇ · İŞARETLE" oldu.
+
 ## [0.15.0] - 2026-10-10
 
 ### Eklendi

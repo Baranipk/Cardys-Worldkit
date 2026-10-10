@@ -69,6 +69,8 @@ Ekip arkadaşları için adım adım anlatım: [Ekip rehberi](Documentation~/Reh
 | | NavMesh bake (ek paket gerekmez), sahnede gösterim | ✅ |
 | **Çıktı** | Bake: materyal başına tek mesh asset + collider | ✅ |
 | | OBJ + MTL dışa aktarma | ✅ |
+| | Parça değiştirme: placeholder → gerçek model, toplu | ✅ |
+| **İşaretleme** | Bölgeler: spawn, görev, güvenli / tehlikeli alan (tetikleyici kutu, olaylar) | ✅ |
 | **Test** *(modül)* | Test oyuncusu, Cinemachine top-down kamera, engelden kaçma | ✅ |
 | **İçerik** *(isteğe bağlı)* | Duvar, pencereli duvar, geçit, kale duvarı, köprü, iskele; ev, han, dükkan, ahır, kule, kale kulesi; ağaç, kaya, ot, fener, tabela; chibi NPC ve ölçü referansları | ✅ |
 
@@ -83,7 +85,7 @@ Ekip arkadaşları için adım adım anlatım: [Ekip rehberi](Documentation~/Reh
 ├───────────┬──────────────────────────────────┤
 │ Zemin     │ [önizleme] Duvar 2m              │  seçili fırça: mod · kat · açı
 │ ───────── │            Alan · Kat 0 · 0°     │  [− kat +] [↻] [Bırak]
-│ Yapı      │ YERLEŞTİR ▪ ━ ▦ ▢ ∴  SİL ✕  ÖLÇ ▭ │  modlar (1-7)
+│ Yapı      │ YERLEŞTİR ▪ ━ ▦ ▢ ∴ ◎ SİL ✕ ÖLÇ ▭ ⬚│  modlar (1-9)
 │ Bina      │ (seçili modun ayarları)          │
 │ Dekor     │ 🔍 ara                    boyut   │
 │ Şablonlar │ [parça] [parça] [parça] ...       │
@@ -115,6 +117,7 @@ Ekip arkadaşları için adım adım anlatım: [Ekip rehberi](Documentation~/Reh
 | 6 | **Sil** | Tıkla: parça siler. Tut-çek: alanı siler |
 | 7 | **Cetvel** | Tut-çek: mesafe, hücre sayısı, yürüme/koşma süresi. Sahneyi değiştirmez |
 | 8 | **Fırça** *(zemin)* | Sürükle: yuvarlak fırçayla seçili zemin işlemini uygular. Patika (Sadece Renk + Yol), kıyı, arazi (Yükselt/Alçalt). Yarıçap palette. Bir sürüklemede her hücreye bir kez uygulanır |
+| 9 | **Bölge** | Tut-çek: bölge (spawn, görev...) çizer. Bkz. *Bölgeler* |
 
 Palette arama kutusu bütün kategorilerde arar.
 
@@ -198,6 +201,17 @@ Palette **Çıktı** sekmesi veya **Tools → World Kit → Çıktı**:
   Sonra düzenlemeye devam edip yeniden bake edebilirsin.
 - **OBJ:** `.obj` + `.mtl` (renkler materyallerden alınır). Blender, Maya vb. için.
 - İkisi de EditorOnly etiketli objeleri (ölçü referansları) ve gizli objeleri atlar.
+- **Değiştir sekmesi:** Greybox'tan gerçek modele geçiş. *Bunu* (ör. `Ev_Kucuk_3x3`, ya da *Seçimden*) ve *Bununla*
+  (yeni model) seç → *N Parçayı Değiştir*. Konum ve dönüş korunur; model farklı yöne bakıyorsa *Ek dönüş*,
+  pivotu farklıysa *Konum kayması* kullan. *Yalnızca seçili parçalar* ile bir kısmını değiştir. Tek Ctrl+Z ile geri alınır.
+  Yeni modelde `WorldKitPiece` yoksa footprint eskisinden kopyalanır.
+
+### Bölgeler
+Spawn alanı, görev noktası, güvenli / tehlikeli alan gibi **tetikleyici kutular** (`WorldKitZone`).
+- Palette **Bölgeler** sekmesinde tür ve yükseklik seç → *Bölge Çiz* (veya fırça açıkken **9**) → tut-çek.
+- Sahnede türüne göre renkli kutu ve adıyla görünür. *Ignore Raycast* katmanındadır: Erişim ve NavMesh engel saymaz.
+- Oyunda: `onEnter` / `onExit` olaylarını Inspector'dan bağla (varsayılan yalnızca `Player` etiketi), ya da koddan
+  `FindObjectsByType<WorldKitZone>` ile türüne / `zoneId`'sine göre bul. Spawn için `RandomPoint()`.
 
 ### Ölçüm
 - **Cetvel (7):** Tut-çek ile ölç. Süreler Project Settings → World Kit → *Walk/Run Speed* değerlerinden hesaplanır.

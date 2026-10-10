@@ -431,7 +431,7 @@ namespace WorldKit.Editor
             {
                 ("YERLEŞTİR", tools.Where(t => t.ModifiesScene && !t.Erases).ToList()),
                 ("SİL", tools.Where(t => t.Erases).ToList()),
-                ("ÖLÇ", tools.Where(t => !t.ModifiesScene).ToList()),
+                ("ÖLÇ · İŞARETLE", tools.Where(t => !t.ModifiesScene).ToList()),
             };
 
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar, GUILayout.Height(26f)))

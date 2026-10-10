@@ -686,6 +686,8 @@ namespace WorldKit.Editor
                     RememberPlacements(anchorCorner);
                 }
             }
+            else if (s_HasHit && tool != null && !tool.ModifiesScene)
+                tool.OnStrokeFinished(s_Context);
 
             s_Context.Dragging = false;
             WorldKitEvents.RaiseEditFinished();

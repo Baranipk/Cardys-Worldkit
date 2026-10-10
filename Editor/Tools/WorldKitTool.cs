@@ -52,6 +52,13 @@ namespace WorldKit.Editor
         /// </summary>
         public virtual void OnSettingsGUI() { }
 
+        /// <summary>
+        /// ModifiesScene = false olan modlarda tıklama/sürükleme bitince çağrılır (Dragging hâlâ true, Anchor ve Hit dolu).
+        /// Fırça bir şey yerleştirmez; mod kendi işini yapabilir (ör. Bölge modu bir bölge objesi oluşturur).
+        /// Yapılan değişiklikler Undo'lu olmalı; hepsi kullanıcı eylemiyle aynı Undo grubuna girer.
+        /// </summary>
+        public virtual void OnStrokeFinished(BrushContext context) { }
+
         /// <summary>Scene'de ek önizleme çizimi (Handles ile; Repaint sırasında çağrılır). Ör. serpme yarıçapı.</summary>
         public virtual void OnPreviewGUI(BrushContext context) { }
 

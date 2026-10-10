@@ -114,6 +114,7 @@ public sealed class CheckerTool : WorldKitTool
 | `ModifiesScene` | `false`: sahneyi değiştirmeyen mod (ör. Cetvel); yerleştirme, boyama ve Shift+tık yapılmaz |
 | `HasSettings` + `OnSettingsGUI()` | Mod seçiliyken palette ayar paneli gösterir. Değerleri `EditorPrefs`'te tutun |
 | `OnPreviewGUI(context)` | Scene'de ek önizleme çizimi (Handles), ör. serpme yarıçapı çemberi |
+| `OnStrokeFinished(context)` | `ModifiesScene = false` modlarda tıklama/sürükleme bitince çağrılır; mod kendi işini yapar (ör. Bölge modu bölge objesi oluşturur). Değişiklikler Undo'lu olmalı |
 
 `Placement` içinde `Position`, `Rotation` ve isteğe bağlı `Scale` (0 = 1) var. Grid dışı yerleşim
 (rastgele konum, açı, boyut) için örnek: `Editor/Tools/ScatterTool.cs`.
@@ -294,7 +295,7 @@ Palet üç katmandan oluşur: **bölümler** (`WorldKitPaletteTab.Section`), **k
 mod çubuğunun altında görünür; diğer bölümlerde sekmeler üstte sıralanır.
 
 Mod çubuğu modları kendiliğinden gruplar: `ModifiesScene && !Erases` → YERLEŞTİR, `Erases` → SİL,
-`!ModifiesScene` → ÖLÇ.
+`!ModifiesScene` → ÖLÇ · İŞARETLE.
 
 **İkonlar (`WorldKitIcons`)** kodla, 64×64 kenar yumuşatmalı bir tuvalde çizilir ve temaya göre renklenir.
 Kendi ikonunuz için:
