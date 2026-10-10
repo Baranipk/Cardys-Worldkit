@@ -26,6 +26,12 @@ namespace WorldKit
         /// <summary>Rampa yönü: hücre bu yöne doğru bir kat yükselir.</summary>
         public enum Slope { None = 0, PositiveX = 1, NegativeX = 2, PositiveZ = 3, NegativeZ = 4 }
 
+        /// <summary>
+        /// Rampanın hangi parçası: Full = tek hücrede bir kat, Lower / Upper = iki hücreye yayılan yumuşak rampanın
+        /// alt ve üst yarısı (her biri yarım kat yükselir). İki yarıda da Height alt kattır.
+        /// </summary>
+        public enum RampPart { Full = 0, Lower = 1, Upper = 2 }
+
         [Tooltip("Bir hücrenin kenar uzunluğu (m).")]
         public float cellSize = 1f;
         [Tooltip("Bir seviyenin yüksekliği (m).")]
@@ -37,14 +43,17 @@ namespace WorldKit
         [SerializeField, HideInInspector] List<Vector3Int> m_Cells = new List<Vector3Int>();
         // m_Cells ile aynı sırada hücre türleri. Eski kayıtlarda boştur (hepsi tür 0).
         [SerializeField, HideInInspector] List<int> m_Types = new List<int>();
-        // m_Cells ile aynı sırada eğimler (Slope). Eski kayıtlarda boştur (hepsi düz).
+        // m_Cells ile aynı sırada eğimler: Slope + 8 × RampPart. Eski kayıtlarda boştur (hepsi düz).
         [SerializeField, HideInInspector] List<int> m_Slopes = new List<int>();
+
+        const int PartStride = 8;
 
         struct Cell
         {
             public int Height;
             public int Type;
             public Slope Slope;
+            public RampPart Part;
         }
 
         readonly Dictionary<Vector2Int, Cell> m_Map = new Dictionary<Vector2Int, Cell>();
@@ -116,6 +125,14 @@ namespace WorldKit
             return found;
         }
 
+        /// <summary>Rampanın parçası (düz hücrelerde Full).</summary>
+        public bool TryGetRampPart(Vector2Int cell, out RampPart part)
+        {
+            bool found = m_Map.TryGetValue(cell, out var data);
+            part = data.Part;
+            return found;
+        }
+
         /// <summary>Zemini olan bütün hücreler.</summary>
         public IEnumerable<Vector2Int> Cells => m_Map.Keys;
 
@@ -180,17 +197,84 @@ namespace WorldKit
         }
 
         /// <summary>Var olan hücrelerin eğimini ayarlar (None = düzleştir).</summary>
-        public void SetSlope(IEnumerable<Vector2Int> cells, Slope slope)
+        public void SetSlope(IEnumerable<Vector2Int> cells, Slope slope) => SetSlope(cells, slope, RampPart.Full);
+
+        /// <summary>Var olan hücrelerin eğimini ve rampa parçasını ayarlar.</summary>
+        public void SetSlope(IEnumerable<Vector2Int> cells, Slope slope, RampPart part)
         {
             foreach (var cell in cells)
             {
                 if (m_Map.TryGetValue(cell, out var data))
                 {
                     data.Slope = slope;
+                    data.Part = slope == Slope.None ? RampPart.Full : part;
                     m_Map[cell] = data;
                 }
             }
             WriteBack();
+        }
+
+        /// <summary>
+        /// Yumuşak rampa: aynı yükseklikteki iki hücreyi, ilerideki bir kat yüksek komşuya doğru yarım kat + yarım kat
+        /// eğimli yapar. Hücrelerden biri seçimde olması yeterli (diğeri komşusu). Yön kendiliğinden bulunur;
+        /// preferAlongX true ise önce X yönüne bakılır. Rampa olan hücre sayısını döndürür.
+        /// </summary>
+        public int AutoSlopeGentle(IEnumerable<Vector2Int> cells, bool preferAlongX)
+        {
+            var order = preferAlongX
+                ? new[] { Slope.PositiveX, Slope.NegativeX, Slope.PositiveZ, Slope.NegativeZ }
+                : new[] { Slope.PositiveZ, Slope.NegativeZ, Slope.PositiveX, Slope.NegativeX };
+
+            var done = new HashSet<Vector2Int>();
+            foreach (var cell in cells)
+            {
+                if (done.Contains(cell) || !m_Map.TryGetValue(cell, out var data))
+                    continue;
+
+                foreach (var slope in order)
+                {
+                    var dir = Direction(slope);
+                    // Bu hücre alt yarı mı (önde aynı yükseklikte bir hücre, onun önünde bir kat yüksek)
+                    // yoksa üst yarı mı (önde bir kat yüksek, arkada aynı yükseklikte bir hücre)?
+                    Vector2Int lower, upper;
+                    if (IsHeight(cell + dir, data.Height) && IsHeight(cell + dir * 2, data.Height + 1))
+                    {
+                        lower = cell;
+                        upper = cell + dir;
+                    }
+                    else if (IsHeight(cell + dir, data.Height + 1) && IsHeight(cell - dir, data.Height))
+                    {
+                        lower = cell - dir;
+                        upper = cell;
+                    }
+                    else
+                        continue;
+
+                    if (done.Contains(lower) || done.Contains(upper))
+                        continue;
+                    // Rampanın arkası yüksekse (çukur) olmaz
+                    if (m_Map.TryGetValue(lower - dir, out var behind) && behind.Height > data.Height)
+                        continue;
+
+                    SetPart(lower, slope, RampPart.Lower);
+                    SetPart(upper, slope, RampPart.Upper);
+                    done.Add(lower);
+                    done.Add(upper);
+                    break;
+                }
+            }
+            WriteBack();
+            return done.Count;
+        }
+
+        bool IsHeight(Vector2Int cell, int height) => m_Map.TryGetValue(cell, out var data) && data.Height == height;
+
+        void SetPart(Vector2Int cell, Slope slope, RampPart part)
+        {
+            var data = m_Map[cell];
+            data.Slope = slope;
+            data.Part = part;
+            m_Map[cell] = data;
         }
 
         /// <summary>
@@ -218,6 +302,7 @@ namespace WorldKit
                     if (higherAhead && notHigherBehind)
                     {
                         data.Slope = slope;
+                        data.Part = RampPart.Full;
                         m_Map[cell] = data;
                         count++;
                         break;
@@ -244,7 +329,7 @@ namespace WorldKit
             {
                 m_Cells.Add(new Vector3Int(pair.Key.x, pair.Value.Height, pair.Key.y));
                 m_Types.Add(pair.Value.Type);
-                m_Slopes.Add((int)pair.Value.Slope);
+                m_Slopes.Add((int)pair.Value.Slope + PartStride * (int)pair.Value.Part);
             }
             BuildMesh();
         }
@@ -260,7 +345,8 @@ namespace WorldKit
                 {
                     Height = c.y,
                     Type = i < m_Types.Count ? m_Types[i] : 0,
-                    Slope = i < m_Slopes.Count ? (Slope)m_Slopes[i] : Slope.None
+                    Slope = i < m_Slopes.Count ? (Slope)(m_Slopes[i] % PartStride) : Slope.None,
+                    Part = i < m_Slopes.Count ? (RampPart)(m_Slopes[i] / PartStride) : RampPart.Full
                 };
             }
             BuildMesh();
@@ -303,13 +389,22 @@ namespace WorldKit
         /// </summary>
         static float CornerLevel(Cell cell, int cx, int cz)
         {
+            // t: köşenin eğim yönündeki konumu (0 = alçak kenar, 1 = yüksek kenar)
+            float t;
             switch (cell.Slope)
             {
-                case Slope.PositiveX: return cell.Height + cx;
-                case Slope.NegativeX: return cell.Height + 1 - cx;
-                case Slope.PositiveZ: return cell.Height + cz;
-                case Slope.NegativeZ: return cell.Height + 1 - cz;
+                case Slope.PositiveX: t = cx; break;
+                case Slope.NegativeX: t = 1 - cx; break;
+                case Slope.PositiveZ: t = cz; break;
+                case Slope.NegativeZ: t = 1 - cz; break;
                 default: return cell.Height;
+            }
+
+            switch (cell.Part)
+            {
+                case RampPart.Lower: return cell.Height + 0.5f * t;
+                case RampPart.Upper: return cell.Height + 0.5f + 0.5f * t;
+                default: return cell.Height + t;
             }
         }
 

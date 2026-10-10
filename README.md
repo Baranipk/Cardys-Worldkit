@@ -148,7 +148,7 @@ uygulanacağını ise üstteki mod belirler (Tek = fırça, Hat = şerit, Alan =
 | **Sadece Renk** | Yalnızca var olan zeminin türünü değiştirir; yükseklik ve şekil korunur. Patika, nehir, bölge için |
 | **Yükselt** | Var olan zemini bir kat yükseltir. Tek moduyla sürükleyerek tepe veya teras "heykel"lenir |
 | **Alçalt** | Var olan zemini bir kat alçaltır (çukur, nehir yatağı) |
-| **Rampa** | Hücreyi yanındaki bir kat yüksek zemine doğru eğimli rampa yapar; yön kendiliğinden bulunur. Zeminin parçasıdır (tek mesh, yürünebilir). **Boya** ile düzleşir |
+| **Rampa** | Hücreyi yanındaki bir kat yüksek zemine doğru eğimli rampa yapar; yön kendiliğinden bulunur. Zeminin parçasıdır (tek mesh, yürünebilir). **Boya** ile düzleşir. **Yumuşak (2 hücre)** açıksa bir kat iki hücreye yayılır: platforma doğru 2 hücrelik bir hat çiz |
 | **Duvarla Çevir** | Seçilen alanın dış kenarlarına duvar örer; zemini değiştirmez. Duvar sekmede seçilir (boşsa `Duvar_1m`) |
 | **Kenar Süsle** | Seçilen alanın dış kenarlarına (uçurum, platform kenarı, kıyı) kaya, çalı gibi parçaları rastgele dizer. Parçalar, yoğunluk ve "uçurum dibine koy" sekmede ayarlanır. Aynı alanı tekrar süslemek üst üste koymaz |
 

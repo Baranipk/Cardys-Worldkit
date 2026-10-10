@@ -234,6 +234,15 @@ namespace WorldKit.Editor
                     WorldKitBrush.FloorWallPrefab = wall;
             }
 
+            if (WorldKitBrush.FloorOp == WorldKitBrush.FloorOperation.Ramp)
+            {
+                bool gentle = EditorGUILayout.ToggleLeft(new GUIContent("Yumuşak (2 hücre)",
+                    "Açıksa bir kat iki hücreye yayılır (yarım + yarım). Platforma doğru 2 hücrelik bir hat çiz."),
+                    WorldKitBrush.FloorGentleRamp);
+                if (gentle != WorldKitBrush.FloorGentleRamp)
+                    WorldKitBrush.FloorGentleRamp = gentle;
+            }
+
             if (WorldKitBrush.FloorOp == WorldKitBrush.FloorOperation.EdgeDecor)
                 DrawEdgeDecorSettings();
         }

@@ -2,6 +2,16 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.12.0] - 2026-10-10
+
+### Eklendi
+- **Yumuşak rampa:** Rampa işleminde "Yumuşak (2 hücre)" seçeneği. Bir kat iki hücreye yayılır (yarım + yarım).
+  `WorldKitFloor.RampPart`, `AutoSlopeGentle`, `SetSlope(cells, slope, part)`, `TryGetRampPart`.
+- Şablonlar yumuşak rampaları da korur (`WorldKitStamp.FloorCell.rampPart`).
+
+### Değişti
+- `m_Slopes` artık eğim + 8 × rampa parçası saklar; eski kayıtlar değişmeden okunur.
+
 ## [0.11.0] - 2026-10-10
 
 ### Eklendi

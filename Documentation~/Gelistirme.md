@@ -274,7 +274,7 @@ Bir değişiklikten sonra en azından şunları deneyin:
 | `SetCells(cells, height)` | Hücreleri doldurur; var olanın türü korunur |
 | `SetCells(cells, height, type)` | Hücreleri yükseklik ve türle doldurur |
 | `PaintType(cells, type)` | Yalnızca var olan hücrelerin türünü değiştirir |
-| `AutoSlope(cells, preferAlongX)` / `SetSlope(cells, slope)` | Rampa (eğim). `Slope.None` düzleştirir |
+| `AutoSlope(cells, preferAlongX)` / `AutoSlopeGentle(cells, preferAlongX)` / `SetSlope(cells, slope[, part])` | Rampa (eğim); yumuşak rampa iki hücre (`RampPart.Lower`/`Upper`). `Slope.None` düzleştirir |
 | `AdjustHeight(cells, delta, min, max)` | Yüksekliği değiştirir, eğimi korur |
 | `RemoveCells(cells)` | Hücreleri siler |
 | `TryGetHeight` / `TryGetType` | Hücre sorgusu |

@@ -23,6 +23,8 @@ namespace WorldKit
             public int type;
             [Tooltip("Rampa yönü, şablon köküne göre (0 = düz). Şablon döndürülünce yön de döner.")]
             public Vector3 localSlopeDirection;
+            [Tooltip("Rampa parçası: 0 = tam (dik), 1 = yumuşak rampanın alt yarısı, 2 = üst yarısı.")]
+            public int rampPart;
         }
 
         public List<FloorCell> floorCells = new List<FloorCell>();

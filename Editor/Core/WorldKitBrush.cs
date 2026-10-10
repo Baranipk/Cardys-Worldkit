@@ -1023,7 +1023,12 @@ namespace WorldKit.Editor
                 case FloorOperation.Recolor: floor.PaintType(cells, s_FloorType); break;
                 case FloorOperation.Raise: floor.AdjustHeight(cells, 1, range.x, range.y); break;
                 case FloorOperation.Lower: floor.AdjustHeight(cells, -1, range.x, range.y); break;
-                case FloorOperation.Ramp: floor.AutoSlope(cells, s_Context.Axis != DragAxis.Z); break;
+                case FloorOperation.Ramp:
+                    if (FloorGentleRamp)
+                        floor.AutoSlopeGentle(cells, s_Context.Axis != DragAxis.Z);
+                    else
+                        floor.AutoSlope(cells, s_Context.Axis != DragAxis.Z);
+                    break;
                 default: floor.SetCells(cells, s_Context.Level, s_FloorType); break;
             }
             SyncFloorMaterials(floor);
@@ -1061,6 +1066,17 @@ namespace WorldKit.Editor
             {
                 s_FloorOperation = value;
                 SceneView.RepaintAll();
+                Changed?.Invoke();
+            }
+        }
+
+        /// <summary>Rampa işlemi yumuşak mı (bir kat iki hücreye yayılır) yoksa dik mi (tek hücre).</summary>
+        public static bool FloorGentleRamp
+        {
+            get => EditorPrefs.GetBool("WorldKit.Floor.GentleRamp", false);
+            set
+            {
+                EditorPrefs.SetBool("WorldKit.Floor.GentleRamp", value);
                 Changed?.Invoke();
             }
         }
