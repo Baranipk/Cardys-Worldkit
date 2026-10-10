@@ -2,6 +2,16 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.14.0] - 2026-10-10
+
+### Eklendi
+- **Fırça** modu (8, `RoundBrushTool`, yalnızca zemin): Yuvarlak fırçayla sürükleyerek zemin işlemi uygular
+  (patika, kıyı, arazi). Bir sürüklemede her hücreye bir kez.
+- **Üste Kopyala** (`StackSelection`): Seçimin kopyasını üstüne koyar (kat ekleme, kule yükseltme).
+- **Su seviyesi:** Zemin türlerine `surfaceOffset` (m). Su varsayılan olarak -0.3 × kat yüksekliği; kıyı oluşur,
+  Erişim'de yürünemez. `WorldKitFloor.SetTypeOffsets`, `TypeOffsets`.
+- Palette arama artık bütün kategorilerde arar; temizleme düğmesi.
+
 ## [0.13.0] - 2026-10-10
 
 ### Eklendi

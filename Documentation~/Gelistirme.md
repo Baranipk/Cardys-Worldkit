@@ -279,6 +279,7 @@ Bir değişiklikten sonra en azından şunları deneyin:
 | `RemoveCells(cells)` | Hücreleri siler |
 | `TryGetHeight` / `TryGetType` | Hücre sorgusu |
 | `Cells` / `TryGetCornerLevel(cell, cx, cz, out level)` | Bütün hücreler; köşe yüksekliği (rampalarda köşeye göre) |
+| `SetTypeOffsets(offsets)` / `TypeOffsets` | Tür başına yüzey kayması (m); World Kit ayarlardan doldurur. Köşe yükseklikleri bunu içerir |
 | `MaxVisibleLevel` | Görünüm sınırı (kaydedilmez) |
 | `SubMeshCount` | Renderer'da gereken materyal sayısı |
 

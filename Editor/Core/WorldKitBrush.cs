@@ -1149,6 +1149,16 @@ namespace WorldKit.Editor
                 Undo.RecordObject(renderer, "World Kit: Zemin Materyalleri");
                 renderer.sharedMaterials = materials.ToArray();
             }
+
+            // Tür başına yüzey kayması (su vb.); 0 = varsayılan tür
+            var offsets = new List<float> { 0f };
+            offsets.AddRange(settings.floorTypes.Select(t => t.surfaceOffset));
+            if (!floor.TypeOffsets.SequenceEqual(offsets))
+            {
+                Undo.RecordObject(floor, "World Kit: Zemin Türleri");
+                floor.SetTypeOffsets(offsets);
+                EditorUtility.SetDirty(floor);
+            }
         }
 
         static void Remove(GameObject go)

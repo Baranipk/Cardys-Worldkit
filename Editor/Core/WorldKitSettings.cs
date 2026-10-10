@@ -19,6 +19,9 @@ namespace WorldKit.Editor
         {
             public string name = "Yeni Tür";
             public Material material;
+            [Tooltip("Yüzeyin kat düzlemine göre kayması (m). Su için ör. -0.3: komşularından alçakta durur, kıyısı oluşur " +
+                     "ve Erişim analizinde yürünemez sayılır. 0 = düz.")]
+            public float surfaceOffset;
         }
 
         public const string DefaultAssetPath = "Assets/WorldKit/WorldKitSettings.asset";

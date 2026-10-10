@@ -500,13 +500,29 @@ namespace WorldKit.Editor
 
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
-                m_Search = GUILayout.TextField(m_Search, EditorStyles.toolbarSearchField, GUILayout.MinWidth(60f));
+                m_Search = GUILayout.TextField(m_Search, EditorStyles.toolbarSearchField,
+                    GUILayout.MinWidth(60f)) ?? string.Empty;
+                if (m_Search.Length > 0 && GUILayout.Button(new GUIContent("×", "Aramayı temizle"), EditorStyles.toolbarButton, GUILayout.Width(20f)))
+                {
+                    m_Search = string.Empty;
+                    GUI.FocusControl(null);
+                }
                 var size = GUILayout.HorizontalSlider(m_TileSize, 56f, 140f, GUILayout.Width(60f));
                 if (!Mathf.Approximately(size, m_TileSize))
                 {
                     m_TileSize = size;
                     EditorPrefs.SetFloat(SizePrefKey, m_TileSize);
                 }
+            }
+
+            // Arama bütün kategorilerde yapılır
+            if (m_Search.Length > 0)
+            {
+                var all = m_Tabs.Where(t => t.Prefabs != null).SelectMany(t => t.Prefabs).Distinct().ToList();
+                int hits = all.Count(p => p != null && Nice(p.name).IndexOf(m_Search, StringComparison.OrdinalIgnoreCase) >= 0);
+                EditorGUILayout.LabelField($"{hits} sonuç (tüm kategoriler)", EditorStyles.miniLabel);
+                DrawPrefabGrid(all);
+                return;
             }
 
             DrawPrefabGrid(tab.Prefabs);

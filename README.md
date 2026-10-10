@@ -53,9 +53,12 @@ kendiliğinden devre dışı kalır, geri kalan her şey çalışır.
 | | Zemin işlemleri: Boya, Sadece Renk, Yükselt, Alçalt, Rampa, Duvarla Çevir, Kenar Süsle | ✅ |
 | | Şablonlar: seçimi zeminiyle birlikte kaydet, palette yerleştir | ✅ |
 | | Serpme fırçası: rastgele konum, dönüş, boyut ve aralık | ✅ |
+| | Yuvarlak fırça: patika, kıyı, arazi şekillendirme | ✅ |
+| | Su seviyesi: tür başına yüzey kayması | ✅ |
 | | Varyasyonlar: Ctrl+tık ile birden fazla parça, her yerleşimde rastgele biri | ✅ |
 | **Düzenleme** | Seç, taşı, döndür, çoğalt, sil (grid'e bağlı, klavyeyle) | ✅ |
 | | Seviye görünürlüğü (üst katları gizle) | ✅ |
+| | Üste kopyala: kat ekle, kule yükselt | ✅ |
 | **Ölçüm** | Cetvel (mesafe, hücre, yürüme/koşma süresi) | ✅ |
 | | İstatistik sekmesi (parça, zemin alanı, üçgen, dünya boyutu) | ✅ |
 | | Üstten harita PNG | ✅ |
@@ -108,6 +111,9 @@ kendiliğinden devre dışı kalır, geri kalan her şey çalışır.
 | 5 | **Serp** | Sürükle: imlecin çevresine rastgele serpiştirir (ayarları palette) |
 | 6 | **Sil** | Tıkla: parça siler. Tut-çek: alanı siler |
 | 7 | **Cetvel** | Tut-çek: mesafe, hücre sayısı, yürüme/koşma süresi. Sahneyi değiştirmez |
+| 8 | **Fırça** *(zemin)* | Sürükle: yuvarlak fırçayla seçili zemin işlemini uygular. Patika (Sadece Renk + Yol), kıyı, arazi (Yükselt/Alçalt). Yarıçap palette. Bir sürüklemede her hücreye bir kez uygulanır |
+
+Palette arama kutusu bütün kategorilerde arar.
 
 ### Kısayollar (fırça seçiliyken, Scene'de)
 | Tuş | İşlev |
@@ -137,6 +143,9 @@ Footprint'inin bir ekseni 0 olan parçalar grid **köşelerine** oturur:
 Zemin sekmesindeki renk karelerinden bir tür seç (Zemin, Çimen, Toprak, Taş, Kum, Su, Yol...) ve boya.
 - Türler **Project Settings → World Kit → Floor Types** listesindedir: ad + materyal. Yeni türleri listenin
   **sonuna** ekle; sırayı değiştirmek boyanmış hücrelerin türünü de değiştirir.
+- **Surface Offset:** Türün yüzeyini kat düzleminden kaydırır (m). Su için ör. `-0.3`: su komşularından alçakta durur,
+  kıyı kendiliğinden oluşur ve Erişim analizinde yürünemez sayılır. Yeni projelerde *Su* bununla gelir;
+  mevcut projede ayarlardan elle gir.
 - Başlangıç içeriği, liste boşsa 6 hazır tür oluşturur.
 
 ### Zemin işlemleri
@@ -227,6 +236,9 @@ Fırça kapalıyken World Kit parçalarını seç (Hierarchy veya Scene'de tıkl
 | G | Grid'e oturt (serbestçe taşınmış parçaları düzeltir) |
 | Ctrl+D | Çoğalt (Unity), ardından oklarla kaydır |
 | Delete | Sil (köşe direkleri de güncellenir) |
+
+**Üste Kopyala** (palet alt çubuğu → Seçim, veya Tools → World Kit): Seçili parçaların bir kopyasını tam üstlerine,
+kat yüksekliğine yuvarlayarak koyar. Binaya kat eklemek, kule ve duvar yükseltmek için; her basışta bir kat daha.
 
 Bu tuşlar yalnızca seçimde parça varken ve Scene odaktayken geçerlidir; diğer zamanlarda Unity'nin
 kendi kısayolları (ör. R = ölçekle) aynen çalışır.

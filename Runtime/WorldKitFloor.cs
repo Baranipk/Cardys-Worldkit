@@ -46,6 +46,9 @@ namespace WorldKit
         // m_Cells ile aynı sırada eğimler: Slope + 8 × RampPart. Eski kayıtlarda boştur (hepsi düz).
         [SerializeField, HideInInspector] List<int> m_Slopes = new List<int>();
 
+        // Tür başına yüzey kayması (m), ör. su komşularından biraz alçakta. İndeks = tür. Ayarlardan doldurulur.
+        [SerializeField, HideInInspector] List<float> m_TypeOffsets = new List<float>();
+
         const int PartStride = 8;
 
         struct Cell
@@ -387,7 +390,9 @@ namespace WorldKit
         /// <summary>
         /// Hücrenin bir köşesinin üst yüksekliği (seviye cinsinden). Köşe (cx, cz) ∈ {0,1}²: hücre içindeki konum.
         /// </summary>
-        static float CornerLevel(Cell cell, int cx, int cz)
+        float CornerLevel(Cell cell, int cx, int cz) => SlopedLevel(cell, cx, cz) + TypeOffset(cell.Type) / Mathf.Max(0.01f, levelHeight);
+
+        static float SlopedLevel(Cell cell, int cx, int cz)
         {
             // t: köşenin eğim yönündeki konumu (0 = alçak kenar, 1 = yüksek kenar)
             float t;
@@ -406,6 +411,27 @@ namespace WorldKit
                 case RampPart.Upper: return cell.Height + 0.5f + 0.5f * t;
                 default: return cell.Height + t;
             }
+        }
+
+        float TypeOffset(int type) => type >= 0 && type < m_TypeOffsets.Count ? m_TypeOffsets[type] : 0f;
+
+        /// <summary>Tür başına yüzey kayması (m). İndeks = tür (0 = varsayılan).</summary>
+        public IReadOnlyList<float> TypeOffsets => m_TypeOffsets;
+
+        /// <summary>
+        /// Tür başına yüzey kaymalarını ayarlar (m; ör. su -0.3). Değiştiyse mesh yeniden kurulur.
+        /// World Kit bunu proje ayarlarındaki zemin türlerinden kendisi doldurur.
+        /// </summary>
+        public void SetTypeOffsets(IList<float> offsets)
+        {
+            bool same = offsets.Count == m_TypeOffsets.Count;
+            for (int i = 0; same && i < offsets.Count; i++)
+                same = Mathf.Approximately(offsets[i], m_TypeOffsets[i]);
+            if (same)
+                return;
+            m_TypeOffsets.Clear();
+            m_TypeOffsets.AddRange(offsets);
+            BuildMesh();
         }
 
         void BuildMesh()

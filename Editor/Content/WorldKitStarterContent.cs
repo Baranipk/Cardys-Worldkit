@@ -75,19 +75,19 @@ namespace WorldKit.Editor
             // Hazır zemin türleri (yalnızca hiç tür tanımlanmamışsa).
             if (settings.floorTypes.Count == 0)
             {
-                void AddType(string typeName, string file, Color color, float smoothness = 0.1f)
+                void AddType(string typeName, string file, Color color, float smoothness = 0.1f, float offset = 0f)
                 {
                     var material = CreateMaterial(file, color, grid);
                     if (material.HasProperty("_Smoothness"))
                         material.SetFloat("_Smoothness", smoothness);
-                    settings.floorTypes.Add(new WorldKitSettings.FloorType { name = typeName, material = material });
+                    settings.floorTypes.Add(new WorldKitSettings.FloorType { name = typeName, material = material, surfaceOffset = offset });
                 }
 
                 AddType("Çimen", "Zemin_Cimen", new Color(0.45f, 0.68f, 0.36f));
                 AddType("Toprak", "Zemin_Toprak", new Color(0.55f, 0.42f, 0.3f));
                 AddType("Taş", "Zemin_Tas", new Color(0.5f, 0.52f, 0.58f));
                 AddType("Kum", "Zemin_Kum", new Color(0.86f, 0.78f, 0.55f));
-                AddType("Su", "Zemin_Su", new Color(0.3f, 0.55f, 0.85f), 0.85f);
+                AddType("Su", "Zemin_Su", new Color(0.3f, 0.55f, 0.85f), 0.85f, -0.3f * settings.levelHeight);
                 AddType("Yol", "Zemin_Yol", new Color(0.72f, 0.66f, 0.56f));
             }
             EditorUtility.SetDirty(settings);

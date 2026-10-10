@@ -146,6 +146,12 @@ namespace WorldKit.Editor
             c.Triangle(6, 54, 30, 54, 18, 30); c.Triangle(32, 54, 58, 54, 45, 30);
             c.Triangle(20, 28, 44, 28, 32, 6);
         }, new Color(0.3f, 0.75f, 1f));
+        public static Texture2D RoundBrush => Get("roundbrush", c => { c.Ring(32, 32, 22, 5); c.Circle(32, 32, 9); });
+        public static Texture2D StackUp => Get("stackup", c =>
+        {
+            c.Rect(12, 40, 52, 58); c.RectStroke(12, 18, 52, 36, 4);
+            c.Triangle(32, 2, 22, 14, 42, 14);
+        });
         public static Texture2D EdgeDecor => Get("edgedecor", c => { c.Rect(4, 30, 60, 60); c.Circle(14, 24, 7); c.Circle(32, 22, 9); c.Circle(50, 25, 6); });
 
         /// <summary>Temaya göre önbelleğe alınmış bir ikon. draw, 64×64 bir tuval üzerinde (sol üst = 0,0) çizer.</summary>
