@@ -165,6 +165,7 @@ namespace WorldKit.Editor
             (WorldKitBrush.FloorOperation.Recolor, "Yalnızca var olan zeminin türünü değiştir; yükseklik ve şekil korunur. Patika, nehir, bölge boyamak için."),
             (WorldKitBrush.FloorOperation.Raise, "Var olan zemini bir kat yükselt. Tek moduyla sürükleyerek heykel gibi kullanılabilir."),
             (WorldKitBrush.FloorOperation.Lower, "Var olan zemini bir kat alçalt (çukur, nehir yatağı)."),
+            (WorldKitBrush.FloorOperation.Ramp, "Hücreyi yanındaki bir kat yüksek zemine doğru rampa yap (yön kendiliğinden). Boya ile düzleşir."),
             (WorldKitBrush.FloorOperation.Wall, "Seçilen alanın dış kenarlarına duvar ör. Zemini değiştirmez."),
         };
 
@@ -177,6 +178,7 @@ namespace WorldKit.Editor
                 case WorldKitBrush.FloorOperation.Recolor: return WorldKitIcons.Recolor;
                 case WorldKitBrush.FloorOperation.Raise: return WorldKitIcons.Raise;
                 case WorldKitBrush.FloorOperation.Lower: return WorldKitIcons.Lower;
+                case WorldKitBrush.FloorOperation.Ramp: return WorldKitIcons.Ramp;
                 case WorldKitBrush.FloorOperation.Wall: return WorldKitIcons.Wall;
                 default: return WorldKitIcons.Paint;
             }

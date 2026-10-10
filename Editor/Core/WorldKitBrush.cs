@@ -1018,6 +1018,7 @@ namespace WorldKit.Editor
                 case FloorOperation.Recolor: floor.PaintType(cells, s_FloorType); break;
                 case FloorOperation.Raise: floor.AdjustHeight(cells, 1, range.x, range.y); break;
                 case FloorOperation.Lower: floor.AdjustHeight(cells, -1, range.x, range.y); break;
+                case FloorOperation.Ramp: floor.AutoSlope(cells, s_Context.Axis != DragAxis.Z); break;
                 default: floor.SetCells(cells, s_Context.Level, s_FloorType); break;
             }
             SyncFloorMaterials(floor);
@@ -1036,6 +1037,8 @@ namespace WorldKit.Editor
             Raise,
             /// <summary>Var olan hücreleri bir kat alçalt.</summary>
             Lower,
+            /// <summary>Hücreleri yanlarındaki bir kat yüksek komşuya doğru rampa yap (yön kendiliğinden).</summary>
+            Ramp,
             /// <summary>Hücre alanının kenarlarına duvar ör (zemini değiştirmez).</summary>
             Wall
         }
@@ -1075,6 +1078,7 @@ namespace WorldKit.Editor
                 case FloorOperation.Recolor: return "Sadece Renk";
                 case FloorOperation.Raise: return "Yükselt";
                 case FloorOperation.Lower: return "Alçalt";
+                case FloorOperation.Ramp: return "Rampa";
                 case FloorOperation.Wall: return "Duvarla Çevir";
                 default: return "Boya";
             }

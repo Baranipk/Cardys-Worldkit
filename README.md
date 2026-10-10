@@ -50,7 +50,7 @@ kendiliğinden devre dışı kalır, geri kalan her şey çalışır.
 | | Duvara kapı açma (aynı hatta üst üste konan çizgi parçası eskisinin yerini alır) | ✅ |
 | | Otomatik köşe direği | ✅ |
 | | Zemin türleri (çimen, toprak, taş, kum, su, yol...) | ✅ |
-| | Zemin işlemleri: Boya, Sadece Renk, Yükselt, Alçalt, Duvarla Çevir | ✅ |
+| | Zemin işlemleri: Boya, Sadece Renk, Yükselt, Alçalt, Rampa, Duvarla Çevir | ✅ |
 | | Şablonlar: seçimi zeminiyle birlikte kaydet, palette yerleştir | ✅ |
 | | Serpme fırçası: rastgele konum, dönüş, boyut ve aralık | ✅ |
 | | Varyasyonlar: Ctrl+tık ile birden fazla parça, her yerleşimde rastgele biri | ✅ |
@@ -147,6 +147,7 @@ uygulanacağını ise üstteki mod belirler (Tek = fırça, Hat = şerit, Alan =
 | **Sadece Renk** | Yalnızca var olan zeminin türünü değiştirir; yükseklik ve şekil korunur. Patika, nehir, bölge için |
 | **Yükselt** | Var olan zemini bir kat yükseltir. Tek moduyla sürükleyerek tepe veya teras "heykel"lenir |
 | **Alçalt** | Var olan zemini bir kat alçaltır (çukur, nehir yatağı) |
+| **Rampa** | Hücreyi yanındaki bir kat yüksek zemine doğru eğimli rampa yapar; yön kendiliğinden bulunur. Zeminin parçasıdır (tek mesh, yürünebilir). **Boya** ile düzleşir |
 | **Duvarla Çevir** | Seçilen alanın dış kenarlarına duvar örer; zemini değiştirmez. Duvar sekmede seçilir (boşsa `Duvar_1m`) |
 
 Duvarla Çevir'de bir kenar, komşu hücre seçimin dışındaysa veya farklı yükseklikteyse dış kenar sayılır;

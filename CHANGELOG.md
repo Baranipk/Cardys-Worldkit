@@ -2,6 +2,17 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.9.0] - 2026-10-10
+
+### Eklendi
+- **Rampa** zemin işlemi: Hücreyi yanındaki bir kat yüksek komşuya doğru eğimli yapar (yön kendiliğinden).
+  Rampa zeminin bir parçasıdır: tek mesh, tek collider, yan yüzler komşularla dikişsiz.
+- `WorldKitFloor.Slope`, `SetSlope`, `AutoSlope`, `TryGetSlope`. Eğimler ayrı listede saklanır; eski zeminler değişmez.
+
+### Değişti
+- Zemin yan yüzleri artık köşe yüksekliklerine göre üretiliyor (eğimli komşularla doğru birleşim).
+- Boya işlemi rampayı düzleştirir; Yükselt, Alçalt ve Sadece Renk eğimi korur.
+
 ## [0.8.0] - 2026-10-10
 
 ### Eklendi
