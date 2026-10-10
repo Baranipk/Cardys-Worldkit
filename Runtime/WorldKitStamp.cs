@@ -21,6 +21,8 @@ namespace WorldKit
             public int height;
             [Tooltip("Zemin türü (0 = varsayılan).")]
             public int type;
+            [Tooltip("Rampa yönü, şablon köküne göre (0 = düz). Şablon döndürülünce yön de döner.")]
+            public Vector3 localSlopeDirection;
         }
 
         public List<FloorCell> floorCells = new List<FloorCell>();

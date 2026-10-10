@@ -87,12 +87,15 @@ namespace WorldKit.Editor
                     if (!floor.TryGetHeight(c, out var height))
                         continue;
                     floor.TryGetType(c, out var type);
+                    floor.TryGetSlope(c, out var slope);
+                    var slopeDir = WorldKitFloor.Direction(slope);
                     var center = WorldKitGrid.CellCenter(c, 0);
                     stamp.floorCells.Add(new WorldKitStamp.FloorCell
                     {
                         localCenter = new Vector3(center.x - pivot.x, 0f, center.z - pivot.z),
                         height = height - baseLevel,
-                        type = type
+                        type = type,
+                        localSlopeDirection = new Vector3(slopeDir.x, 0f, slopeDir.y)
                     });
                 }
             }
@@ -127,6 +130,13 @@ namespace WorldKit.Editor
                     var cells = group.Select(c => WorldKitGrid.ToCell(placed.transform.TransformPoint(c.localCenter))).ToList();
                     floor.SetCells(cells, baseLevel + group.Key.height, group.Key.type);
                 }
+
+                // Rampalar: yön şablonun dönüşüyle birlikte döner.
+                var ramps = stamp.floorCells
+                    .Where(c => c.localSlopeDirection.sqrMagnitude > 0.01f)
+                    .GroupBy(c => WorldKitFloor.SlopeFromDirection(placed.transform.rotation * c.localSlopeDirection));
+                foreach (var ramp in ramps)
+                    floor.SetSlope(ramp.Select(c => WorldKitGrid.ToCell(placed.transform.TransformPoint(c.localCenter))).ToList(), ramp.Key);
                 WorldKitBrush.SyncFloorMaterials(floor);
                 EditorUtility.SetDirty(floor);
                 WorldKitEvents.RaiseFloorChanged(floor);

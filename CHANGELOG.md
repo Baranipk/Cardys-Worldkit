@@ -2,6 +2,17 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.10.0] - 2026-10-10
+
+### Eklendi
+- **Kenar Süsle** zemin işlemi (`FloorEdgeDecor`): Seçilen alanın dış kenarlarına kaya, çalı gibi parçaları rastgele
+  ama tekrarlanabilir dizer. Parça listesi, yoğunluk ve "uçurum dibine koy" Zemin sekmesinde.
+- **Şablonlarda rampa:** Şablona kaydedilen rampalar korunur ve şablonla birlikte döner
+  (`WorldKitStamp.FloorCell.localSlopeDirection`, `WorldKitFloor.SlopeFromDirection`).
+- **Başlangıç içeriği:** Pencereli duvar, geniş geçit, kale duvarı, köprü (2×4, üstü 1. katta), iskele;
+  kale kulesi, ahır; kaya kümesi, ot, fener, tabela. Mevcut projelerde "Başlangıç İçeriğini Üret" ile eklenir.
+- `FloorWalls.OuterEdges(floor, cells)`: Bir hücre alanının dış kenarları (modüller için).
+
 ## [0.9.0] - 2026-10-10
 
 ### Eklendi

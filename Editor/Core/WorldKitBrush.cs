@@ -1008,6 +1008,11 @@ namespace WorldKit.Editor
                 FloorWalls.Build(floor, cells, FloorWallPrefab);
                 return;
             }
+            if (!erase && s_FloorOperation == FloorOperation.EdgeDecor)
+            {
+                FloorEdgeDecor.Build(floor, cells);
+                return;
+            }
 
             var range = Settings.levelRange;
             Undo.RecordObject(floor, erase ? "World Kit: Zemin Sil" : "World Kit: Zemin Boya");
@@ -1040,7 +1045,9 @@ namespace WorldKit.Editor
             /// <summary>Hücreleri yanlarındaki bir kat yüksek komşuya doğru rampa yap (yön kendiliğinden).</summary>
             Ramp,
             /// <summary>Hücre alanının kenarlarına duvar ör (zemini değiştirmez).</summary>
-            Wall
+            Wall,
+            /// <summary>Hücre alanının dış kenarlarına kaya, çalı gibi süs parçaları diz (zemini değiştirmez).</summary>
+            EdgeDecor
         }
 
         static int s_FloorType;
@@ -1080,6 +1087,7 @@ namespace WorldKit.Editor
                 case FloorOperation.Lower: return "Alçalt";
                 case FloorOperation.Ramp: return "Rampa";
                 case FloorOperation.Wall: return "Duvarla Çevir";
+                case FloorOperation.EdgeDecor: return "Kenar Süsle";
                 default: return "Boya";
             }
         }

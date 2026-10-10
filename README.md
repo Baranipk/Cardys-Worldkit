@@ -50,7 +50,7 @@ kendiliğinden devre dışı kalır, geri kalan her şey çalışır.
 | | Duvara kapı açma (aynı hatta üst üste konan çizgi parçası eskisinin yerini alır) | ✅ |
 | | Otomatik köşe direği | ✅ |
 | | Zemin türleri (çimen, toprak, taş, kum, su, yol...) | ✅ |
-| | Zemin işlemleri: Boya, Sadece Renk, Yükselt, Alçalt, Rampa, Duvarla Çevir | ✅ |
+| | Zemin işlemleri: Boya, Sadece Renk, Yükselt, Alçalt, Rampa, Duvarla Çevir, Kenar Süsle | ✅ |
 | | Şablonlar: seçimi zeminiyle birlikte kaydet, palette yerleştir | ✅ |
 | | Serpme fırçası: rastgele konum, dönüş, boyut ve aralık | ✅ |
 | | Varyasyonlar: Ctrl+tık ile birden fazla parça, her yerleşimde rastgele biri | ✅ |
@@ -62,7 +62,7 @@ kendiliğinden devre dışı kalır, geri kalan her şey çalışır.
 | **Çıktı** | Bake: materyal başına tek mesh asset + collider | ✅ |
 | | OBJ + MTL dışa aktarma | ✅ |
 | **Test** *(modül)* | Test oyuncusu, Cinemachine top-down kamera, engelden kaçma | ✅ |
-| **İçerik** *(isteğe bağlı)* | Duvar, bina, dekor, chibi NPC ve ölçü referansları | ✅ |
+| **İçerik** *(isteğe bağlı)* | Duvar, pencereli duvar, geçit, kale duvarı, köprü, iskele; ev, han, dükkan, ahır, kule, kale kulesi; ağaç, kaya, ot, fener, tabela; chibi NPC ve ölçü referansları | ✅ |
 
 ---
 
@@ -149,6 +149,7 @@ uygulanacağını ise üstteki mod belirler (Tek = fırça, Hat = şerit, Alan =
 | **Alçalt** | Var olan zemini bir kat alçaltır (çukur, nehir yatağı) |
 | **Rampa** | Hücreyi yanındaki bir kat yüksek zemine doğru eğimli rampa yapar; yön kendiliğinden bulunur. Zeminin parçasıdır (tek mesh, yürünebilir). **Boya** ile düzleşir |
 | **Duvarla Çevir** | Seçilen alanın dış kenarlarına duvar örer; zemini değiştirmez. Duvar sekmede seçilir (boşsa `Duvar_1m`) |
+| **Kenar Süsle** | Seçilen alanın dış kenarlarına (uçurum, platform kenarı, kıyı) kaya, çalı gibi parçaları rastgele dizer. Parçalar, yoğunluk ve "uçurum dibine koy" sekmede ayarlanır. Aynı alanı tekrar süslemek üst üste koymaz |
 
 Duvarla Çevir'de bir kenar, komşu hücre seçimin dışındaysa veya farklı yükseklikteyse dış kenar sayılır;
 duvar her hücrenin kendi yüksekliğine oturur. Uzun duvarlar (ör. 2 m) kenara sığdığı yerlerde kullanılır,

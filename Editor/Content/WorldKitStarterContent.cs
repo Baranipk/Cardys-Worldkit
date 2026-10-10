@@ -118,6 +118,42 @@ namespace WorldKit.Editor
             Save(Structure, "Merdiven_2x2", new Vector2Int(2, 2), Stair(new Vector3(-1f, 0f, -1f), new Vector3(2f, 1f, 2f), 5, platform));
             Save(Structure, "Rampa_2x2", new Vector2Int(2, 2), Wedge(new Vector3(-1f, 0f, -1f), new Vector3(1f, 1f, 1f), platform));
 
+            // Pencere ve geçitler
+            float sill = Mathf.Min(1f, h * 0.35f), lintel = Mathf.Min(2f, h - 0.4f);
+            Save(Structure, "Pencereli_Duvar_2m", new Vector2Int(2, 0),
+                Box(new Vector3(-1f, 0f, -t), new Vector3(1f, sill, t), wall),
+                Box(new Vector3(-1f, lintel, -t), new Vector3(1f, h, t), wall),
+                Box(new Vector3(-1f, sill, -t), new Vector3(-0.5f, lintel, t), wall),
+                Box(new Vector3(0.5f, sill, -t), new Vector3(1f, lintel, t), wall));
+            float gate = Mathf.Min(2.6f, h - 0.3f);
+            Save(Structure, "Genis_Gecit_4m", new Vector2Int(4, 0),
+                Box(new Vector3(-2f, 0f, -t), new Vector3(-1.2f, h, t), wall),
+                Box(new Vector3(1.2f, 0f, -t), new Vector3(2f, h, t), wall),
+                Box(new Vector3(-1.2f, gate, -t), new Vector3(1.2f, h, t), wall));
+
+            // Kale duvarı: daha yüksek ve kalın, üstünde mazgallar
+            float castle = h + 1f;
+            Save(Structure, "Kale_Duvari_2m", new Vector2Int(2, 0),
+                Box(new Vector3(-1f, 0f, -0.3f), new Vector3(1f, castle, 0.3f), wall),
+                Box(new Vector3(-1f, castle, -0.3f), new Vector3(-0.6f, castle + 0.6f, 0.3f), wall),
+                Box(new Vector3(-0.2f, castle, -0.3f), new Vector3(0.2f, castle + 0.6f, 0.3f), wall),
+                Box(new Vector3(0.6f, castle, -0.3f), new Vector3(1f, castle + 0.6f, 0.3f), wall));
+
+            // Köprü: üst yüzü 1. katta, iki platformu birbirine bağlar (Z boyunca 4 hücre)
+            float deck = WorldKitGrid.LevelHeight;
+            Save(Structure, "Kopru_2x4", new Vector2Int(2, 4),
+                Box(new Vector3(-1f, deck - 0.2f, -2f), new Vector3(1f, deck, 2f), wood),
+                Box(new Vector3(-1f, deck, -2f), new Vector3(-0.9f, deck + 0.9f, 2f), wood),
+                Box(new Vector3(0.9f, deck, -2f), new Vector3(1f, deck + 0.9f, 2f), wood));
+
+            // İskele: yer seviyesinde güverte, suya (alt kata) inen direkler
+            Save(Structure, "Iskele_2x3", new Vector2Int(2, 3),
+                Box(new Vector3(-1f, -0.15f, -1.5f), new Vector3(1f, 0.05f, 1.5f), wood),
+                Cylinder(new Vector3(-0.85f, -1.2f, -1.35f), 0.1f, 1.2f, 6, wood),
+                Cylinder(new Vector3(0.85f, -1.2f, -1.35f), 0.1f, 1.2f, 6, wood),
+                Cylinder(new Vector3(-0.85f, -1.2f, 1.35f), 0.1f, 1.2f, 6, wood),
+                Cylinder(new Vector3(0.85f, -1.2f, 1.35f), 0.1f, 1.2f, 6, wood));
+
             // ---------- Dekor ----------
             Save(Decor, "Kaya_Kucuk", new Vector2Int(1, 1), Rock(Vector3.zero, new Vector3(0.9f, 0.6f, 0.8f), 1, rock));
             Save(Decor, "Kaya_Buyuk", new Vector2Int(2, 2), Rock(Vector3.zero, new Vector3(1.9f, 1.3f, 1.7f), 2, rock));
@@ -136,6 +172,22 @@ namespace WorldKit.Editor
                 Box(new Vector3(-1f, 0.85f, -0.04f), new Vector3(1f, 0.95f, 0.04f), wood));
             Save(Decor, "Varil", new Vector2Int(1, 1), Cylinder(Vector3.zero, 0.35f, 1f, 10, wood));
             Save(Decor, "Kasa", new Vector2Int(1, 1), Box(new Vector3(-0.4f, 0f, -0.4f), new Vector3(0.4f, 0.8f, 0.4f), wood));
+            Save(Decor, "Kaya_Kumesi", new Vector2Int(2, 2),
+                Rock(new Vector3(-0.4f, 0f, -0.3f), new Vector3(1.2f, 0.9f, 1.1f), 5, rock),
+                Rock(new Vector3(0.5f, 0f, 0.2f), new Vector3(0.8f, 0.6f, 0.7f), 6, rock),
+                Rock(new Vector3(-0.2f, 0f, 0.6f), new Vector3(0.5f, 0.4f, 0.5f), 7, rock));
+            Save(Decor, "Ot", new Vector2Int(1, 1),
+                Cone(new Vector3(0f, 0f, 0f), 0.12f, 0.6f, 4, foliage),
+                Cone(new Vector3(0.18f, 0f, 0.1f), 0.1f, 0.45f, 4, foliage),
+                Cone(new Vector3(-0.15f, 0f, 0.12f), 0.1f, 0.5f, 4, foliage),
+                Cone(new Vector3(0.05f, 0f, -0.18f), 0.1f, 0.4f, 4, foliage));
+            Save(Decor, "Fener", new Vector2Int(1, 1),
+                Cylinder(Vector3.zero, 0.06f, 2.2f, 6, wood),
+                Box(new Vector3(-0.15f, 2.1f, -0.15f), new Vector3(0.15f, 2.45f, 0.15f), CreateMaterial("Isik", new Color(1f, 0.85f, 0.45f), grid)),
+                Cone(new Vector3(0f, 2.45f, 0f), 0.22f, 0.2f, 4, wood));
+            Save(Decor, "Tabela", new Vector2Int(1, 1),
+                Cylinder(Vector3.zero, 0.05f, 1.4f, 6, wood),
+                Box(new Vector3(-0.4f, 1f, -0.04f), new Vector3(0.4f, 1.35f, 0.04f), wood));
 
             // ---------- Bina (kapı her zaman +Z, yani mavi okun gösterdiği taraf) ----------
             var roof = CreateMaterial("Cati", new Color(0.72f, 0.33f, 0.26f), grid);
@@ -164,6 +216,22 @@ namespace WorldKit.Editor
                 Cylinder(Vector3.zero, 1.4f, 6f, 8, wall),
                 Cone(new Vector3(0f, 6f, 0f), 1.75f, 2.2f, 8, roof),
                 Door(1.3f, 0.9f, 1.6f, door));
+            Save(Building, "Kale_Kulesi_3x3", new Vector2Int(3, 3),
+                Box(new Vector3(-1.5f, 0f, -1.5f), new Vector3(1.5f, 7f, 1.5f), wall),
+                // Mazgallar: dört köşe ve kenar ortaları
+                Box(new Vector3(-1.5f, 7f, -1.5f), new Vector3(-0.9f, 7.6f, -0.9f), wall),
+                Box(new Vector3(0.9f, 7f, -1.5f), new Vector3(1.5f, 7.6f, -0.9f), wall),
+                Box(new Vector3(-1.5f, 7f, 0.9f), new Vector3(-0.9f, 7.6f, 1.5f), wall),
+                Box(new Vector3(0.9f, 7f, 0.9f), new Vector3(1.5f, 7.6f, 1.5f), wall),
+                Box(new Vector3(-0.3f, 7f, -1.5f), new Vector3(0.3f, 7.6f, -1.1f), wall),
+                Box(new Vector3(-0.3f, 7f, 1.1f), new Vector3(0.3f, 7.6f, 1.5f), wall),
+                Box(new Vector3(-1.5f, 7f, -0.3f), new Vector3(-1.1f, 7.6f, 0.3f), wall),
+                Box(new Vector3(1.1f, 7f, -0.3f), new Vector3(1.5f, 7.6f, 0.3f), wall),
+                Door(1.5f, 1.1f, 2f, door));
+            Save(Building, "Ahir_4x3", new Vector2Int(4, 3),
+                Box(new Vector3(-2f, 0f, -1.5f), new Vector3(2f, 2.4f, 1.5f), wood),
+                Prism(new Vector3(-2.2f, 2.4f, -1.7f), new Vector3(2.2f, 3.8f, 1.7f), roof),
+                Door(1.5f, 1.8f, 2f, door));
 
             // ---------- NPC (chibi, boy: ayarlardaki karakter boyu) ----------
             var villager = CreateMaterial("NPC_Koylu", new Color(0.95f, 0.78f, 0.35f), grid);

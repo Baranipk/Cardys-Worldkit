@@ -167,6 +167,7 @@ namespace WorldKit.Editor
             (WorldKitBrush.FloorOperation.Lower, "Var olan zemini bir kat alçalt (çukur, nehir yatağı)."),
             (WorldKitBrush.FloorOperation.Ramp, "Hücreyi yanındaki bir kat yüksek zemine doğru rampa yap (yön kendiliğinden). Boya ile düzleşir."),
             (WorldKitBrush.FloorOperation.Wall, "Seçilen alanın dış kenarlarına duvar ör. Zemini değiştirmez."),
+            (WorldKitBrush.FloorOperation.EdgeDecor, "Seçilen alanın dış kenarlarına (uçurum, platform kenarı, kıyı) kaya, çalı gibi parçalar diz. Zemini değiştirmez."),
         };
 
         static GUIStyle s_OperationButton;
@@ -180,6 +181,7 @@ namespace WorldKit.Editor
                 case WorldKitBrush.FloorOperation.Lower: return WorldKitIcons.Lower;
                 case WorldKitBrush.FloorOperation.Ramp: return WorldKitIcons.Ramp;
                 case WorldKitBrush.FloorOperation.Wall: return WorldKitIcons.Wall;
+                case WorldKitBrush.FloorOperation.EdgeDecor: return WorldKitIcons.EdgeDecor;
                 default: return WorldKitIcons.Paint;
             }
         }
@@ -231,6 +233,59 @@ namespace WorldKit.Editor
                 if (wall != WorldKitBrush.FloorWallPrefab)
                     WorldKitBrush.FloorWallPrefab = wall;
             }
+
+            if (WorldKitBrush.FloorOp == WorldKitBrush.FloorOperation.EdgeDecor)
+                DrawEdgeDecorSettings();
+        }
+
+        /// <summary>Kenar Süsle ayarları: parça listesi, yoğunluk, uçurum dibi.</summary>
+        static void DrawEdgeDecorSettings()
+        {
+            var prefabs = FloorEdgeDecor.Prefabs;
+            bool changed = false;
+
+            EditorGUILayout.LabelField(new GUIContent("Süs parçaları", "Her kenarda bunlardan biri rastgele seçilir."), EditorStyles.miniBoldLabel);
+            for (int i = 0; i < prefabs.Count; i++)
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    var prefab = (GameObject)EditorGUILayout.ObjectField(prefabs[i], typeof(GameObject), false);
+                    if (prefab != prefabs[i])
+                    {
+                        prefabs[i] = prefab;
+                        changed = true;
+                    }
+                    if (GUILayout.Button("−", EditorStyles.miniButton, GUILayout.Width(20f)))
+                    {
+                        prefabs.RemoveAt(i);
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+
+            var added = (GameObject)EditorGUILayout.ObjectField(new GUIContent("+ Ekle"), null, typeof(GameObject), false);
+            if (added != null)
+            {
+                prefabs.Add(added);
+                changed = true;
+            }
+
+            if (changed)
+            {
+                prefabs.RemoveAll(p => p == null);
+                FloorEdgeDecor.SavePrefabs();
+            }
+
+            float density = EditorGUILayout.Slider(new GUIContent("Yoğunluk", "Kenarların ne kadarına parça konsun."), FloorEdgeDecor.Density, 0.05f, 1f);
+            if (!Mathf.Approximately(density, FloorEdgeDecor.Density))
+                FloorEdgeDecor.Density = density;
+
+            bool bottom = EditorGUILayout.ToggleLeft(
+                new GUIContent("Uçurum dibine koy", "Dışarısı daha alçaksa parça kenarın üstüne değil, uçurumun dibine konur."),
+                FloorEdgeDecor.PlaceAtBottom);
+            if (bottom != FloorEdgeDecor.PlaceAtBottom)
+                FloorEdgeDecor.PlaceAtBottom = bottom;
         }
     }
 

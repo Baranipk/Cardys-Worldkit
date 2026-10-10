@@ -259,7 +259,18 @@ namespace WorldKit
             new Vector2Int(1, 0), new Vector2Int(-1, 0), new Vector2Int(0, 1), new Vector2Int(0, -1)
         };
 
-        static Vector2Int Direction(Slope slope)
+        /// <summary>En yakın eksen yönüne karşılık gelen eğim (sıfır vektör = None).</summary>
+        public static Slope SlopeFromDirection(Vector3 direction)
+        {
+            if (direction.sqrMagnitude < 0.01f)
+                return Slope.None;
+            if (Mathf.Abs(direction.x) >= Mathf.Abs(direction.z))
+                return direction.x > 0f ? Slope.PositiveX : Slope.NegativeX;
+            return direction.z > 0f ? Slope.PositiveZ : Slope.NegativeZ;
+        }
+
+        /// <summary>Eğimin yükseldiği yön (hücre cinsinden).</summary>
+        public static Vector2Int Direction(Slope slope)
         {
             switch (slope)
             {

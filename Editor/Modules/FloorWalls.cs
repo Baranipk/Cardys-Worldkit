@@ -13,7 +13,7 @@ namespace WorldKit.Editor
     /// sığdığı kadar uzun parça, kalan yerlere (varsa) 1 hücrelik varsayılan duvar konur.
     /// Köşe direkleri ve kapı açma modülleri bu duvarları da görür.
     /// </summary>
-    static class FloorWalls
+    public static class FloorWalls
     {
         static readonly Vector2Int[] k_Directions = { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down };
 
@@ -36,22 +36,7 @@ namespace WorldKit.Editor
             bool localAxisIsX = info.footprint.x >= info.footprint.y;
             var shortWall = length == 1 ? null : AssetDatabase.LoadAssetAtPath<GameObject>(WorldKitStarterContent.DefaultWallPath);
 
-            // Dış kenarları topla: (hücre, yön) → yükseklik
-            var selected = new HashSet<Vector2Int>(cells);
-            var edges = new HashSet<(Vector2Int cell, Vector2Int dir)>();
-            foreach (var cell in selected)
-            {
-                if (!floor.TryGetHeight(cell, out var height))
-                    continue;
-
-                foreach (var dir in k_Directions)
-                {
-                    var neighbour = cell + dir;
-                    bool inside = selected.Contains(neighbour) && floor.TryGetHeight(neighbour, out var nh) && nh == height;
-                    if (!inside)
-                        edges.Add((cell, dir));
-                }
-            }
+            var edges = OuterEdges(floor, cells);
 
             float cellSize = WorldKitGrid.CellSize;
             var done = new HashSet<(Vector2Int, Vector2Int)>();
@@ -81,6 +66,30 @@ namespace WorldKit.Editor
 
                 PlaceRun(run, edge.dir, step, height, wall, length, localAxisIsX, shortWall, cellSize);
             }
+        }
+
+        /// <summary>
+        /// Seçili hücre alanının dış kenarları: (hücre, kenarın baktığı yön). Yalnızca zemini olan hücreler sayılır;
+        /// komşu seçimin dışındaysa veya farklı yükseklikteyse kenar dıştır. Diğer modüller de kullanabilir.
+        /// </summary>
+        public static HashSet<(Vector2Int cell, Vector2Int dir)> OuterEdges(WorldKitFloor floor, ICollection<Vector2Int> cells)
+        {
+            var selected = cells as HashSet<Vector2Int> ?? new HashSet<Vector2Int>(cells);
+            var edges = new HashSet<(Vector2Int cell, Vector2Int dir)>();
+            foreach (var cell in selected)
+            {
+                if (!floor.TryGetHeight(cell, out var height))
+                    continue;
+
+                foreach (var dir in k_Directions)
+                {
+                    var neighbour = cell + dir;
+                    bool inside = selected.Contains(neighbour) && floor.TryGetHeight(neighbour, out var nh) && nh == height;
+                    if (!inside)
+                        edges.Add((cell, dir));
+                }
+            }
+            return edges;
         }
 
         static bool SameHeight(WorldKitFloor floor, Vector2Int cell, int height) =>
