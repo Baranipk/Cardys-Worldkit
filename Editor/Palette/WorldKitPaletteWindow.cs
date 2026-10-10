@@ -62,6 +62,7 @@ namespace WorldKit.Editor
         static GUIStyle s_SidebarItem;
         static GUIStyle s_CardTitle;
         static GUIStyle s_GroupLabel;
+        static GUIStyle s_ModeButton;
 
         bool Narrow => position.width < 440f;
 
@@ -422,62 +423,67 @@ namespace WorldKit.Editor
             }
         }
 
-        /// <summary>Mod çubuğu: Yerleştir / Sil / Ölç-İşaretle grupları. Sığmayan düğmeler alt satıra geçer.</summary>
+        /// <summary>
+        /// Mod çubuğu: yerleştirme, silme ve ölç/işaretle modları; gruplar arasında ince ayırıcı (yazı yok, adlar ipucunda).
+        /// Sığmayan düğmeler alt satıra geçer.
+        /// </summary>
         void DrawToolModes()
         {
             var context = WorldKitBrush.Context;
             var tools = WorldKitTools.All.ToList();
             var groups = new[]
             {
-                ("YERLEŞTİR", tools.Where(t => t.ModifiesScene && !t.Erases).ToList()),
-                ("SİL", tools.Where(t => t.Erases).ToList()),
-                ("ÖLÇ · İŞARETLE", tools.Where(t => !t.ModifiesScene).ToList()),
+                tools.Where(t => t.ModifiesScene && !t.Erases).ToList(),
+                tools.Where(t => t.Erases).ToList(),
+                tools.Where(t => !t.ModifiesScene).ToList(),
             };
 
-            // Satırlara böl: grup etiketi kendi ilk düğmesiyle aynı satırda kalır.
-            const float button = 28f, groupGap = 8f;
+            // Satırlara böl; null = grup ayırıcısı (satır başında konmaz).
+            const float button = 36f, height = 30f, separator = 11f;
+            s_ModeButton ??= new GUIStyle(EditorStyles.miniButton)
+            {
+                fixedHeight = 0f, fixedWidth = 0f,
+                padding = new RectOffset(2, 2, 2, 2), margin = new RectOffset(1, 1, 2, 2)
+            };
             float available = EditorGUIUtility.currentViewWidth - (Narrow ? 34f : 124f) - 16f;
-            var rows = new List<List<(string label, WorldKitTool tool)>> { new List<(string, WorldKitTool)>() };
+            var rows = new List<List<WorldKitTool>> { new List<WorldKitTool>() };
             float x = 0f;
-            foreach (var (label, list) in groups)
+            foreach (var list in groups)
             {
                 if (list.Count == 0)
                     continue;
-                float labelWidth = Narrow ? 0f : s_GroupLabel.CalcSize(new GUIContent(label)).x + 4f;
                 for (int i = 0; i < list.Count; i++)
                 {
-                    float width = button + (i == 0 ? labelWidth + (x > 0f ? groupGap : 0f) : 0f);
+                    bool groupStart = i == 0 && x > 0f;
+                    float width = button + 2f + (groupStart ? separator : 0f); // +2: düğme kenar boşluğu
                     if (x > 0f && x + width > available)
                     {
-                        rows.Add(new List<(string, WorldKitTool)>());
+                        rows.Add(new List<WorldKitTool>());
                         x = 0f;
-                        width = button + (i == 0 ? labelWidth : 0f);
+                        groupStart = false;
+                        width = button + 2f;
                     }
-                    var row = rows[rows.Count - 1];
-                    if (i == 0 && labelWidth > 0f)
-                        row.Add((label, null));
-                    else if (i == 0 && row.Count > 0)
-                        row.Add((null, null)); // dar modda grup arası boşluk
-                    row.Add((null, list[i]));
+                    if (groupStart)
+                        rows[rows.Count - 1].Add(null);
+                    rows[rows.Count - 1].Add(list[i]);
                     x += width;
                 }
             }
 
-            using (new EditorGUIUtility.IconSizeScope(new Vector2(16f, 16f)))
+            using (new EditorGUIUtility.IconSizeScope(new Vector2(20f, 20f)))
             {
                 foreach (var row in rows)
                 {
-                    using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar, GUILayout.Height(24f)))
+                    using (new EditorGUILayout.HorizontalScope(GUILayout.Height(height + 4f)))
                     {
                         for (int i = 0; i < row.Count; i++)
                         {
-                            var (label, tool) = row[i];
+                            var tool = row[i];
                             if (tool == null)
                             {
-                                if (i > 0)
-                                    GUILayout.Space(groupGap);
-                                if (label != null)
-                                    GUILayout.Label(label, s_GroupLabel, GUILayout.ExpandWidth(false));
+                                // İnce dikey ayırıcı
+                                var rect = GUILayoutUtility.GetRect(separator, height, GUILayout.Width(separator));
+                                EditorGUI.DrawRect(new Rect(rect.center.x, rect.y + 4f, 1f, rect.height - 8f), new Color(0.5f, 0.5f, 0.5f, 0.5f));
                                 continue;
                             }
 
@@ -488,12 +494,18 @@ namespace WorldKit.Editor
                                 ? new GUIContent(tool.Icon, tip)
                                 : new GUIContent(tool.DisplayName(context).Substring(0, 1), tip);
 
-                            using (new EditorGUI.DisabledScope(!tool.Supports(context)))
+                            // Seçili parçada kullanılamayan modlar (ör. prefab'da zemin Fırçası) belirgin şekilde soluk
+                            bool supported = !WorldKitBrush.IsActive || tool.Supports(context);
+                            var color = GUI.color;
+                            if (!supported)
+                                GUI.color = new Color(color.r, color.g, color.b, 0.35f);
+                            using (new EditorGUI.DisabledScope(!supported))
                             {
                                 bool on = WorldKitBrush.Tool == tool;
-                                if (GUILayout.Toggle(on, content, EditorStyles.toolbarButton, GUILayout.Width(button), GUILayout.Height(22f)) && !on)
+                                if (GUILayout.Toggle(on, content, s_ModeButton, GUILayout.Width(button), GUILayout.Height(height)) && !on)
                                     WorldKitBrush.Tool = tool;
                             }
+                            GUI.color = color;
                         }
                         GUILayout.FlexibleSpace();
                     }

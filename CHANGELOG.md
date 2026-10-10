@@ -2,6 +2,14 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.18.2] - 2026-10-10
+
+### Değişti
+- Mod çubuğu: Grup yazıları (YERLEŞTİR, SİL, ÖLÇ · İŞARETLE) kaldırıldı; gruplar ince ayırıcıyla ayrılır, adlar ipucunda.
+- Mod düğmeleri büyüdü (36×30, ikon 20 px); tıklaması kolay.
+- Seçili parçada kullanılamayan modlar belirgin şekilde soluk.
+- Fırça (zemin) ikonu boya fırçası, Bölge ikonu konum iğnesi oldu (Halka ve Çerçeve ile karışıyordu).
+
 ## [0.18.1] - 2026-10-10
 
 ### Düzeltildi

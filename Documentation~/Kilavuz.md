@@ -49,7 +49,7 @@ hazır tarifler ve bölümü teslim etmeden önce yapılacak kontroller.
 ```
 ┌ [İnşa] [Analiz] [Çıktı]                     ⟳ ⚙ ⓘ ┐  ← bölümler · yenile · ayarlar · yardım
 │ Kategoriler │ Fırça kartı: seçili parça, mod, kat, açı │
-│  Zemin      │ Mod çubuğu: YERLEŞTİR · SİL · ÖLÇ/İŞARETLE│
+│  Zemin      │ Mod çubuğu: yerleştir │ sil │ ölç-işaretle │
 │  Yapı       │ Serbest yerleştirme ve mod ayarları        │
 │  Bina       │ 🔍 arama (bütün kategorilerde)   boyut    │
 │  Dekor ...  │ Parça ızgarası                             │

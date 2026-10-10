@@ -146,21 +146,25 @@ namespace WorldKit.Editor
             c.Triangle(6, 54, 30, 54, 18, 30); c.Triangle(32, 54, 58, 54, 45, 30);
             c.Triangle(20, 28, 44, 28, 32, 6);
         }, new Color(0.3f, 0.75f, 1f));
-        public static Texture2D RoundBrush => Get("roundbrush", c => { c.Ring(32, 32, 22, 5); c.Circle(32, 32, 9); });
+        // Boya fırçası: sap + uç (Halka modunun dairesiyle karışmasın)
+        public static Texture2D RoundBrush => Get("roundbrush2", c =>
+        {
+            c.Line(56, 6, 34, 28, 6);
+            c.Line(34, 28, 27, 35, 11);
+            c.Circle(18, 45, 12);
+            c.Triangle(6, 58, 8, 44, 20, 56);
+        });
         public static Texture2D StackUp => Get("stackup", c =>
         {
             c.Rect(12, 40, 52, 58); c.RectStroke(12, 18, 52, 36, 4);
             c.Triangle(32, 2, 22, 14, 42, 14);
         });
-        public static Texture2D Zone => Get("zone", c =>
+        // Konum iğnesi (Çerçeve modunun karesiyle karışmasın)
+        public static Texture2D Zone => Get("zone2", c =>
         {
-            for (int i = 0; i < 4; i++)
-            {
-                float a = 8 + i * 13;
-                c.Line(a, 8, a + 7, 8, 5); c.Line(a, 56, a + 7, 56, 5);
-                c.Line(8, a, 8, a + 7, 5); c.Line(56, a, 56, a + 7, 5);
-            }
-            c.Circle(32, 32, 8);
+            c.Circle(32, 24, 18);
+            c.Triangle(17, 32, 47, 32, 32, 60);
+            c.ClearCircle(32, 24, 7);
         });
         public static Texture2D Replace => Get("replace", c =>
         {

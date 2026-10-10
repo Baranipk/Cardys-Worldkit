@@ -87,7 +87,7 @@ Bütün araçlar, tarifler ve kısayollar: **[Kullanım kılavuzu](Documentation
 ├───────────┬──────────────────────────────────┤
 │ Zemin     │ [önizleme] Duvar 2m              │  seçili fırça: mod · kat · açı
 │ ───────── │            Alan · Kat 0 · 0°     │  [− kat +] [↻] [Bırak]
-│ Yapı      │ YERLEŞTİR ▪ ━ ▦ ▢ ∴ ◎ SİL ✕ ÖLÇ ▭ ⬚│  modlar (1-0)
+│ Yapı      │ ▪ ━ ▦ ▢ ∴ 🖌 ⋰ ◯ │ ✕ │ ▭ 📍      │  modlar (1-0)
 │ Bina      │ (seçili modun ayarları)          │
 │ Dekor     │ 🔍 ara                    boyut   │
 │ Şablonlar │ [parça] [parça] [parça] ...       │
@@ -101,7 +101,7 @@ Bütün araçlar, tarifler ve kısayollar: **[Kullanım kılavuzu](Documentation
 - **Kategoriler (sol):** *Zemin* ve parçalar klasörünün her alt klasörü. Kendi klasörüne ikon vermek için içine
   `_icon.png` koy.
 - **Fırça kartı:** Seçili parçanın önizlemesi, modu, katı ve açısı; kat, döndür ve bırak düğmeleri.
-- **Mod çubuğu:** Yerleştir / Sil / Ölç grupları. Üzerine gelince adı, kısayolu ve açıklaması görünür.
+- **Mod çubuğu:** Yerleştirme, silme ve ölç/işaretle modları; gruplar ince çizgiyle ayrılır. Üzerine gelince adı, kısayolu ve açıklaması görünür. Seçili parçada kullanılamayan modlar soluktur.
 - **Parçaya tıkla:** Fırça seçilir. **Scene'e sürükle:** Tek bir parça bırakılır. **Sağ tık:** Project'te göster veya düzenle.
 - **Alt çubuk:** Görünüm, Test ve Seçim gruplarında düğmeler. Dar pencerede yalnızca ikonlar görünür.
 - Pencere daraldığında (440 px altı) kategori listesi ikon moduna geçer.
