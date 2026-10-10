@@ -53,6 +53,7 @@ kendiliğinden devre dışı kalır, geri kalan her şey çalışır.
 | | Zemin işlemleri: Boya, Sadece Renk, Yükselt, Alçalt, Duvarla Çevir | ✅ |
 | | Şablonlar: seçimi zeminiyle birlikte kaydet, palette yerleştir | ✅ |
 | | Serpme fırçası: rastgele konum, dönüş, boyut ve aralık | ✅ |
+| | Varyasyonlar: Ctrl+tık ile birden fazla parça, her yerleşimde rastgele biri | ✅ |
 | **Düzenleme** | Seç, taşı, döndür, çoğalt, sil (grid'e bağlı, klavyeyle) | ✅ |
 | | Seviye görünürlüğü (üst katları gizle) | ✅ |
 | **Ölçüm** | Cetvel (mesafe, hücre, yürüme/koşma süresi) | ✅ |
@@ -159,7 +160,7 @@ kalan yerlere 1 m'lik duvar konur. Köşe direkleri ve kapı açma bu duvarlarla
 4. Yerleşince şablon açılır: parçalar normal parçalar gibi kendi gruplarına dağılır, zemini boyanır.
    Sonradan tek tek düzenlenebilirler.
 
-### Serpme fırçası
+X
 Ağaç, kaya, çalı gibi bir parça seç ve **Serp** moduna geç (5). Sürükledikçe imlecin çevresine
 rastgele serpiştirir. Palette ayarlanabilenler: yarıçap, adet, aralık (mevcut parçalar dahil),
 rastgele dönüş ve boyut aralığı.

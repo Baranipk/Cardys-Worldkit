@@ -377,13 +377,13 @@ namespace WorldKit.Editor
                     if (!active)
                     {
                         GUILayout.Label("Fırça seçili değil", s_CardTitle);
-                        GUILayout.Label("Bir parçaya tıkla veya Scene'e sürükle", EditorStyles.miniLabel);
+                        GUILayout.Label("Parçaya tıkla · Ctrl+tık: varyasyon ekle", EditorStyles.miniLabel);
                     }
                     else
                     {
                         var name = WorldKitBrush.IsFloorBrush
                             ? $"Zemin · {WorldKitBrush.FloorOperationName(WorldKitBrush.FloorOp)}"
-                            : Nice(WorldKitBrush.Current.name);
+                            : Nice(WorldKitBrush.Current.name) + (WorldKitBrush.Variants.Count > 1 ? $"  +{WorldKitBrush.Variants.Count - 1} varyasyon" : "");
                         GUILayout.Label(name, s_CardTitle);
                         var tool = WorldKitBrush.Tool;
                         var details = $"{tool?.DisplayName(WorldKitBrush.Context)} · Kat {WorldKitBrush.Level}";
@@ -559,7 +559,7 @@ namespace WorldKit.Editor
                 var imageRect = new Rect(rect.x, rect.y, tileWidth, tileWidth);
                 var labelRect = new Rect(rect.x, imageRect.yMax + 2f, tileWidth, labelHeight);
 
-                bool selected = WorldKitBrush.Current == prefab;
+                bool selected = WorldKitBrush.Variants.Contains(prefab);
                 if (e.type == EventType.Repaint)
                 {
                     EditorGUI.DrawRect(new Rect(imageRect.x - 2f, imageRect.y - 2f, imageRect.width + 4f, imageRect.height + 4f),
@@ -604,7 +604,9 @@ namespace WorldKit.Editor
 
                 case EventType.MouseUp when m_DragCandidate == prefab:
                     m_DragCandidate = null;
-                    if (selected)
+                    if (EditorGUI.actionKey)
+                        WorldKitBrush.ToggleVariant(prefab);        // Ctrl+tık: varyasyon ekle/çıkar
+                    else if (selected && WorldKitBrush.Variants.Count == 1)
                         WorldKitBrush.End();
                     else
                         WorldKitBrush.Begin(prefab);

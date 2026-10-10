@@ -2,6 +2,14 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.8.0] - 2026-10-10
+
+### Eklendi
+- **Varyasyonlar:** Palette Ctrl+tık ile birden fazla parça seçilir; fırça her yerleşimde aralarından birini koyar.
+  Seçim konumdan türetilir (önizleme = sonuç). Bütün modlarda ve Shift+tık zincirinde çalışır.
+- API: `WorldKitBrush.Variants`, `Begin(IReadOnlyList<GameObject>)`, `ToggleVariant(prefab)`;
+  `PlacePiece(..., equivalents)` ile aynı yerde eşdeğer parça varsa koymama.
+
 ## [0.7.0] - 2026-10-10
 
 Arayüz yeniden düzenlendi.

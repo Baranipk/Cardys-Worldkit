@@ -31,7 +31,6 @@ namespace WorldKit.Editor
         static Mode s_Mode;
         static WorldKitTool s_Tool;
         static GameObject s_Prefab;
-        static GameObject s_Ghost;
         static readonly List<GhostPart> s_GhostParts = new List<GhostPart>();
         static List<WorldKitStamp.FloorCell> s_StampCells;
         static bool s_Temporary;
@@ -113,14 +112,18 @@ namespace WorldKit.Editor
 
         public static void Begin(GameObject prefab) => Begin(prefab, false);
 
-        static void Begin(GameObject prefab, bool temporary)
+        static void Begin(GameObject prefab, bool temporary) => Begin(prefab != null ? new[] { prefab } : null, temporary);
+
+        static void Begin(IReadOnlyList<GameObject> prefabs, bool temporary)
         {
             End();
-            if (prefab == null)
+            var list = prefabs?.Where(p => p != null).Distinct().ToList();
+            if (list == null || list.Count == 0)
                 return;
 
             s_Mode = Mode.Prefab;
-            s_Prefab = prefab;
+            s_Prefab = list[0];
+            s_Variants.AddRange(list);
             s_Temporary = temporary;
             CreateGhost();
             Activate(!temporary);
@@ -156,15 +159,20 @@ namespace WorldKit.Editor
 
         public static void End()
         {
-            if (s_Mode == Mode.None && s_Ghost == null)
+            if (s_Mode == Mode.None && s_Ghosts.Count == 0)
                 return;
 
-            if (s_Ghost != null)
-                UnityEngine.Object.DestroyImmediate(s_Ghost);
+            foreach (var ghost in s_Ghosts)
+            {
+                if (ghost != null)
+                    UnityEngine.Object.DestroyImmediate(ghost);
+            }
             if (s_Context.Dragging)
                 GUIUtility.hotControl = 0;
 
-            s_Ghost = null;
+            s_Ghosts.Clear();
+            s_VariantParts.Clear();
+            s_Variants.Clear();
             s_GhostParts.Clear();
             s_StampCells = null;
             s_Prefab = null;
@@ -252,34 +260,98 @@ namespace WorldKit.Editor
 
         static void CreateGhost()
         {
-            s_Ghost = UnityEngine.Object.Instantiate(s_Prefab);
-            s_Ghost.name = "WorldKitGhost";
-            s_Ghost.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            foreach (var t in s_Ghost.GetComponentsInChildren<Transform>(true))
-                t.gameObject.hideFlags = HideFlags.HideAndDontSave;
-
-            foreach (var pb in s_Ghost.GetComponentsInChildren<ProBuilderMesh>(true))
+            foreach (var variant in s_Variants)
             {
-                pb.ToMesh();
-                pb.Refresh();
+                var ghost = UnityEngine.Object.Instantiate(variant);
+                ghost.name = "WorldKitGhost";
+                ghost.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+                foreach (var t in ghost.GetComponentsInChildren<Transform>(true))
+                    t.gameObject.hideFlags = HideFlags.HideAndDontSave;
+
+                foreach (var pb in ghost.GetComponentsInChildren<ProBuilderMesh>(true))
+                {
+                    pb.ToMesh();
+                    pb.Refresh();
+                }
+
+                if (variant == s_Prefab)
+                {
+                    var piece = s_Prefab.GetComponent<WorldKitPiece>();
+                    s_Context.Footprint = piece != null ? piece.footprint : FootprintFromBounds(ghost);
+                }
+
+                // Ghost sahnede görünmez; mesh'leri her yerleşim noktası için elle çizilir.
+                var parts = new List<GhostPart>();
+                var root = ghost.transform.worldToLocalMatrix;
+                foreach (var filter in ghost.GetComponentsInChildren<MeshFilter>(true))
+                {
+                    if (filter.sharedMesh == null || !filter.TryGetComponent<MeshRenderer>(out _))
+                        continue;
+                    parts.Add(new GhostPart { Mesh = filter.sharedMesh, Local = root * filter.transform.localToWorldMatrix });
+                }
+
+                ghost.SetActive(false);
+                s_Ghosts.Add(ghost);
+                s_VariantParts[variant] = parts;
             }
 
-            var piece = s_Prefab.GetComponent<WorldKitPiece>();
-            s_Context.Footprint = piece != null ? piece.footprint : FootprintFromBounds(s_Ghost);
-
-            // Ghost sahnede görünmez; mesh'leri her yerleşim noktası için elle çizilir.
-            var root = s_Ghost.transform.worldToLocalMatrix;
-            foreach (var filter in s_Ghost.GetComponentsInChildren<MeshFilter>(true))
-            {
-                if (filter.sharedMesh == null || !filter.TryGetComponent<MeshRenderer>(out _))
-                    continue;
-                s_GhostParts.Add(new GhostPart { Mesh = filter.sharedMesh, Local = root * filter.transform.localToWorldMatrix });
-            }
-
-            s_Ghost.SetActive(false);
+            s_GhostParts.Clear();
+            s_GhostParts.AddRange(s_VariantParts[s_Prefab]);
 
             var stamp = s_Prefab.GetComponent<WorldKitStamp>();
             s_StampCells = stamp != null && stamp.floorCells.Count > 0 ? stamp.floorCells : null;
+        }
+
+        // ---------------- Varyasyonlar ----------------
+
+        static readonly List<GameObject> s_Variants = new List<GameObject>();
+        static readonly List<GameObject> s_Ghosts = new List<GameObject>();
+        static readonly Dictionary<GameObject, List<GhostPart>> s_VariantParts = new Dictionary<GameObject, List<GhostPart>>();
+
+        /// <summary>Fırçadaki parçalar (ilki ana parça). Birden fazlaysa her yerleşimde aralarından biri seçilir.</summary>
+        public static IReadOnlyList<GameObject> Variants => s_Variants;
+
+        /// <summary>Birden fazla parçayla fırça başlatır; her yerleşimde aralarından biri konur.</summary>
+        public static void Begin(IReadOnlyList<GameObject> prefabs) => Begin(prefabs, false);
+
+        /// <summary>
+        /// Parçayı varyasyon olarak ekler/çıkarır (palette Ctrl+tık). Fırça kapalıysa yalnızca o parçayla başlar.
+        /// </summary>
+        public static void ToggleVariant(GameObject prefab)
+        {
+            if (prefab == null)
+                return;
+            if (s_Mode != Mode.Prefab)
+            {
+                Begin(prefab);
+                return;
+            }
+
+            var list = s_Variants.ToList();
+            if (!list.Remove(prefab))
+                list.Add(prefab);
+
+            if (list.Count == 0)
+                End();
+            else
+                Begin(list);
+        }
+
+        /// <summary>Bu noktaya konacak varyasyon. Konumdan türetilir: önizleme ile yerleşim aynı olur.</summary>
+        static GameObject PickVariant(Vector3 position)
+        {
+            if (s_Variants.Count <= 1)
+                return s_Prefab;
+
+            var key = Vector3Int.RoundToInt(position * 10f);
+            int hash = unchecked(key.x * 73856093 ^ key.y * 19349663 ^ key.z * 83492791);
+            return s_Variants[(hash & int.MaxValue) % s_Variants.Count];
+        }
+
+        static GameObject PlaceVariant(Vector3 position, Quaternion rotation, Vector3? scale = null)
+        {
+            var prefab = PickVariant(position);
+            return PlacePiece(prefab, WorldKitScene.GetGroup(GetCategory(prefab)), position, rotation, scale, s_Variants);
         }
 
         static Vector2Int FootprintFromBounds(GameObject go)
@@ -507,7 +579,7 @@ namespace WorldKit.Editor
                     var single = s_Context.SinglePlacement();
                     Undo.IncrementCurrentGroup();
                     int group = Undo.GetCurrentGroup();
-                    var go = Place(WorldKitScene.GetGroup(GetCategory(s_Prefab)), single.Position, single.Rotation);
+                    var go = PlaceVariant(single.Position, single.Rotation);
                     WorldKitEvents.RaiseEditFinished();
                     Undo.CollapseUndoOperations(group);
                     if (go != null)
@@ -681,7 +753,7 @@ namespace WorldKit.Editor
             foreach (var placement in s_Placements)
             {
                 var matrix = Matrix4x4.TRS(placement.Position, placement.Rotation, placement.ScaleVector);
-                foreach (var part in s_GhostParts)
+                foreach (var part in PartsFor(placement.Position))
                 {
                     var world = matrix * part.Local;
                     for (int i = 0; i < part.Mesh.subMeshCount; i++)
@@ -877,20 +949,21 @@ namespace WorldKit.Editor
             if (s_Placements.Count == 0)
                 return;
 
-            var parent = WorldKitScene.GetGroup(GetCategory(s_Prefab));
             foreach (var placement in s_Placements)
-                Place(parent, placement.Position, placement.Rotation, placement.ScaleVector);
+                PlaceVariant(placement.Position, placement.Rotation, placement.ScaleVector);
         }
 
-        static GameObject Place(Transform parent, Vector3 position, Quaternion rotation, Vector3? scale = null) =>
-            PlacePiece(s_Prefab, parent, position, rotation, scale);
+        static List<GhostPart> PartsFor(Vector3 position) =>
+            s_VariantParts.TryGetValue(PickVariant(position), out var parts) ? parts : s_GhostParts;
 
         /// <summary>
         /// Bir prefab'ı parça olarak yerleştirir: aynı yerde aynısı varsa koymaz, Undo'ya kaydeder ve
         /// PiecePlaced olayını tetikler. Modüller kendi yerleştirmeleri için bunu kullanmalı
         /// (sonunda WorldKitEvents.RaiseEditFinished çağırarak). parent null ise prefab'ın kategorisi kullanılır.
+        /// equivalents: aynı yerde bunlardan biri varsa da konmaz (varyasyonların üst üste binmemesi için).
         /// </summary>
-        public static GameObject PlacePiece(GameObject prefab, Transform parent, Vector3 position, Quaternion rotation, Vector3? scale = null)
+        public static GameObject PlacePiece(GameObject prefab, Transform parent, Vector3 position, Quaternion rotation, Vector3? scale = null,
+            IReadOnlyCollection<GameObject> equivalents = null)
         {
             if (prefab == null)
                 return null;
@@ -905,7 +978,8 @@ namespace WorldKit.Editor
             {
                 if ((child.position - position).sqrMagnitude > 0.0001f)
                     continue;
-                if (PrefabUtility.GetCorrespondingObjectFromSource(child.gameObject) != prefab)
+                var source = PrefabUtility.GetCorrespondingObjectFromSource(child.gameObject);
+                if (source != prefab && (equivalents == null || !equivalents.Contains(source)))
                     continue;
 
                 float angle = Quaternion.Angle(child.rotation, rotation);
