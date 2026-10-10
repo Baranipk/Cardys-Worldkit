@@ -141,6 +141,11 @@ namespace WorldKit.Editor
             c.Line(21, 43, 31, 33, 5); c.Line(31, 33, 41, 33, 5); c.Line(41, 33, 46, 22, 5);
             c.Rect(46, 6, 50, 30); c.Triangle(50, 6, 62, 12, 50, 18);
         }, new Color(0.35f, 0.85f, 0.45f));
+        public static Texture2D NavMesh => Get("navmesh", c =>
+        {
+            c.Triangle(6, 54, 30, 54, 18, 30); c.Triangle(32, 54, 58, 54, 45, 30);
+            c.Triangle(20, 28, 44, 28, 32, 6);
+        }, new Color(0.3f, 0.75f, 1f));
         public static Texture2D EdgeDecor => Get("edgedecor", c => { c.Rect(4, 30, 60, 60); c.Circle(14, 24, 7); c.Circle(32, 22, 9); c.Circle(50, 25, 6); });
 
         /// <summary>Temaya göre önbelleğe alınmış bir ikon. draw, 64×64 bir tuval üzerinde (sol üst = 0,0) çizer.</summary>

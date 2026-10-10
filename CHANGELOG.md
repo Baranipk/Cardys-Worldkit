@@ -2,6 +2,14 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.13.0] - 2026-10-10
+
+### Eklendi
+- **NavMesh** sekmesi (Analiz): Dünyanın collider'larından NavMesh bake eder, asset olarak saklar ve köke
+  `WorldKitNavMesh` (runtime) ekler. Unity'nin yerleşik API'si; AI Navigation paketi gerekmez. Sahnede gösterim, alan.
+  API: `WorldKitNavMeshBake.Bake()`, `Clear()`, `BuildSettings()`.
+- **Erişim:** Dar geçitler (karakter genişliği sığmayan geçişler) mor gösterilir; `Result.Narrow`.
+
 ## [0.12.0] - 2026-10-10
 
 ### Eklendi

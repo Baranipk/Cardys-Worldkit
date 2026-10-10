@@ -26,6 +26,8 @@ namespace WorldKit.Editor
             public readonly List<Vector2Int> Unreachable = new List<Vector2Int>();
             /// <summary>Bir objenin kapladığı, karakterin duramayacağı hücreler.</summary>
             public readonly HashSet<Vector2Int> Occupied = new HashSet<Vector2Int>();
+            /// <summary>Dar geçidin iki yanındaki hücreler: ışınla geçiliyor ama karakter genişliği sığmıyor olabilir.</summary>
+            public readonly HashSet<Vector2Int> Narrow = new HashSet<Vector2Int>();
             public Vector2Int Start;
             public bool HasStart;
             public Vector2Int Farthest;
@@ -96,6 +98,11 @@ namespace WorldKit.Editor
                         continue;
                     if (!context.CanStep(cell, next, dir, allowDrop))
                         continue;
+                    if (context.IsNarrow(cell, next))
+                    {
+                        result.Narrow.Add(cell);
+                        result.Narrow.Add(next);
+                    }
 
                     result.Distance[next] = distance + 1;
                     queue.Enqueue(next);
@@ -198,6 +205,28 @@ namespace WorldKit.Editor
                 return true;
             }
 
+            /// <summary>
+            /// Geçiş ışınlarla açık ama karakter genişliğinde bir kapsül sığmıyor mu (dar kapı, sıkışık kolonlar)?
+            /// </summary>
+            public bool IsNarrow(Vector2Int from, Vector2Int to)
+            {
+                var a = SurfaceCenter(m_Floor, from);
+                var b = SurfaceCenter(m_Floor, to);
+                return Sweep(a, b) || Sweep(b, a);
+            }
+
+            bool Sweep(Vector3 from, Vector3 to)
+            {
+                var delta = to - from;
+                var bottom = from + Vector3.up * (m_Radius + WorldKitGrid.LevelHeight * 0.35f);
+                var top = from + Vector3.up * Mathf.Max(m_Height - m_Radius, m_Radius + WorldKitGrid.LevelHeight * 0.35f);
+                int count = Physics.CapsuleCastNonAlloc(bottom, top, m_Radius, delta.normalized, s_Hits, delta.magnitude, ~0, QueryTriggerInteraction.Ignore);
+                for (int i = 0; i < count; i++)
+                    if (Blocks(s_Hits[i].collider))
+                        return true;
+                return false;
+            }
+
             bool Hit(Vector3 from, Vector3 to)
             {
                 var delta = to - from;
@@ -232,6 +261,7 @@ namespace WorldKit.Editor
         static readonly Color k_Reachable = new Color(0.25f, 0.85f, 0.35f, 0.45f);
         static readonly Color k_Far = new Color(1f, 0.75f, 0.15f, 0.5f);
         static readonly Color k_Unreachable = new Color(1f, 0.25f, 0.2f, 0.55f);
+        static readonly Color k_Narrow = new Color(0.75f, 0.3f, 1f, 0.65f);
 
         static ReachabilityPaletteTab()
         {
@@ -267,7 +297,7 @@ namespace WorldKit.Editor
         {
             GUILayout.Space(6f);
             EditorGUILayout.HelpBox(
-                "Başlangıçtan yürüyerek ulaşılan zemin yeşil, ulaşılamayan kırmızı gösterilir. Duvarlar, binalar ve " +
+                "Başlangıçtan yürüyerek ulaşılan zemin yeşil, ulaşılamayan kırmızı, dar geçitler mor gösterilir. Duvarlar, binalar ve " +
                 "diğer collider'lar engeldir; katlar arasında rampa gerekir.\n" +
                 "Başlangıç: seçili obje, yoksa sahnedeki Oyuncu referansı, o da yoksa Scene kamerasının baktığı yer.",
                 MessageType.None);
@@ -321,6 +351,8 @@ namespace WorldKit.Editor
             EditorGUILayout.LabelField("Ulaşılan", $"{result.Distance.Count} hücre  ({result.Distance.Count * area:0} m²)");
             EditorGUILayout.LabelField("Ulaşılamayan", $"{result.Unreachable.Count} hücre  ({result.Unreachable.Count * area:0} m²)");
             EditorGUILayout.LabelField("Dolu (obje altında)", $"{result.Occupied.Count} hücre");
+            EditorGUILayout.LabelField(new GUIContent("Dar geçit", "Mor: geçiliyor ama karakter genişliği sığmayabilir (dar kapı, sıkışık engeller)."),
+                new GUIContent($"{result.Narrow.Count} hücre"));
 
             float far = result.MaxDistance * cell;
             EditorGUILayout.LabelField(new GUIContent("En uzak nokta", "Hücreden hücreye yol uzunluğu; çapraz kısayollar sayılmaz."),
@@ -452,7 +484,8 @@ namespace WorldKit.Editor
             float max = Mathf.Max(1, result.MaxDistance);
 
             foreach (var pair in result.Distance)
-                AddCell(floor, pair.Key, gradient ? Color.Lerp(k_Reachable, k_Far, pair.Value / max) : k_Reachable, vertices, colors, indices);
+                AddCell(floor, pair.Key, result.Narrow.Contains(pair.Key) ? k_Narrow
+                    : gradient ? Color.Lerp(k_Reachable, k_Far, pair.Value / max) : k_Reachable, vertices, colors, indices);
             foreach (var cell in result.Unreachable)
                 AddCell(floor, cell, k_Unreachable, vertices, colors, indices);
 

@@ -59,7 +59,8 @@ kendiliğinden devre dışı kalır, geri kalan her şey çalışır.
 | **Ölçüm** | Cetvel (mesafe, hücre, yürüme/koşma süresi) | ✅ |
 | | İstatistik sekmesi (parça, zemin alanı, üçgen, dünya boyutu) | ✅ |
 | | Üstten harita PNG | ✅ |
-| | Erişim analizi: yürüyerek ulaşılan / ulaşılamayan zemin | ✅ |
+| | Erişim analizi: ulaşılan / ulaşılamayan zemin, dar geçitler | ✅ |
+| | NavMesh bake (ek paket gerekmez), sahnede gösterim | ✅ |
 | **Çıktı** | Bake: materyal başına tek mesh asset + collider | ✅ |
 | | OBJ + MTL dışa aktarma | ✅ |
 | **Test** *(modül)* | Test oyuncusu, Cinemachine top-down kamera, engelden kaçma | ✅ |
@@ -196,7 +197,13 @@ Palette **Çıktı** sekmesi veya **Tools → World Kit → Çıktı**:
   - Başlangıç: seçili obje; seçim yoksa sahnedeki *Oyuncu* referansı; o da yoksa Scene kamerasının baktığı yer.
   - Engel = collider'ı olan her şey (duvar, bina, kaya...). Kapılardan geçilir. NPC'ler ve referanslar engel değildir.
   - Katlar arasında yalnızca rampadan geçilir. *Aşağı atlamaya izin ver* açıksa alçak komşuya inilebilir.
+  - **Mor** hücreler dar geçit: ışınla geçiliyor ama karakter genişliği sığmayabilir (dar kapı, sıkışık kolonlar).
   - Gösterim açıkken her düzenlemeden sonra kendiliğinden yenilenir. *En Uzağa Git* / *Ulaşılamayana Git* kamerayı oraya götürür.
+- **NavMesh sekmesi (Analiz):** *Bake Et* dünyanın collider'larından NavMesh üretir, `Assets/WorldKit/NavMesh` altına kaydeder
+  ve köke `WorldKitNavMesh` ekler; NPC ve düşmanlardaki `NavMeshAgent`'lar Play'de ve build'de bunu kullanır. Ajan boyu ve
+  yarıçapı *Character Height*'tan gelir; tam ve yumuşak rampalar yürünebilir. Ek paket gerekmez.
+  - Dünya değişince yeniden bake et (kendiliğinden güncellenmez).
+  - AI Navigation paketinin `NavMeshSurface`'i ile aynı sahnede kullanma (iki NavMesh üst üste biner).
 
 ### Duvara kapı açma
 Bir çizgi parçasını, aynı hattaki başka bir çizgi parçasının üstüne koy (ya da taşı): eskisi kaldırılır.
