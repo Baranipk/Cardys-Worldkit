@@ -1,0 +1,34 @@
+{
+    "name": "WorldKit.Playtest.Editor",
+    "rootNamespace": "WorldKit.Playtest.Editor",
+    "references": [
+        "WorldKit.Runtime",
+        "WorldKit.Editor",
+        "WorldKit.Playtest"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "WORLDKIT_INPUTSYSTEM",
+        "WORLDKIT_CINEMACHINE"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "1.7.0",
+            "define": "WORLDKIT_INPUTSYSTEM"
+        },
+        {
+            "name": "com.unity.cinemachine",
+            "expression": "3.0.0",
+            "define": "WORLDKIT_CINEMACHINE"
+        }
+    ],
+    "noEngineReferences": false
+}

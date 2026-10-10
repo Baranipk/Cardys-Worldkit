@@ -1,0 +1,19 @@
+{
+    "name": "WorldKit.Editor",
+    "rootNamespace": "WorldKit.Editor",
+    "references": [
+        "WorldKit.Runtime",
+        "Unity.ProBuilder"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
