@@ -49,7 +49,8 @@ kendiliğinden devre dışı kalır, geri kalan her şey çalışır.
 | | Seçili parçaları zemine çevirme | ✅ |
 | | Duvara kapı açma (aynı hatta üst üste konan çizgi parçası eskisinin yerini alır) | ✅ |
 | | Otomatik köşe direği | ✅ |
-| | Zemin türleri (çimen, toprak, taş, kum, su, yol...) ve "sadece renk" boyama | ✅ |
+| | Zemin türleri (çimen, toprak, taş, kum, su, yol...) | ✅ |
+| | Zemin işlemleri: Boya, Sadece Renk, Yükselt, Alçalt, Duvarla Çevir | ✅ |
 | | Şablonlar: seçimi zeminiyle birlikte kaydet, palette yerleştir | ✅ |
 | | Serpme fırçası: rastgele konum, dönüş, boyut ve aralık | ✅ |
 | **Düzenleme** | Seç, taşı, döndür, çoğalt, sil (grid'e bağlı, klavyeyle) | ✅ |
@@ -109,11 +110,25 @@ Footprint'inin bir ekseni 0 olan parçalar grid **köşelerine** oturur:
 
 ### Zemin türleri
 Zemin sekmesindeki renk karelerinden bir tür seç (Zemin, Çimen, Toprak, Taş, Kum, Su, Yol...) ve boya.
-- **Sadece renk (yüksekliği koru):** Açıkken yalnızca var olan hücrelerin türü değişir. Yükseklik ve şekil
-  korunur, yeni zemin eklenmez. Patika, nehir ve bölge boyamak için ideal.
 - Türler **Project Settings → World Kit → Floor Types** listesindedir: ad + materyal. Yeni türleri listenin
   **sonuna** ekle; sırayı değiştirmek boyanmış hücrelerin türünü de değiştirir.
 - Başlangıç içeriği, liste boşsa 6 hazır tür oluşturur.
+
+### Zemin işlemleri
+Zemin sekmesinin altındaki **İşlem** seçicisi, zemin fırçasının ne yapacağını belirler. Hangi hücrelere
+uygulanacağını ise üstteki mod belirler (Tek = fırça, Hat = şerit, Alan = dikdörtgen, Çerçeve = kenar).
+
+| İşlem | Ne yapar |
+|---|---|
+| **Boya** | Seçili seviyede, seçili türle doldurur (yeni zemin ekler) |
+| **Sadece Renk** | Yalnızca var olan zeminin türünü değiştirir; yükseklik ve şekil korunur. Patika, nehir, bölge için |
+| **Yükselt** | Var olan zemini bir kat yükseltir. Tek moduyla sürükleyerek tepe veya teras "heykel"lenir |
+| **Alçalt** | Var olan zemini bir kat alçaltır (çukur, nehir yatağı) |
+| **Duvarla Çevir** | Seçilen alanın dış kenarlarına duvar örer; zemini değiştirmez. Duvar sekmede seçilir (boşsa `Duvar_1m`) |
+
+Duvarla Çevir'de bir kenar, komşu hücre seçimin dışındaysa veya farklı yükseklikteyse dış kenar sayılır;
+duvar her hücrenin kendi yüksekliğine oturur. Uzun duvarlar (ör. 2 m) kenara sığdığı yerlerde kullanılır,
+kalan yerlere 1 m'lik duvar konur. Köşe direkleri ve kapı açma bu duvarlarla da çalışır.
 
 ### Şablonlar (stamp)
 1. Bir grup parçayı seç (ör. bir kamp, ev + çit + ağaçlar) ve palette **Şablon Kaydet**'e bas.

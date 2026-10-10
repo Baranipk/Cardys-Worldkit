@@ -82,6 +82,7 @@ namespace WorldKit.Editor
                 "Zemin tek bir obje ve tek bir mesh olarak tutulur; ne kadar büyük boyarsan boya sahne hafif kalır.\n\n" +
                 "• Yukarıdaki modlar zeminde de çalışır: Tek = fırça gibi boya, Hat = şerit (yol), Alan = dikdörtgen, Çerçeve = kenar\n" +
                 "• Shift + tık: son boyanan hücreden buraya şerit çek\n" +
+                "• İşlemler (aşağıda): Boya, Sadece Renk, Yükselt, Alçalt, Duvarla Çevir. Hepsi seçili modun şekliyle uygulanır\n" +
                 "• E / Q: seviye. Üst seviyede boyamak platform yapar, kenar duvarları kendiliğinden oluşur\n" +
                 "• Aynı alanı başka seviyede boyamak yüksekliği değiştirir\n" +
                 "• Ctrl + sürükle veya Sil modu: zemini sil",
@@ -133,15 +134,48 @@ namespace WorldKit.Editor
                 }
             }
 
+            if (GUILayout.Button("Tür Ekle…", EditorStyles.miniButton, GUILayout.Width(70f)))
+                SettingsService.OpenProjectSettings("Project/World Kit");
+
+            DrawOperationPicker();
+        }
+
+        static readonly (WorldKitBrush.FloorOperation op, string tip)[] k_Operations =
+        {
+            (WorldKitBrush.FloorOperation.Paint, "Seçili seviyede, seçili türle doldur (yeni zemin ekler)."),
+            (WorldKitBrush.FloorOperation.Recolor, "Yalnızca var olan zeminin türünü değiştir; yükseklik ve şekil korunur. Patika, nehir, bölge boyamak için."),
+            (WorldKitBrush.FloorOperation.Raise, "Var olan zemini bir kat yükselt. Tek moduyla sürükleyerek heykel gibi kullanılabilir."),
+            (WorldKitBrush.FloorOperation.Lower, "Var olan zemini bir kat alçalt (çukur, nehir yatağı)."),
+            (WorldKitBrush.FloorOperation.Wall, "Seçilen alanın dış kenarlarına duvar ör. Zemini değiştirmez."),
+        };
+
+        /// <summary>Zemin işlemi seçici: Boya / Sadece Renk / Yükselt / Alçalt / Duvarla Çevir.</summary>
+        static void DrawOperationPicker()
+        {
+            GUILayout.Space(6f);
+            EditorGUILayout.LabelField("İşlem", EditorStyles.boldLabel);
+
             using (new EditorGUILayout.HorizontalScope())
             {
-                bool keep = EditorGUILayout.ToggleLeft(
-                    new GUIContent("Sadece renk (yüksekliği koru)", "Açıkken yalnızca var olan hücrelerin türü değişir; yeni zemin eklenmez."),
-                    WorldKitBrush.FloorKeepHeight);
-                if (keep != WorldKitBrush.FloorKeepHeight)
-                    WorldKitBrush.FloorKeepHeight = keep;
-                if (GUILayout.Button("Tür Ekle…", EditorStyles.miniButton, GUILayout.Width(70f)))
-                    SettingsService.OpenProjectSettings("Project/World Kit");
+                foreach (var (op, tip) in k_Operations)
+                {
+                    bool on = WorldKitBrush.FloorOp == op;
+                    if (GUILayout.Toggle(on, new GUIContent(WorldKitBrush.FloorOperationName(op), tip), EditorStyles.miniButton) && !on)
+                    {
+                        WorldKitBrush.FloorOp = op;
+                        if (!WorldKitBrush.IsFloorBrush)
+                            WorldKitBrush.BeginFloor();
+                    }
+                }
+            }
+
+            if (WorldKitBrush.FloorOp == WorldKitBrush.FloorOperation.Wall)
+            {
+                var wall = (GameObject)EditorGUILayout.ObjectField(
+                    new GUIContent("Duvar", "1 hücrelik bir çizgi parçası önerilir (ör. Duvar_1m). Boşsa Duvar_1m kullanılır."),
+                    WorldKitBrush.FloorWallPrefab, typeof(GameObject), false);
+                if (wall != WorldKitBrush.FloorWallPrefab)
+                    WorldKitBrush.FloorWallPrefab = wall;
             }
         }
     }

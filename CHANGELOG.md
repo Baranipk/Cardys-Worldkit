@@ -2,6 +2,22 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.6.0] - 2026-10-10
+
+Zemin ve arazi.
+
+### Eklendi
+- **Zemin işlemleri** (Zemin sekmesi → İşlem): Boya, Sadece Renk, Yükselt, Alçalt, Duvarla Çevir.
+  Hepsi seçili modun şekliyle (Tek, Hat, Alan, Çerçeve) uygulanır.
+- **Yükselt / Alçalt:** Var olan zemini kat kat yükseltip alçaltır. `WorldKitFloor.AdjustHeight`.
+- **Duvarla Çevir:** Seçilen alanın dış kenarlarına duvar örer (`FloorWalls`). Köşe direkleri ve kapı açma bu duvarlarla da çalışır.
+- `WorldKitBrush.PlacePiece(prefab, parent, position, rotation, scale)`: Modüllerin parça yerleştirmesi için genel metot
+  (aynı yere tekrar koymaz, Undo'ya kaydeder, PiecePlaced tetikler).
+- `WorldKitBrush.FloorOp`, `FloorWallPrefab`.
+
+### Değişti
+- "Sadece renk" onay kutusu, İşlem seçicisindeki **Sadece Renk** oldu (`FloorKeepHeight` geriye uyumlu kaldı).
+
 ## [0.5.0] - 2026-10-10
 
 Çıktı kategorisi.

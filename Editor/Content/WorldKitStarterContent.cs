@@ -37,6 +37,9 @@ namespace WorldKit.Editor
         /// <summary>Köşe direği prefab'ının yolu (ayarlarda başka direk seçilmemişse otomatik köşelerde kullanılır).</summary>
         public static string CornerPostPath => $"{PiecesRoot}/{Structure}/Kose_Diregi.prefab";
 
+        /// <summary>Zemin "Duvarla Çevir" işleminin varsayılan duvarı.</summary>
+        public static string DefaultWallPath => $"{PiecesRoot}/{Structure}/Duvar_1m.prefab";
+
         static float CharacterHeight => Settings.characterHeight;
 
         [MenuItem("Tools/World Kit/Başlangıç İçeriğini Üret", priority = 20)]

@@ -127,6 +127,17 @@ namespace WorldKit
             WriteBack();
         }
 
+        /// <summary>Var olan hücrelerin yüksekliğini delta kadar değiştirir (sınırlar içinde); boş hücreler boş kalır.</summary>
+        public void AdjustHeight(IEnumerable<Vector2Int> cells, int delta, int minHeight, int maxHeight)
+        {
+            foreach (var cell in cells)
+            {
+                if (m_Map.TryGetValue(cell, out var data))
+                    m_Map[cell] = new Cell { Height = Mathf.Clamp(data.Height + delta, minHeight, maxHeight), Type = data.Type };
+            }
+            WriteBack();
+        }
+
         public void RemoveCells(IEnumerable<Vector2Int> cells)
         {
             foreach (var cell in cells)

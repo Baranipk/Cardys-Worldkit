@@ -30,7 +30,7 @@ com.baran.worldkit/
 │   ├── Tools/                   Fırça modları (WorldKitTool) — eklenti noktası
 │   ├── Palette/                 Palet penceresi, sekme ve düğme eklenti noktaları
 │   ├── Modules/                 Yerleşik modüller (eklenti API'siyle yazılmış, örnek olarak okuyun):
-│   │                            LineReplacement, AutoCornerPosts, SelectionEditing, LevelVisibility, Stamps
+│   │                            LineReplacement, AutoCornerPosts, SelectionEditing, LevelVisibility, Stamps, FloorWalls, Measurement, Output
 │   ├── Content/                 Başlangıç içeriği, dönüştürücüler (isteğe bağlı)
 │   └── Playtest/                WorldKit.Playtest.Editor (isteğe bağlı)
 ├── Documentation~/              Bu belgeler (Unity içe aktarmaz)
@@ -194,6 +194,9 @@ static class AutoStaticFlags
 | `FloorChanged(WorldKitFloor)` | Zemin hücreleri değiştikten sonra |
 | `EditFinished()` | Bir kullanıcı eylemi bittiğinde, Undo grubu kapanmadan hemen önce |
 | `SettingsChanged()` | Proje ayarları değiştiğinde |
+
+**Parça yerleştirmek:** Modülünüz parça koyacaksa `WorldKitBrush.PlacePiece(prefab, parent, position, rotation)` kullanın;
+aynı yere tekrar koymaz, Undo'ya kaydeder ve `PiecePlaced`'i tetikler. Örnek: `Editor/Modules/FloorWalls.cs`.
 
 **Toplu iş deseni:** Her parça için ağır iş yapmak yerine, `PiecePlaced`/`PieceRemoving`'de etkilenen
 yerleri bir kümeye toplayın, `EditFinished`'te bir kez işleyin. Örnek: `Editor/Modules/AutoCornerPosts.cs`.

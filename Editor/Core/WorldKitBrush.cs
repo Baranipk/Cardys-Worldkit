@@ -838,7 +838,9 @@ namespace WorldKit.Editor
             s_HudStyle ??= new GUIStyle(EditorStyles.helpBox) { fontSize = 11, richText = true, padding = new RectOffset(8, 8, 6, 6) };
 
             var name = s_Mode == Mode.Floor
-                ? $"Zemin: {FloorTypeName(s_FloorType)}{(s_FloorKeepHeight ? " (sadece renk)" : "")}"
+                ? (s_FloorOperation == FloorOperation.Paint || s_FloorOperation == FloorOperation.Recolor
+                    ? $"Zemin: {FloorTypeName(s_FloorType)}  [{FloorOperationName(s_FloorOperation)}]"
+                    : $"Zemin  [{FloorOperationName(s_FloorOperation)}]")
                 : s_Prefab.name.Replace('_', ' ');
             string status = $"<b>{name}</b>   Mod: <b>{tool.DisplayName(s_Context)}</b>   Seviye: {s_Context.Level}";
             if (s_Mode == Mode.Prefab)
@@ -880,16 +882,30 @@ namespace WorldKit.Editor
                 Place(parent, placement.Position, placement.Rotation, placement.ScaleVector);
         }
 
-        static GameObject Place(Transform parent, Vector3 position, Quaternion rotation, Vector3? scale = null)
+        static GameObject Place(Transform parent, Vector3 position, Quaternion rotation, Vector3? scale = null) =>
+            PlacePiece(s_Prefab, parent, position, rotation, scale);
+
+        /// <summary>
+        /// Bir prefab'ı parça olarak yerleştirir: aynı yerde aynısı varsa koymaz, Undo'ya kaydeder ve
+        /// PiecePlaced olayını tetikler. Modüller kendi yerleştirmeleri için bunu kullanmalı
+        /// (sonunda WorldKitEvents.RaiseEditFinished çağırarak). parent null ise prefab'ın kategorisi kullanılır.
+        /// </summary>
+        public static GameObject PlacePiece(GameObject prefab, Transform parent, Vector3 position, Quaternion rotation, Vector3? scale = null)
         {
+            if (prefab == null)
+                return null;
+            if (parent == null)
+                parent = WorldKitScene.GetGroup(GetCategory(prefab));
+
             // Aynı yere aynı parçayı ikinci kez koyma. Simetrik çizgi parçalarında (duvar, çit)
             // 180° çevrilmiş kopya da aynı sayılır, üst üste binmez.
-            bool symmetric = s_Context.IsLinear;
+            var info = prefab.GetComponent<WorldKitPiece>();
+            bool symmetric = info != null && WorldKitLayout.IsLinear(info.footprint);
             foreach (Transform child in parent)
             {
                 if ((child.position - position).sqrMagnitude > 0.0001f)
                     continue;
-                if (PrefabUtility.GetCorrespondingObjectFromSource(child.gameObject) != s_Prefab)
+                if (PrefabUtility.GetCorrespondingObjectFromSource(child.gameObject) != prefab)
                     continue;
 
                 float angle = Quaternion.Angle(child.rotation, rotation);
@@ -897,7 +913,7 @@ namespace WorldKit.Editor
                     return null;
             }
 
-            var go = (GameObject)PrefabUtility.InstantiatePrefab(s_Prefab, parent);
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
             go.transform.SetPositionAndRotation(position, rotation);
             // Ölçek, prefab'ın kendi ölçeğiyle çarpılır (kendi ölçeği 1 olmayan prefab'lar bozulmasın).
             if (scale.HasValue && scale.Value != Vector3.one)
@@ -913,20 +929,82 @@ namespace WorldKit.Editor
                 return;
 
             var floor = GetFloor();
+            if (!erase && s_FloorOperation == FloorOperation.Wall)
+            {
+                FloorWalls.Build(floor, cells, FloorWallPrefab);
+                return;
+            }
+
+            var range = Settings.levelRange;
             Undo.RecordObject(floor, erase ? "World Kit: Zemin Sil" : "World Kit: Zemin Boya");
             if (erase)
                 floor.RemoveCells(cells);
-            else if (s_FloorKeepHeight)
-                floor.PaintType(cells, s_FloorType);
-            else
-                floor.SetCells(cells, s_Context.Level, s_FloorType);
+            else switch (s_FloorOperation)
+            {
+                case FloorOperation.Recolor: floor.PaintType(cells, s_FloorType); break;
+                case FloorOperation.Raise: floor.AdjustHeight(cells, 1, range.x, range.y); break;
+                case FloorOperation.Lower: floor.AdjustHeight(cells, -1, range.x, range.y); break;
+                default: floor.SetCells(cells, s_Context.Level, s_FloorType); break;
+            }
             SyncFloorMaterials(floor);
             EditorUtility.SetDirty(floor);
             WorldKitEvents.RaiseFloorChanged(floor);
         }
 
+        /// <summary>Zemin fırçasının yaptığı iş. Hangi hücrelere uygulanacağını seçili mod belirler.</summary>
+        public enum FloorOperation
+        {
+            /// <summary>Seçili seviyede, seçili türle doldur.</summary>
+            Paint,
+            /// <summary>Yalnızca var olan hücrelerin türünü değiştir.</summary>
+            Recolor,
+            /// <summary>Var olan hücreleri bir kat yükselt.</summary>
+            Raise,
+            /// <summary>Var olan hücreleri bir kat alçalt.</summary>
+            Lower,
+            /// <summary>Hücre alanının kenarlarına duvar ör (zemini değiştirmez).</summary>
+            Wall
+        }
+
         static int s_FloorType;
-        static bool s_FloorKeepHeight;
+        static FloorOperation s_FloorOperation;
+        static GameObject s_FloorWallPrefab;
+
+        public static FloorOperation FloorOp
+        {
+            get => s_FloorOperation;
+            set
+            {
+                s_FloorOperation = value;
+                SceneView.RepaintAll();
+                Changed?.Invoke();
+            }
+        }
+
+        /// <summary>"Duvarla Çevir" işleminin kullandığı duvar (boşsa başlangıç içeriğindeki Duvar_1m).</summary>
+        public static GameObject FloorWallPrefab
+        {
+            get => s_FloorWallPrefab != null
+                ? s_FloorWallPrefab
+                : AssetDatabase.LoadAssetAtPath<GameObject>(WorldKitStarterContent.DefaultWallPath);
+            set
+            {
+                s_FloorWallPrefab = value;
+                Changed?.Invoke();
+            }
+        }
+
+        public static string FloorOperationName(FloorOperation op)
+        {
+            switch (op)
+            {
+                case FloorOperation.Recolor: return "Sadece Renk";
+                case FloorOperation.Raise: return "Yükselt";
+                case FloorOperation.Lower: return "Alçalt";
+                case FloorOperation.Wall: return "Duvarla Çevir";
+                default: return "Boya";
+            }
+        }
 
         /// <summary>Zemin fırçasının boyadığı tür (0 = varsayılan Zemin, n = ayarlardaki n. ek tür).</summary>
         public static int FloorType
@@ -940,16 +1018,11 @@ namespace WorldKit.Editor
             }
         }
 
-        /// <summary>true ise zemin fırçası yalnızca var olan hücrelerin türünü değiştirir, yüksekliğe dokunmaz.</summary>
+        /// <summary>Eski API: FloorOp == Recolor ile aynı.</summary>
         public static bool FloorKeepHeight
         {
-            get => s_FloorKeepHeight;
-            set
-            {
-                s_FloorKeepHeight = value;
-                SceneView.RepaintAll();
-                Changed?.Invoke();
-            }
+            get => s_FloorOperation == FloorOperation.Recolor;
+            set => FloorOp = value ? FloorOperation.Recolor : FloorOperation.Paint;
         }
 
         /// <summary>Tür adı (0 = "Zemin").</summary>
