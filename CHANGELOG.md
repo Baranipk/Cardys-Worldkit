@@ -2,6 +2,14 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.11.0] - 2026-10-10
+
+### Eklendi
+- **Erişim** sekmesi (Analiz): Başlangıçtan yürüyerek ulaşılan zemini yeşil, ulaşılamayanı kırmızı gösterir.
+  Collider'lar engel, katlar arası rampa gerekir; isteğe bağlı aşağı atlama, uzaklık renklendirmesi,
+  en uzak / ulaşılamayan noktaya gitme. Gösterim açıkken düzenlemelerden sonra kendiliğinden yenilenir.
+- API: `WorldKitReachability.Compute(floor, start, ignore, allowDrop)`, `WorldKitFloor.Cells`, `TryGetCornerLevel`.
+
 ## [0.10.0] - 2026-10-10
 
 ### Eklendi

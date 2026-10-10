@@ -59,6 +59,7 @@ kendiliğinden devre dışı kalır, geri kalan her şey çalışır.
 | **Ölçüm** | Cetvel (mesafe, hücre, yürüme/koşma süresi) | ✅ |
 | | İstatistik sekmesi (parça, zemin alanı, üçgen, dünya boyutu) | ✅ |
 | | Üstten harita PNG | ✅ |
+| | Erişim analizi: yürüyerek ulaşılan / ulaşılamayan zemin | ✅ |
 | **Çıktı** | Bake: materyal başına tek mesh asset + collider | ✅ |
 | | OBJ + MTL dışa aktarma | ✅ |
 | **Test** *(modül)* | Test oyuncusu, Cinemachine top-down kamera, engelden kaçma | ✅ |
@@ -189,6 +190,13 @@ Palette **Çıktı** sekmesi veya **Tools → World Kit → Çıktı**:
 - **Cetvel (7):** Tut-çek ile ölç. Süreler Project Settings → World Kit → *Walk/Run Speed* değerlerinden hesaplanır.
 - **İstatistik sekmesi:** Parça sayıları (kategoriye göre), zemin alanı (türe göre m²), üçgen sayısı, dünya boyutu.
 - **Harita PNG:** İstatistik sekmesinde *Üstten Harita PNG Kaydet*. Ortografik, kuzey yukarıda; çözünürlük piksel/metre ile ayarlanır.
+- **Erişim sekmesi (Analiz):** *Hesapla ve Göster* ile başlangıçtan yürüyerek ulaşılan zemin sahnede **yeşil**
+  (uzaklaştıkça turuncu), ulaşılamayan **kırmızı** boyanır. Kapalı kalmış odaları, rampasız platformları, duvarla
+  kesilmiş yolları bulmak için.
+  - Başlangıç: seçili obje; seçim yoksa sahnedeki *Oyuncu* referansı; o da yoksa Scene kamerasının baktığı yer.
+  - Engel = collider'ı olan her şey (duvar, bina, kaya...). Kapılardan geçilir. NPC'ler ve referanslar engel değildir.
+  - Katlar arasında yalnızca rampadan geçilir. *Aşağı atlamaya izin ver* açıksa alçak komşuya inilebilir.
+  - Gösterim açıkken her düzenlemeden sonra kendiliğinden yenilenir. *En Uzağa Git* / *Ulaşılamayana Git* kamerayı oraya götürür.
 
 ### Duvara kapı açma
 Bir çizgi parçasını, aynı hattaki başka bir çizgi parçasının üstüne koy (ya da taşı): eskisi kaldırılır.

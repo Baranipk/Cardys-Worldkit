@@ -278,6 +278,7 @@ Bir değişiklikten sonra en azından şunları deneyin:
 | `AdjustHeight(cells, delta, min, max)` | Yüksekliği değiştirir, eğimi korur |
 | `RemoveCells(cells)` | Hücreleri siler |
 | `TryGetHeight` / `TryGetType` | Hücre sorgusu |
+| `Cells` / `TryGetCornerLevel(cell, cx, cz, out level)` | Bütün hücreler; köşe yüksekliği (rampalarda köşeye göre) |
 | `MaxVisibleLevel` | Görünüm sınırı (kaydedilmez) |
 | `SubMeshCount` | Renderer'da gereken materyal sayısı |
 

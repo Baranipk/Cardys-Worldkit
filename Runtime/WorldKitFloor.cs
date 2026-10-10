@@ -116,6 +116,20 @@ namespace WorldKit
             return found;
         }
 
+        /// <summary>Zemini olan bütün hücreler.</summary>
+        public IEnumerable<Vector2Int> Cells => m_Map.Keys;
+
+        /// <summary>
+        /// Hücrenin bir köşesinin üst yüksekliği (seviye cinsinden, rampalarda köşeye göre değişir).
+        /// Köşe (cx, cz) ∈ {0,1}²: 0 = hücrenin küçük kenarı, 1 = büyük kenarı.
+        /// </summary>
+        public bool TryGetCornerLevel(Vector2Int cell, int cx, int cz, out float level)
+        {
+            bool found = m_Map.TryGetValue(cell, out var data);
+            level = found ? CornerLevel(data, cx, cz) : 0f;
+            return found;
+        }
+
         // ---------------- Düzenleme ----------------
 
         /// <summary>Hücreleri verilen yükseklikte (düz) doldurur; var olan hücrelerin türü korunur, yenileri tür 0 olur.</summary>
