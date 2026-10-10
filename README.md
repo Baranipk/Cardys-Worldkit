@@ -160,7 +160,15 @@ kalan yerlere 1 m'lik duvar konur. Köşe direkleri ve kapı açma bu duvarlarla
 4. Yerleşince şablon açılır: parçalar normal parçalar gibi kendi gruplarına dağılır, zemini boyanır.
    Sonradan tek tek düzenlenebilirler.
 
-X
+### Varyasyonlar
+Palette **Ctrl+tık** ile birden fazla parça seç (ör. 3 farklı ağaç, 2 kaya, farklı çitler). Fırça her yerleşimde
+aralarından birini koyar; bütün modlarda (Tek, Hat, Alan, Çerçeve, Serp, Shift+tık) çalışır.
+- Hangi noktaya hangisinin geleceği konumdan türetilir: önizlemede gördüğün aynen konur.
+- Fırça kartında "+N varyasyon" yazar; Ctrl+tık seçili bir parçayı varyasyonlardan çıkarır.
+- Grid hizası ilk seçilen parçanın footprint'ine göre yapılır; varyasyonların aynı boyutta olması önerilir.
+- Aynı yerde varyasyonlardan biri zaten varsa yenisi konmaz.
+
+### Serpme fırçası
 Ağaç, kaya, çalı gibi bir parça seç ve **Serp** moduna geç (5). Sürükledikçe imlecin çevresine
 rastgele serpiştirir. Palette ayarlanabilenler: yarıçap, adet, aralık (mevcut parçalar dahil),
 rastgele dönüş ve boyut aralığı.
