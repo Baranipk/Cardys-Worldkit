@@ -2,6 +2,22 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.18.0] - 2026-10-10
+
+### Eklendi
+- **Serbest yerleştirme** (`WorldKitFreePlacement`): Grid'siz koyma; parça imlecin altındaki yüzeye (zemin, platform,
+  obje) oturur. G ile aç/kapa; ayarlardaki `freePlacementCategories` (varsayılan Dekor) için kendiliğinden açık.
+  R ile `freeRotationStep` (15°) döndürme; aralık, rastgele dönüş/boyut, yüzeye otur, eğime yatır ayarları.
+- **Yol Boyu** modu (0, `PathTool`): Serbest çizilen yol boyunca aralıklarla dizme; yana kayma, iki yana, yola dönük.
+- **Halka** modu (`CircleTool`): Çember üstüne eşit aralıklarla dizme; merkeze / dışarı / rastgele / sabit yön.
+- **Yere Oturt** ve **Çeşitlendir** (alt çubuk → Seçim, Tools → World Kit → Seçim).
+- **Kullanım kılavuzu** (`Documentation~/Kilavuz.md`): Kavramlar, arayüz, bütün araçlar, tarifler, kısayollar, sorun giderme.
+- Eklenti API'si: `WorldKitTool.FreeForm`, `BrushContext.FreePlacement` / `IsFree` / `FreeYaw` / `SurfaceNormal`,
+  `WorldKitBrush.FreePlacement`, `WorldKitFreePlacement.Make` / `TryDrop` / `RaycastSurface`. Mod kısayolu 0.
+
+### Değişti
+- Serp modu imleci ve parçaları yüzeye oturtur (platformlarda doğru yükseklik); bina içine düşen noktalar atlanır.
+
 ## [0.17.0] - 2026-10-10
 
 Sade greybox ve performans.

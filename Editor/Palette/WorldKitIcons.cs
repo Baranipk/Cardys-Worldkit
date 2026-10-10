@@ -167,6 +167,28 @@ namespace WorldKit.Editor
             c.RectStroke(4, 20, 26, 42, 4); c.Rect(38, 20, 60, 42);
             c.Line(27, 31, 35, 31, 4); c.Triangle(37, 31, 31, 25, 31, 37);
         });
+        public static Texture2D PathTool => Get("pathtool", c =>
+        {
+            c.Line(6, 52, 22, 36, 3); c.Line(22, 36, 40, 34, 3); c.Line(40, 34, 58, 12, 3);
+            c.Circle(10, 46, 6); c.Circle(30, 30, 6); c.Circle(52, 22, 6);
+        });
+        public static Texture2D CircleTool => Get("circletool", c =>
+        {
+            c.Ring(32, 32, 20, 3);
+            for (int i = 0; i < 6; i++)
+            {
+                float a = i * Mathf.PI / 3f;
+                c.Circle(32 + Mathf.Cos(a) * 20, 32 + Mathf.Sin(a) * 20, 6);
+            }
+        });
+        public static Texture2D DropDown => Get("dropdown", c =>
+        {
+            c.Rect(20, 6, 44, 26); c.Rect(29, 26, 35, 40); c.Triangle(32, 50, 22, 38, 42, 38); c.Rect(6, 54, 58, 60);
+        });
+        public static Texture2D Shuffle => Get("shuffle", c =>
+        {
+            c.RoundRect(6, 30, 26, 50, 3); c.RoundRect(36, 12, 58, 34, 3); c.Circle(48, 52, 8);
+        });
         public static Texture2D EdgeDecor => Get("edgedecor", c => { c.Rect(4, 30, 60, 60); c.Circle(14, 24, 7); c.Circle(32, 22, 9); c.Circle(50, 25, 6); });
 
         /// <summary>Temaya göre önbelleğe alınmış bir ikon. draw, 64×64 bir tuval üzerinde (sol üst = 0,0) çizer.</summary>

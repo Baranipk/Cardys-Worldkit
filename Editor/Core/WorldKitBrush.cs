@@ -41,6 +41,7 @@ namespace WorldKit.Editor
         static bool s_Shift;
         static int s_UndoGroup;
         static Vector2Int s_LastStrokeCell;
+        static Vector3 s_LastStrokePoint;
 
         // Shift+tık zinciri: son yerleştirilen noktadan imlece kadar doldurmak için.
         static bool s_HasLastPoint;
@@ -125,6 +126,7 @@ namespace WorldKit.Editor
             s_Prefab = list[0];
             s_Variants.AddRange(list);
             s_Temporary = temporary;
+            s_Context.FreePlacement = WorldKitFreePlacement.IsDefaultFor(s_Prefab);
             CreateGhost();
             Activate(!temporary);
         }
@@ -188,9 +190,36 @@ namespace WorldKit.Editor
 
         public static void Rotate(int steps)
         {
-            s_Context.Rotation = ((s_Context.Rotation + steps) % 4 + 4) % 4;
+            if (s_Context.IsFree)
+                s_Context.FreeYaw = Mathf.Repeat(s_Context.FreeYaw + steps * Settings.freeRotationStep, 360f);
+            else
+                s_Context.Rotation = ((s_Context.Rotation + steps) % 4 + 4) % 4;
             SceneView.RepaintAll();
             Changed?.Invoke();
+        }
+
+        /// <summary>Serbest yerleştirme (grid'siz) açık mı? Prefab fırçasında G ile değişir.</summary>
+        public static bool FreePlacement
+        {
+            get => s_Context.FreePlacement;
+            set
+            {
+                if (s_Context.FreePlacement == value)
+                    return;
+                s_Context.FreePlacement = value;
+                SceneView.RepaintAll();
+                Changed?.Invoke();
+            }
+        }
+
+        /// <summary>Ekranda gösterilecek açı: serbestte derece, grid'de 90° adım.</summary>
+        public static float DisplayAngle => s_Context.IsFree ? s_Context.FreeYaw : s_Context.Rotation * 90f;
+
+        [Shortcut("World Kit/Serbest Yerleştirme", typeof(BrushShortcutContext), KeyCode.G)]
+        static void ToggleFreePlacement()
+        {
+            if (s_Mode == Mode.Prefab)
+                FreePlacement = !FreePlacement;
         }
 
         public static void ChangeLevel(int delta)
@@ -224,6 +253,7 @@ namespace WorldKit.Editor
         [Shortcut("World Kit/Mod 7", typeof(BrushShortcutContext), KeyCode.Alpha7)] static void Tool7() => SelectTool(6);
         [Shortcut("World Kit/Mod 8", typeof(BrushShortcutContext), KeyCode.Alpha8)] static void Tool8() => SelectTool(7);
         [Shortcut("World Kit/Mod 9", typeof(BrushShortcutContext), KeyCode.Alpha9)] static void Tool9() => SelectTool(8);
+        [Shortcut("World Kit/Mod 10", typeof(BrushShortcutContext), KeyCode.Alpha0)] static void Tool10() => SelectTool(9);
 
         static void SelectTool(int index)
         {
@@ -374,12 +404,26 @@ namespace WorldKit.Editor
         static void UpdateCursor(Vector2 mousePosition)
         {
             var ray = HandleUtility.GUIPointToWorldRay(mousePosition);
-            var plane = new Plane(Vector3.up, new Vector3(0f, LevelY, 0f));
-            s_HasHit = plane.Raycast(ray, out var distance) && distance < 5000f;
-            if (!s_HasHit)
-                return;
+            s_Context.SurfaceNormal = Vector3.up;
 
-            s_Context.Hit = ray.GetPoint(distance);
+            // Serbest yerleştirme ve grid'siz modlar: imleç altındaki yüzeye (zemin, platform, obje) oturur.
+            var tool = s_Mode == Mode.Prefab ? EffectiveTool : null;
+            if (tool != null && !tool.Erases && WorldKitFreePlacement.SnapToSurface && (s_Context.IsFree || tool.FreeForm)
+                && WorldKitFreePlacement.RaycastSurface(ray, out var point, out var normal))
+            {
+                s_HasHit = true;
+                s_Context.Hit = point;
+                s_Context.SurfaceNormal = normal;
+            }
+            else
+            {
+                var plane = new Plane(Vector3.up, new Vector3(0f, LevelY, 0f));
+                s_HasHit = plane.Raycast(ray, out var distance) && distance < 5000f;
+                if (!s_HasHit)
+                    return;
+                s_Context.Hit = ray.GetPoint(distance);
+            }
+
             if (s_Context.Dragging)
                 s_Context.Axis = WorldKitLayout.UpdateAxisLock(s_Context.Axis, s_Context.Anchor, s_Context.Hit);
         }
@@ -609,6 +653,7 @@ namespace WorldKit.Editor
             if (tool != null && tool.ModifiesScene && tool.PaintsWhileDragging && !tool.Erases)
             {
                 s_LastStrokeCell = s_Context.HoverCell;
+                s_LastStrokePoint = s_Context.Hit;
                 ApplyPaintStep(tool);
             }
         }
@@ -618,6 +663,18 @@ namespace WorldKit.Editor
             var tool = EffectiveTool;
             if (tool == null || !tool.ModifiesScene || !tool.PaintsWhileDragging || tool.Erases || !s_HasHit)
                 return;
+
+            // Serbest yerleştirmede hücre yerine mesafe: son parçadan "Aralık" kadar uzaklaşınca yenisi.
+            if (s_Mode == Mode.Prefab && s_Context.IsFree)
+            {
+                var flat = s_Context.Hit - s_LastStrokePoint;
+                flat.y = 0f;
+                if (flat.magnitude < WorldKitFreePlacement.Spacing)
+                    return;
+                s_LastStrokePoint = s_Context.Hit;
+                ApplyPaintStep(tool);
+                return;
+            }
 
             var cell = s_Context.HoverCell;
             if (cell == s_LastStrokeCell)
@@ -918,7 +975,7 @@ namespace WorldKit.Editor
                 : s_Prefab.name.Replace('_', ' ');
             string status = $"<b>{name}</b>   Mod: <b>{tool.DisplayName(s_Context)}</b>   Seviye: {s_Context.Level}";
             if (s_Mode == Mode.Prefab)
-                status += $"   Açı: {s_Context.Rotation * 90}°";
+                status += s_Context.IsFree ? $"   Açı: {s_Context.FreeYaw:0}°   <b>Serbest</b> (G)" : $"   Açı: {s_Context.Rotation * 90}°";
 
             bool chaining = IsChaining;
             if (chaining || (s_Context.Dragging && !tool.PaintsWhileDragging))

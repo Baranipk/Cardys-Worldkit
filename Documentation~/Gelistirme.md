@@ -115,6 +115,7 @@ public sealed class CheckerTool : WorldKitTool
 | `HasSettings` + `OnSettingsGUI()` | Mod seçiliyken palette ayar paneli gösterir. Değerleri `EditorPrefs`'te tutun |
 | `OnPreviewGUI(context)` | Scene'de ek önizleme çizimi (Handles), ör. serpme yarıçapı çemberi |
 | `OnStrokeFinished(context)` | `ModifiesScene = false` modlarda tıklama/sürükleme bitince çağrılır; mod kendi işini yapar (ör. Bölge modu bölge objesi oluşturur). Değişiklikler Undo'lu olmalı |
+| `FreeForm` | `true`: mod grid'e bağlı değil; prefab fırçasında imleç altındaki yüzeye oturur (Serp, Yol Boyu, Halka). Çok noktalı modlarda her noktayı `WorldKitFreePlacement.TryDrop` ile yüzeye indirin |
 
 `Placement` içinde `Position`, `Rotation` ve isteğe bağlı `Scale` (0 = 1) var. Grid dışı yerleşim
 (rastgele konum, açı, boyut) için örnek: `Editor/Tools/ScatterTool.cs`.

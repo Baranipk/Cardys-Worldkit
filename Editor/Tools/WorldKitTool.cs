@@ -38,6 +38,11 @@ namespace WorldKit.Editor
         /// <summary>true ise sürüklerken imlecin geçtiği her hücreye anında uygular (fırça gibi boyar).</summary>
         public virtual bool PaintsWhileDragging => false;
 
+        /// <summary>
+        /// true ise mod grid'e bağlı değildir (Serp, Yol Boyu, Halka): prefab fırçasında imleç, serbest yerleştirme
+        /// kapalı olsa bile altındaki yüzeye (zemin, platform, obje) oturur.
+        /// </summary>
+        public virtual bool FreeForm => false;
         /// <summary>Seçili hedefte (prefab / zemin, çizgi parçası...) bu mod kullanılabilir mi?</summary>
         public virtual bool Supports(BrushContext context) => true;
 
@@ -111,6 +116,14 @@ namespace WorldKit.Editor
 
         /// <summary>Duvar/çit gibi köşeden köşeye yerleşen parça mı?</summary>
         public bool IsLinear => !IsFloor && WorldKitLayout.IsLinear(Footprint);
+        /// <summary>Serbest yerleştirme seçeneği açık mı (G)?</summary>
+        public bool FreePlacement { get; internal set; }
+        /// <summary>Serbest yerleştirme gerçekten uygulanıyor mu (açık, prefab fırçası, çizgi parçası değil)?</summary>
+        public bool IsFree => FreePlacement && !IsFloor && !IsLinear;
+        /// <summary>Serbest yerleştirmedeki dönüş (derece, R ile ayarlardaki adım kadar değişir).</summary>
+        public float FreeYaw { get; internal set; }
+        /// <summary>İmlecin altındaki yüzeyin normali (yüzeye oturma kapalıysa yukarı).</summary>
+        public Vector3 SurfaceNormal { get; internal set; } = Vector3.up;
 
         public Quaternion RotationQuaternion => Quaternion.Euler(0f, Rotation * 90f, 0f);
 
@@ -124,6 +137,8 @@ namespace WorldKit.Editor
         {
             if (IsLinear)
                 return WorldKitLayout.LinearSingle(Hit, Footprint, Rotation, Level);
+            if (IsFree)
+                return WorldKitFreePlacement.Make(Hit, FreeYaw, SurfaceNormal);
             return new Placement(WorldKitGrid.Snap(Hit, Footprint, Rotation, Level), RotationQuaternion);
         }
 

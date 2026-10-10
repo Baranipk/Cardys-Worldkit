@@ -64,6 +64,11 @@ namespace WorldKit.Editor
         public bool autoCornerPosts = true;
         [Tooltip("Otomatik köşe direği prefab'ı. Boşsa başlangıç içeriğindeki Kose_Diregi kullanılır.")]
         public GameObject cornerPostPrefab;
+        [Tooltip("Bu kategorilerden seçilen parçalarda serbest yerleştirme (grid'siz) kendiliğinden açılır. " +
+                 "Fırça açıkken G ile her zaman açılıp kapanabilir.")]
+        public List<string> freePlacementCategories = new List<string> { "Dekor" };
+        [Tooltip("Serbest yerleştirmede R ile dönüş adımı (derece).")]
+        [Range(1f, 90f)] public float freeRotationStep = 15f;
 
         [Header("Ölçüm")]
         [Tooltip("Cetvelde süre hesabı için yürüme hızı (m/sn).")]

@@ -388,7 +388,7 @@ namespace WorldKit.Editor
                         var tool = WorldKitBrush.Tool;
                         var details = $"{tool?.DisplayName(WorldKitBrush.Context)} · Kat {WorldKitBrush.Level}";
                         if (!WorldKitBrush.IsFloorBrush)
-                            details += $" · {WorldKitBrush.Rotation * 90}°";
+                            details += $" · {WorldKitBrush.DisplayAngle:0}°" + (WorldKitBrush.Context.IsFree ? " · serbest" : "");
                         GUILayout.Label(details, EditorStyles.miniLabel);
                     }
                     GUILayout.FlexibleSpace();
@@ -466,6 +466,26 @@ namespace WorldKit.Editor
                 var current = WorldKitBrush.Tool;
                 if (current != null)
                     GUILayout.Label(current.DisplayName(context), EditorStyles.miniBoldLabel);
+            }
+
+            // Serbest yerleştirme (dekor ve küçük objeler; çizgi parçası ve zeminde yok)
+            if (!WorldKitBrush.IsFloorBrush && !context.IsLinear)
+            {
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    bool free = EditorGUILayout.ToggleLeft(new GUIContent("Serbest yerleştirme (G)",
+                        "Grid'e oturmadan imlecin tam altına koy: zemin, platform veya objenin üstüne. R serbest açıyla döndürür."),
+                        WorldKitBrush.FreePlacement, EditorStyles.boldLabel);
+                    if (free != WorldKitBrush.FreePlacement)
+                        WorldKitBrush.FreePlacement = free;
+                    if (free)
+                    {
+                        EditorGUI.BeginChangeCheck();
+                        WorldKitFreePlacement.DrawSettingsGUI();
+                        if (EditorGUI.EndChangeCheck())
+                            SceneView.RepaintAll();
+                    }
+                }
             }
 
             // Seçili modun ayarları (ör. Serp: yarıçap, yoğunluk).

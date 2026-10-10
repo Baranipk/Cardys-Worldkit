@@ -26,6 +26,7 @@ namespace WorldKit.Editor
         public override int Order => 50;
         public override Texture2D Icon => WorldKitIcons.Scatter;
         public override bool PaintsWhileDragging => true;
+        public override bool FreeForm => true;
         public override bool Supports(BrushContext c) => !c.IsFloor && !c.IsLinear;
         public override string Hint(BrushContext c) => $"Tıkla/Sürükle: serp (yarıçap {Radius:0.#} m, {Count} adet)";
         public override bool HasSettings => true;
@@ -48,6 +49,7 @@ namespace WorldKit.Editor
         {
             var cell = c.HoverCell;
             var center = WorldKitGrid.CellCenter(cell, c.Level);
+            center.y = c.Hit.y; // yüzeye oturma açıksa imlecin altındaki yükseklik
             float radius = Radius, spacing = Spacing, minScale = MinScale, maxScale = MaxScale;
             bool randomRotation = RandomRotation;
             int count = Count;
@@ -72,6 +74,8 @@ namespace WorldKit.Editor
                 float yaw = randomRotation ? (float)random.NextDouble() * 360f : c.Rotation * 90f;
                 float scale = Mathf.Lerp(minScale, maxScale, (float)random.NextDouble());
 
+                if (!WorldKitFreePlacement.TryDrop(position, center.y, out position))
+                    continue;
                 if (occupied.Any(o => Flat(o - position).sqrMagnitude < minDistanceSq))
                     continue;
 
@@ -82,7 +86,8 @@ namespace WorldKit.Editor
 
         public override void OnPreviewGUI(BrushContext c)
         {
-            var center = WorldKitGrid.CellCenter(c.HoverCell, c.Level) + Vector3.up * 0.03f;
+            var center = WorldKitGrid.CellCenter(c.HoverCell, c.Level);
+            center.y = c.Hit.y + 0.03f;
             using (new Handles.DrawingScope(new Color(0.2f, 0.8f, 1f, 0.8f)))
                 Handles.DrawWireDisc(center, Vector3.up, Radius, 2f);
         }

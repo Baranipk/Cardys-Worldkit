@@ -35,6 +35,7 @@ kendiliğinden devre dışı kalır, geri kalan her şey çalışır.
 
 Hazır bir örnek görmek için: **Tools → World Kit → Örnek Köy Oluştur** (yeni sahnede küçük bir köy kurar).
 Ekip arkadaşları için adım adım anlatım: [Ekip rehberi](Documentation~/Rehber.md).
+Bütün araçlar, tarifler ve kısayollar: **[Kullanım kılavuzu](Documentation~/Kilavuz.md)**.
 
 ---
 
@@ -57,6 +58,7 @@ Ekip arkadaşları için adım adım anlatım: [Ekip rehberi](Documentation~/Reh
 | | Şablonlar: seçimi zeminiyle birlikte kaydet, palette yerleştir | ✅ |
 | | Serpme fırçası: rastgele konum, dönüş, boyut ve aralık | ✅ |
 | | Yuvarlak fırça: patika, kıyı, arazi şekillendirme | ✅ |
+| | Serbest yerleştirme (grid'siz, yüzeye oturan, rastgele dönüş/boyut), Yol Boyu ve Halka modları | ✅ |
 | | Su seviyesi: tür başına yüzey kayması | ✅ |
 | | Varyasyonlar: Ctrl+tık ile birden fazla parça, her yerleşimde rastgele biri | ✅ |
 | **Düzenleme** | Seç, taşı, döndür, çoğalt, sil (grid'e bağlı, klavyeyle) | ✅ |
@@ -85,7 +87,7 @@ Ekip arkadaşları için adım adım anlatım: [Ekip rehberi](Documentation~/Reh
 ├───────────┬──────────────────────────────────┤
 │ Zemin     │ [önizleme] Duvar 2m              │  seçili fırça: mod · kat · açı
 │ ───────── │            Alan · Kat 0 · 0°     │  [− kat +] [↻] [Bırak]
-│ Yapı      │ YERLEŞTİR ▪ ━ ▦ ▢ ∴ ◎ SİL ✕ ÖLÇ ▭ ⬚│  modlar (1-9)
+│ Yapı      │ YERLEŞTİR ▪ ━ ▦ ▢ ∴ ◎ SİL ✕ ÖLÇ ▭ ⬚│  modlar (1-0)
 │ Bina      │ (seçili modun ayarları)          │
 │ Dekor     │ 🔍 ara                    boyut   │
 │ Şablonlar │ [parça] [parça] [parça] ...       │
@@ -118,6 +120,17 @@ Ekip arkadaşları için adım adım anlatım: [Ekip rehberi](Documentation~/Reh
 | 7 | **Cetvel** | Tut-çek: mesafe, hücre sayısı, yürüme/koşma süresi. Sahneyi değiştirmez |
 | 8 | **Fırça** *(zemin)* | Sürükle: yuvarlak fırçayla seçili zemin işlemini uygular. Patika (Sadece Renk + Yol), kıyı, arazi (Yükselt/Alçalt). Yarıçap palette. Bir sürüklemede her hücreye bir kez uygulanır |
 | 9 | **Bölge** | Tut-çek: bölge (spawn, görev...) çizer. Bkz. *Bölgeler* |
+| 0 | **Yol Boyu** | Serbest çiz: yol boyunca aralıklarla dizer; yana kayma, iki yana, yola dönük |
+| – | **Halka** | Merkezden dışarı sürükle: çember üstüne eşit aralıklarla dizer; merkeze/dışarı/rastgele bakar |
+
+### Serbest yerleştirme (dekor ve küçük objeler)
+Grid'siz koyma: parça imlecin tam altına, zeminin, platformun veya bir objenin **üstüne** oturur.
+- Fırça açıkken **G** ile açılır/kapanır; *Free Placement Categories* ayarındaki kategorilerde (varsayılan **Dekor**) kendiliğinden açık.
+- **R** serbest açıyla döndürür (*Free Rotation Step*, varsayılan 15°).
+- Palette: *Aralık* (sürüklerken parça arası), *Rastgele dönüş*, *Rastgele boyut* (min–max), *Yüzeye otur*, *Eğime yatır*.
+  Rastgelelik konumdan türetilir: önizleme = sonuç.
+- Çizgi parçaları (duvar, çit) ve zemin her zaman grid'dedir. Serp, Yol Boyu ve Halka da yüzeye oturur; bina içine düşen noktalar atlanır.
+- Sonradan: alt çubuk → **Yere Oturt** (seçimi altındaki yüzeye indirir), **Çeşitlendir** (rastgele dönüş ve boyut).
 
 Palette arama kutusu bütün kategorilerde arar.
 
@@ -126,7 +139,8 @@ Palette arama kutusu bütün kategorilerde arar.
 |---|---|
 | Shift + tık | Son noktadan buraya kadar doldurur (önizleme mavi) |
 | Ctrl + tık / tut-çek | Her modda siler |
-| R / Shift+R | 90° döndürür |
+| R / Shift+R | 90° döndürür (serbest yerleştirmede ayarlardaki adım kadar) |
+| G | Serbest yerleştirme aç / kapa |
 | E / Q | Seviye yukarı / aşağı |
 | Esc | Sürüklerken iptal eder, değilse fırçayı bırakır |
 | Alt + sürükle | Kamerayı döndürür |

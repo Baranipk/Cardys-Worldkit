@@ -1,6 +1,6 @@
 # World Kit: Ekip Rehberi
 
-Level design'a yardım edecek ekip arkadaşları için adım adım rehber. Her özelliğin ayrıntısı [README](../README.md)'de.
+Level design'a yardım edecek ekip arkadaşları için adım adım rehber. Her aracın ayrıntısı ve hazır tarifler: [Kullanım kılavuzu](Kilavuz.md).
 Kod yazmak gerekmez.
 
 ---
