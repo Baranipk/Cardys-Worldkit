@@ -12,10 +12,21 @@ namespace WorldKit.Editor
     /// </summary>
     public abstract class WorldKitPaletteTab
     {
+        /// <summary>Paletin üstündeki bölümler. Kendi bölümünüz için herhangi bir ad da verebilirsiniz.</summary>
+        public const string BuildSection = "İnşa";
+        public const string AnalysisSection = "Analiz";
+        public const string OutputSection = "Çıktı";
+
         public abstract string Title { get; }
 
-        /// <summary>Sekme sırası. Zemin: 0, klasör sekmeleri: 100+, varsayılan: 1000.</summary>
+        /// <summary>Sekme sırası (bölüm içinde). Zemin: 0, klasör sekmeleri: 100+, varsayılan: 1000.</summary>
         public virtual int Order => 1000;
+
+        /// <summary>Sekmenin bulunduğu bölüm. "İnşa" bölümünde fırça kartı ve mod çubuğu da görünür.</summary>
+        public virtual string Section => "Araçlar";
+
+        /// <summary>Kenar çubuğundaki ikon (null = klasör ikonu).</summary>
+        public virtual Texture2D Icon => null;
 
         /// <summary>Sekme içeriği. EditorGUILayout ile çizin.</summary>
         public abstract void OnGUI(WorldKitPaletteWindow window);
@@ -30,6 +41,12 @@ namespace WorldKit.Editor
         public abstract string Label { get; }
         public virtual string Tooltip => Label;
         public virtual int Order => 100;
+
+        /// <summary>Alt çubukta düğmenin gösterildiği grup (ör. "Görünüm", "Test", "Seçim").</summary>
+        public virtual string Group => "Genel";
+
+        /// <summary>Düğme ikonu (null = yalnızca yazı).</summary>
+        public virtual Texture2D Icon => null;
         public virtual bool IsEnabled => true;
         public abstract void Execute();
     }
@@ -52,6 +69,8 @@ namespace WorldKit.Editor
     {
         public override string Title => "Zemin";
         public override int Order => 0;
+        public override string Section => BuildSection;
+        public override Texture2D Icon => WorldKitIcons.Floor;
 
         public override void OnGUI(WorldKitPaletteWindow window)
         {
@@ -149,22 +168,55 @@ namespace WorldKit.Editor
             (WorldKitBrush.FloorOperation.Wall, "Seçilen alanın dış kenarlarına duvar ör. Zemini değiştirmez."),
         };
 
+        static GUIStyle s_OperationButton;
+
+        static Texture2D OperationIcon(WorldKitBrush.FloorOperation op)
+        {
+            switch (op)
+            {
+                case WorldKitBrush.FloorOperation.Recolor: return WorldKitIcons.Recolor;
+                case WorldKitBrush.FloorOperation.Raise: return WorldKitIcons.Raise;
+                case WorldKitBrush.FloorOperation.Lower: return WorldKitIcons.Lower;
+                case WorldKitBrush.FloorOperation.Wall: return WorldKitIcons.Wall;
+                default: return WorldKitIcons.Paint;
+            }
+        }
+
         /// <summary>Zemin işlemi seçici: Boya / Sadece Renk / Yükselt / Alçalt / Duvarla Çevir.</summary>
         static void DrawOperationPicker()
         {
             GUILayout.Space(6f);
             EditorGUILayout.LabelField("İşlem", EditorStyles.boldLabel);
 
-            using (new EditorGUILayout.HorizontalScope())
+            s_OperationButton ??= new GUIStyle(EditorStyles.miniButton)
             {
-                foreach (var (op, tip) in k_Operations)
+                imagePosition = ImagePosition.ImageAbove,
+                fixedHeight = 44f,
+                fontSize = 9,
+                padding = new RectOffset(2, 2, 4, 2)
+            };
+
+            const float buttonWidth = 64f;
+            int columns = Mathf.Max(1, Mathf.FloorToInt((EditorGUIUtility.currentViewWidth - 160f) / (buttonWidth + 2f)));
+            using (new EditorGUIUtility.IconSizeScope(new Vector2(20f, 20f)))
+            {
+                for (int i = 0; i < k_Operations.Length; i += columns)
                 {
-                    bool on = WorldKitBrush.FloorOp == op;
-                    if (GUILayout.Toggle(on, new GUIContent(WorldKitBrush.FloorOperationName(op), tip), EditorStyles.miniButton) && !on)
+                    using (new EditorGUILayout.HorizontalScope())
                     {
-                        WorldKitBrush.FloorOp = op;
-                        if (!WorldKitBrush.IsFloorBrush)
-                            WorldKitBrush.BeginFloor();
+                        for (int j = i; j < Mathf.Min(i + columns, k_Operations.Length); j++)
+                        {
+                            var (op, tip) = k_Operations[j];
+                            bool on = WorldKitBrush.FloorOp == op;
+                            var content = new GUIContent(WorldKitBrush.FloorOperationName(op), OperationIcon(op), tip);
+                            if (GUILayout.Toggle(on, content, s_OperationButton, GUILayout.Width(buttonWidth)) && !on)
+                            {
+                                WorldKitBrush.FloorOp = op;
+                                if (!WorldKitBrush.IsFloorBrush)
+                                    WorldKitBrush.BeginFloor();
+                            }
+                        }
+                        GUILayout.FlexibleSpace();
                     }
                 }
             }
@@ -186,6 +238,8 @@ namespace WorldKit.Editor
         public override string Label => "Üstten Kamera";
         public override string Tooltip => "Scene kamerasını top-down açıya (55°) getirir.";
         public override int Order => 10;
+        public override string Group => "Görünüm";
+        public override Texture2D Icon => WorldKitIcons.Camera;
 
         public override void Execute()
         {
@@ -201,12 +255,4 @@ namespace WorldKit.Editor
         }
     }
 
-    /// <summary>Proje ayarlarını açar.</summary>
-    sealed class SettingsItem : WorldKitToolbarItem
-    {
-        public override string Label => "Ayarlar";
-        public override string Tooltip => "Project Settings → World Kit";
-        public override int Order => 900;
-        public override void Execute() => SettingsService.OpenProjectSettings("Project/World Kit");
-    }
 }

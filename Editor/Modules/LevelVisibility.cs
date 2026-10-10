@@ -31,6 +31,8 @@ namespace WorldKit.Editor
         public override string Label => s_Active ? $"Üst Katlar Gizli ({WorldKitBrush.Level})" : "Üst Katları Gizle";
         public override string Tooltip => "Çalışılan seviyenin (E/Q) üstündeki parçaları ve zemini gizler / gösterir.";
         public override int Order => 15;
+        public override string Group => "Görünüm";
+        public override Texture2D Icon => WorldKitIcons.Layers;
 
         public override void Execute()
         {

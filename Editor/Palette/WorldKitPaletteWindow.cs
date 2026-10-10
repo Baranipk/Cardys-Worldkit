@@ -8,56 +8,83 @@ using UnityEngine;
 namespace WorldKit.Editor
 {
     /// <summary>
-    /// World Kit paleti. Sekmeler iki kaynaktan gelir:
-    /// 1) Parçalar klasörünün her alt klasörü (prefab'lar otomatik listelenir),
-    /// 2) Koddan eklenen WorldKitPaletteTab sınıfları (ör. Zemin).
-    /// Mod çubuğu WorldKitTool'lardan, alt çubuk WorldKitToolbarItem'lardan oluşur.
+    /// World Kit paleti.
+    ///
+    /// Düzen:
+    ///   Başlık    — bölümler (İnşa / Analiz / Çıktı / eklentilerin bölümleri) + yenile, ayarlar, yardım
+    ///   İnşa      — solda kategori listesi (Zemin + parçalar klasörünün alt klasörleri + İnşa bölümündeki eklenti
+    ///               sekmeleri), sağda seçili fırça kartı, mod çubuğu (Yerleştir / Sil / Ölç) ve içerik
+    ///   Diğerleri — bölümdeki sekmeler
+    ///   Alt çubuk — WorldKitToolbarItem'lar, gruplarına göre (Görünüm, Test, Seçim...)
     /// </summary>
     public class WorldKitPaletteWindow : EditorWindow
     {
-        const string TabPrefKey = "WorldKit.Palette.Tab";
+        const string SectionPrefKey = "WorldKit.Palette.Section";
+        const string TabPrefKey = "WorldKit.Palette.Tab.";
         const string SizePrefKey = "WorldKit.Palette.Size";
+
+        /// <summary>Bilinen klasörlerin görünen adı ve ikonu. Diğer klasörler için klasöre "_icon.png" koyun.</summary>
+        static readonly Dictionary<string, (string title, Func<Texture2D> icon)> k_KnownFolders =
+            new Dictionary<string, (string, Func<Texture2D>)>
+            {
+                { "Yapi", ("Yapı", () => WorldKitIcons.Wall) },
+                { "Bina", ("Bina", () => WorldKitIcons.House) },
+                { "Dekor", ("Dekor", () => WorldKitIcons.Tree) },
+                { "Sablonlar", ("Şablonlar", () => WorldKitIcons.Stamp) },
+                { "NPC", ("NPC", () => WorldKitIcons.Person) },
+                { "Referans", ("Referans", () => WorldKitIcons.Reference) },
+            };
 
         sealed class Tab
         {
             public string Title;
+            public string Section;
             public int Order;
+            public Func<Texture2D> Icon;
             public WorldKitPaletteTab Custom;
             public List<GameObject> Prefabs;
         }
 
         readonly List<Tab> m_Tabs = new List<Tab>();
+        readonly List<string> m_Sections = new List<string>();
         List<WorldKitPaletteTab> m_CustomTabs;
         List<WorldKitToolbarItem> m_ToolbarItems;
 
-        int m_Tab;
+        string m_Section;
         float m_TileSize = 84f;
         string m_Search = string.Empty;
         Vector2 m_Scroll;
+        Vector2 m_SidebarScroll;
         GameObject m_DragCandidate;
         Vector2 m_DragStart;
 
-        static GUIStyle s_RichLabel;
         static GUIStyle s_TileLabel;
+        static GUIStyle s_SidebarItem;
+        static GUIStyle s_CardTitle;
+        static GUIStyle s_GroupLabel;
+
+        bool Narrow => position.width < 440f;
 
         [MenuItem("Tools/World Kit/Palet %#g", priority = 0)]
         public static void Open()
         {
             var window = GetWindow<WorldKitPaletteWindow>();
-            window.titleContent = new GUIContent("World Kit", EditorGUIUtility.IconContent("Prefab Icon").image);
-            window.minSize = new Vector2(280f, 300f);
+            window.titleContent = new GUIContent("World Kit", WorldKitIcons.Build);
+            window.minSize = new Vector2(300f, 360f);
             window.Show();
         }
 
         void OnEnable()
         {
-            m_Tab = EditorPrefs.GetInt(TabPrefKey, 0);
+            titleContent = new GUIContent("World Kit", WorldKitIcons.Build);
+            m_Section = EditorPrefs.GetString(SectionPrefKey, WorldKitPaletteTab.BuildSection);
             m_TileSize = EditorPrefs.GetFloat(SizePrefKey, 84f);
             wantsMouseMove = true;
             m_CustomTabs = WorldKitExtensions.Create<WorldKitPaletteTab>();
             m_ToolbarItems = WorldKitExtensions.Create<WorldKitToolbarItem>().OrderBy(i => i.Order).ToList();
             WorldKitBrush.Changed += Repaint;
             WorldKitEvents.SettingsChanged += Refresh;
+            Selection.selectionChanged += Repaint;
             Refresh();
         }
 
@@ -65,9 +92,12 @@ namespace WorldKit.Editor
         {
             WorldKitBrush.Changed -= Repaint;
             WorldKitEvents.SettingsChanged -= Refresh;
+            Selection.selectionChanged -= Repaint;
         }
 
         void OnProjectChange() => Refresh();
+
+        // ---------------- Veri ----------------
 
         public void Refresh()
         {
@@ -75,7 +105,10 @@ namespace WorldKit.Editor
             var settings = WorldKitSettings.Instance;
 
             foreach (var custom in m_CustomTabs)
-                m_Tabs.Add(new Tab { Title = custom.Title, Order = custom.Order, Custom = custom });
+            {
+                var tab = custom;
+                m_Tabs.Add(new Tab { Title = tab.Title, Section = tab.Section, Order = tab.Order, Custom = tab, Icon = () => tab.Icon ?? WorldKitIcons.Folder });
+            }
 
             if (AssetDatabase.IsValidFolder(settings.piecesFolder))
             {
@@ -93,132 +126,359 @@ namespace WorldKit.Editor
                         continue;
 
                     int index = settings.categoryOrder.IndexOf(folder);
+                    var customIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(folderPath + "/_icon.png");
+                    k_KnownFolders.TryGetValue(folder, out var known);
+
                     m_Tabs.Add(new Tab
                     {
-                        Title = folder,
+                        Title = known.title ?? folder.Replace('_', ' '),
+                        Section = WorldKitPaletteTab.BuildSection,
                         Order = index >= 0 ? 100 + index : 500,
+                        Icon = () => customIcon != null ? customIcon : known.icon != null ? known.icon() : WorldKitIcons.Folder,
                         Prefabs = prefabs
                     });
                 }
             }
 
-            // Hiç parça yoksa "Başlangıç içeriği üret" ekranını gösteren boş bir sekme.
+            // Hiç parça yoksa "Başlangıç içeriği üret" ekranını gösteren boş bir kategori.
             if (m_Tabs.All(t => t.Prefabs == null))
-                m_Tabs.Add(new Tab { Title = "Parçalar", Order = 100, Prefabs = new List<GameObject>() });
+                m_Tabs.Add(new Tab { Title = "Parçalar", Section = WorldKitPaletteTab.BuildSection, Order = 100, Icon = () => WorldKitIcons.Folder, Prefabs = new List<GameObject>() });
 
             m_Tabs.Sort((a, b) => a.Order != b.Order
                 ? a.Order.CompareTo(b.Order)
                 : string.Compare(a.Title, b.Title, StringComparison.OrdinalIgnoreCase));
 
-            m_Tab = Mathf.Clamp(m_Tab, 0, Mathf.Max(0, m_Tabs.Count - 1));
+            // Bölümler: İnşa her zaman ilk, diğerleri içlerindeki ilk sekmenin sırasına göre.
+            m_Sections.Clear();
+            m_Sections.AddRange(m_Tabs
+                .GroupBy(t => t.Section)
+                .OrderBy(g => g.Key == WorldKitPaletteTab.BuildSection ? int.MinValue : g.Min(t => t.Order))
+                .Select(g => g.Key));
+
+            if (!m_Sections.Contains(m_Section))
+                m_Section = m_Sections.FirstOrDefault() ?? WorldKitPaletteTab.BuildSection;
+
             Repaint();
         }
 
+        IEnumerable<Tab> TabsIn(string section) => m_Tabs.Where(t => t.Section == section);
+
+        Tab SelectedTab(string section)
+        {
+            var title = EditorPrefs.GetString(TabPrefKey + section, "");
+            return TabsIn(section).FirstOrDefault(t => t.Title == title) ?? TabsIn(section).FirstOrDefault();
+        }
+
+        void SelectTab(Tab tab)
+        {
+            EditorPrefs.SetString(TabPrefKey + tab.Section, tab.Title);
+            m_Scroll = Vector2.zero;
+        }
+
+        // ---------------- Çizim ----------------
+
         void OnGUI()
         {
-            DrawTabs();
-            DrawToolModes();
-            DrawBrushStatus();
+            InitStyles();
+            DrawHeader();
 
-            if (m_Tab < m_Tabs.Count)
-                DrawTabContent(m_Tabs[m_Tab]);
+            var tab = SelectedTab(m_Section);
+            if (m_Section == WorldKitPaletteTab.BuildSection)
+            {
+                using (new EditorGUILayout.HorizontalScope(GUILayout.ExpandHeight(true)))
+                {
+                    DrawSidebar(tab);
+                    using (new EditorGUILayout.VerticalScope())
+                    {
+                        DrawBrushCard();
+                        DrawToolModes();
+                        if (tab != null)
+                            DrawTabContent(tab);
+                        else
+                            GUILayout.FlexibleSpace();
+                    }
+                }
+            }
             else
-                GUILayout.FlexibleSpace();
+            {
+                var tabs = TabsIn(m_Section).ToList();
+                if (tabs.Count > 1)
+                {
+                    using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+                    {
+                        foreach (var t in tabs)
+                        {
+                            if (GUILayout.Toggle(t == tab, t.Title, EditorStyles.toolbarButton) && t != tab)
+                                SelectTab(t);
+                        }
+                        GUILayout.FlexibleSpace();
+                    }
+                }
+
+                if (tab != null)
+                    DrawTabContent(tab);
+                else
+                    GUILayout.FlexibleSpace();
+            }
 
             DrawFooter();
         }
 
-        void DrawEmptyState()
+        static void InitStyles()
         {
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.HelpBox(
-                "Parçalar klasöründe (" + WorldKitSettings.Instance.piecesFolder + ") henüz prefab yok.\n\n" +
-                "• Kendi prefab'larını bu klasörün alt klasörlerine koy (her alt klasör bir sekme olur), veya\n" +
-                "• Başlangıç içeriğini üret.",
-                MessageType.Info);
-            if (GUILayout.Button("Başlangıç İçeriğini Üret", GUILayout.Height(32f)))
+            s_TileLabel ??= new GUIStyle(EditorStyles.miniLabel)
             {
-                WorldKitStarterContent.Generate();
-                Refresh();
-            }
-            GUILayout.FlexibleSpace();
+                alignment = TextAnchor.UpperCenter,
+                wordWrap = true,
+                clipping = TextClipping.Clip
+            };
+            s_SidebarItem ??= new GUIStyle(EditorStyles.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                padding = new RectOffset(6, 4, 2, 2),
+                fixedHeight = 26f
+            };
+            s_CardTitle ??= new GUIStyle(EditorStyles.boldLabel) { fontSize = 12, clipping = TextClipping.Clip };
+            s_GroupLabel ??= new GUIStyle(EditorStyles.miniLabel)
+            {
+                fontSize = 9,
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = EditorGUIUtility.isProSkin ? new Color(0.6f, 0.6f, 0.6f) : new Color(0.4f, 0.4f, 0.4f) }
+            };
         }
 
-        void DrawTabs()
+        static Texture2D SectionIcon(string section)
+        {
+            switch (section)
+            {
+                case WorldKitPaletteTab.BuildSection: return WorldKitIcons.Build;
+                case WorldKitPaletteTab.AnalysisSection: return WorldKitIcons.Stats;
+                case WorldKitPaletteTab.OutputSection: return WorldKitIcons.Output;
+                default: return WorldKitIcons.Folder;
+            }
+        }
+
+        /// <summary>Başlık: bölümler + yenile / ayarlar / yardım.</summary>
+        void DrawHeader()
         {
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+            using (new EditorGUIUtility.IconSizeScope(new Vector2(14f, 14f)))
             {
-                var labels = m_Tabs.Select(t => t.Title).ToArray();
-                var tab = GUILayout.Toolbar(m_Tab, labels, EditorStyles.toolbarButton);
-                if (tab != m_Tab)
+                foreach (var section in m_Sections)
                 {
-                    m_Tab = tab;
-                    EditorPrefs.SetInt(TabPrefKey, m_Tab);
+                    bool on = section == m_Section;
+                    var content = Narrow ? new GUIContent(SectionIcon(section), section) : new GUIContent(" " + section, SectionIcon(section));
+                    if (GUILayout.Toggle(on, content, EditorStyles.toolbarButton, GUILayout.MinWidth(Narrow ? 30f : 70f)) && !on)
+                    {
+                        m_Section = section;
+                        EditorPrefs.SetString(SectionPrefKey, section);
+                        m_Scroll = Vector2.zero;
+                    }
+                }
+
+                GUILayout.FlexibleSpace();
+
+                if (GUILayout.Button(new GUIContent(WorldKitIcons.Refresh, "Listeyi ve önizlemeleri yenile"), EditorStyles.toolbarButton, GUILayout.Width(26f)))
+                {
+                    WorldKitThumbnails.Clear();
+                    Refresh();
+                }
+                if (GUILayout.Button(new GUIContent(WorldKitIcons.Settings, "Proje ayarları (Project Settings → World Kit)"), EditorStyles.toolbarButton, GUILayout.Width(26f)))
+                    SettingsService.OpenProjectSettings("Project/World Kit");
+                if (GUILayout.Button(new GUIContent(WorldKitIcons.Help, "Kısayollar"), EditorStyles.toolbarButton, GUILayout.Width(26f)))
+                    ShowHelp();
+            }
+        }
+
+        /// <summary>İnşa bölümünün sol kategori listesi.</summary>
+        void DrawSidebar(Tab selected)
+        {
+            float width = Narrow ? 34f : 124f;
+            using (new EditorGUILayout.VerticalScope(GUILayout.Width(width)))
+            {
+                m_SidebarScroll = EditorGUILayout.BeginScrollView(m_SidebarScroll, GUIStyle.none, GUI.skin.verticalScrollbar);
+                GUILayout.Space(4f);
+
+                string lastGroup = null;
+                foreach (var tab in TabsIn(WorldKitPaletteTab.BuildSection))
+                {
+                    // Zemin ile parçalar arasında ince bir ayraç
+                    string group = tab.Prefabs != null ? "parts" : "custom";
+                    if (lastGroup != null && group != lastGroup)
+                        DrawSeparator();
+                    lastGroup = group;
+
+                    var rect = GUILayoutUtility.GetRect(width, 26f);
+                    bool isSelected = tab == selected;
+                    if (Event.current.type == EventType.Repaint)
+                    {
+                        if (isSelected)
+                            EditorGUI.DrawRect(rect, new Color(0.24f, 0.48f, 0.9f, EditorGUIUtility.isProSkin ? 0.55f : 0.35f));
+                        else if (rect.Contains(Event.current.mousePosition))
+                            EditorGUI.DrawRect(rect, new Color(0.5f, 0.5f, 0.5f, 0.15f));
+
+                        GUI.DrawTexture(new Rect(rect.x + 7f, rect.y + 4f, 18f, 18f), tab.Icon(), ScaleMode.ScaleToFit);
+                        if (!Narrow)
+                            GUI.Label(new Rect(rect.x + 28f, rect.y, rect.width - 30f, rect.height), tab.Title, s_SidebarItem);
+                    }
+
+                    if (Narrow)
+                        GUI.Label(rect, new GUIContent("", tab.Title));
+
+                    if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
+                    {
+                        SelectTab(tab);
+                        Event.current.Use();
+                    }
+                }
+
+                GUILayout.FlexibleSpace();
+                EditorGUILayout.EndScrollView();
+            }
+
+            // Kenar çubuğu ile içerik arasında dikey çizgi
+            var line = GUILayoutUtility.GetRect(1f, 1f, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
+            EditorGUI.DrawRect(line, new Color(0f, 0f, 0f, 0.25f));
+
+            if (Event.current.type == EventType.MouseMove)
+                Repaint();
+        }
+
+        static void DrawSeparator()
+        {
+            GUILayout.Space(3f);
+            var rect = GUILayoutUtility.GetRect(1f, 1f, GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(new Rect(rect.x + 6f, rect.y, rect.width - 12f, 1f), new Color(0.5f, 0.5f, 0.5f, 0.3f));
+            GUILayout.Space(3f);
+        }
+
+        /// <summary>Seçili fırçanın kartı: önizleme, ad, mod/kat/açı ve kontroller.</summary>
+        void DrawBrushCard()
+        {
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox, GUILayout.Height(46f)))
+            {
+                bool active = WorldKitBrush.IsActive;
+                var thumbRect = GUILayoutUtility.GetRect(40f, 40f, GUILayout.Width(40f), GUILayout.Height(40f));
+                Texture image = !active ? WorldKitIcons.Build
+                    : WorldKitBrush.IsFloorBrush ? WorldKitIcons.Floor
+                    : WorldKitThumbnails.Get(WorldKitBrush.Current);
+                if (image != null)
+                {
+                    var color = GUI.color;
+                    if (!active)
+                        GUI.color = new Color(1f, 1f, 1f, 0.35f);
+                    GUI.DrawTexture(active ? thumbRect : new Rect(thumbRect.x + 8f, thumbRect.y + 8f, 24f, 24f), image, ScaleMode.ScaleToFit);
+                    GUI.color = color;
+                }
+
+                using (new EditorGUILayout.VerticalScope())
+                {
+                    GUILayout.FlexibleSpace();
+                    if (!active)
+                    {
+                        GUILayout.Label("Fırça seçili değil", s_CardTitle);
+                        GUILayout.Label("Bir parçaya tıkla veya Scene'e sürükle", EditorStyles.miniLabel);
+                    }
+                    else
+                    {
+                        var name = WorldKitBrush.IsFloorBrush
+                            ? $"Zemin · {WorldKitBrush.FloorOperationName(WorldKitBrush.FloorOp)}"
+                            : Nice(WorldKitBrush.Current.name);
+                        GUILayout.Label(name, s_CardTitle);
+                        var tool = WorldKitBrush.Tool;
+                        var details = $"{tool?.DisplayName(WorldKitBrush.Context)} · Kat {WorldKitBrush.Level}";
+                        if (!WorldKitBrush.IsFloorBrush)
+                            details += $" · {WorldKitBrush.Rotation * 90}°";
+                        GUILayout.Label(details, EditorStyles.miniLabel);
+                    }
+                    GUILayout.FlexibleSpace();
+                }
+
+                if (!active)
+                    return;
+
+                using (new EditorGUILayout.VerticalScope(GUILayout.Width(Narrow ? 70f : 120f)))
+                {
+                    GUILayout.FlexibleSpace();
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        if (!Narrow)
+                            GUILayout.Label("Kat", EditorStyles.miniLabel, GUILayout.Width(22f));
+                        if (GUILayout.Button(new GUIContent("−", "Kat aşağı (Q)"), EditorStyles.miniButtonLeft, GUILayout.Width(20f)))
+                            WorldKitBrush.ChangeLevel(-1);
+                        GUILayout.Label(WorldKitBrush.Level.ToString(), EditorStyles.miniButtonMid, GUILayout.Width(24f));
+                        if (GUILayout.Button(new GUIContent("+", "Kat yukarı (E)"), EditorStyles.miniButtonRight, GUILayout.Width(20f)))
+                            WorldKitBrush.ChangeLevel(1);
+                    }
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        if (!WorldKitBrush.IsFloorBrush && GUILayout.Button(new GUIContent("↻", "Döndür (R)"), EditorStyles.miniButtonLeft, GUILayout.Width(Narrow ? 30f : 42f)))
+                            WorldKitBrush.Rotate(1);
+                        if (GUILayout.Button(new GUIContent("Bırak", "Fırçayı bırak (Esc)"), WorldKitBrush.IsFloorBrush ? EditorStyles.miniButton : EditorStyles.miniButtonRight))
+                            WorldKitBrush.End();
+                    }
+                    GUILayout.FlexibleSpace();
                 }
             }
         }
 
-        /// <summary>Mod çubuğu: kayıtlı tüm WorldKitTool'lar.</summary>
+        /// <summary>Mod çubuğu: Yerleştir / Sil / Ölç grupları, ikonlu düğmeler.</summary>
         void DrawToolModes()
         {
             var context = WorldKitBrush.Context;
-            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+            var tools = WorldKitTools.All.ToList();
+            var groups = new[]
             {
-                GUILayout.Label("Mod", EditorStyles.miniLabel, GUILayout.Width(28f));
-                var tools = WorldKitTools.All;
-                for (int i = 0; i < tools.Count; i++)
+                ("YERLEŞTİR", tools.Where(t => t.ModifiesScene && !t.Erases).ToList()),
+                ("SİL", tools.Where(t => t.Erases).ToList()),
+                ("ÖLÇ", tools.Where(t => !t.ModifiesScene).ToList()),
+            };
+
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar, GUILayout.Height(26f)))
+            using (new EditorGUIUtility.IconSizeScope(new Vector2(16f, 16f)))
+            {
+                foreach (var (label, list) in groups)
                 {
-                    var tool = tools[i];
-                    using (new EditorGUI.DisabledScope(!tool.Supports(context)))
+                    if (list.Count == 0)
+                        continue;
+                    if (!Narrow)
+                        GUILayout.Label(label, s_GroupLabel, GUILayout.ExpandWidth(false));
+
+                    foreach (var tool in list)
                     {
-                        var label = i < 9 ? $"{i + 1} {tool.DisplayName(context)}" : tool.DisplayName(context);
-                        bool on = WorldKitBrush.Tool == tool;
-                        if (GUILayout.Toggle(on, new GUIContent(label, tool.Tooltip), EditorStyles.toolbarButton) && !on)
-                            WorldKitBrush.Tool = tool;
+                        int index = tools.IndexOf(tool);
+                        var key = index < 9 ? $" ({index + 1})" : "";
+                        var content = tool.Icon != null
+                            ? new GUIContent(tool.Icon, $"{tool.DisplayName(context)}{key}\n{tool.Tooltip}")
+                            : new GUIContent(tool.DisplayName(context).Substring(0, 1), $"{tool.DisplayName(context)}{key}\n{tool.Tooltip}");
+
+                        using (new EditorGUI.DisabledScope(!tool.Supports(context)))
+                        {
+                            bool on = WorldKitBrush.Tool == tool;
+                            if (GUILayout.Toggle(on, content, EditorStyles.toolbarButton, GUILayout.Width(28f), GUILayout.Height(22f)) && !on)
+                                WorldKitBrush.Tool = tool;
+                        }
                     }
+                    GUILayout.Space(6f);
                 }
+
+                GUILayout.FlexibleSpace();
+                var current = WorldKitBrush.Tool;
+                if (current != null)
+                    GUILayout.Label(current.DisplayName(context), EditorStyles.miniBoldLabel);
             }
 
             // Seçili modun ayarları (ör. Serp: yarıçap, yoğunluk).
-            var current = WorldKitBrush.Tool;
-            if (current != null && current.HasSettings)
+            var selected = WorldKitBrush.Tool;
+            if (selected != null && selected.HasSettings && selected.Supports(context))
             {
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
                     EditorGUI.BeginChangeCheck();
-                    current.OnSettingsGUI();
+                    selected.OnSettingsGUI();
                     if (EditorGUI.EndChangeCheck())
                         SceneView.RepaintAll();
                 }
-            }
-        }
-
-        void DrawBrushStatus()
-        {
-            using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox))
-            {
-                if (!WorldKitBrush.IsActive)
-                {
-                    GUILayout.Label("Bir parçaya tıkla veya Scene'e sürükle.", EditorStyles.miniLabel);
-                    return;
-                }
-
-                var brushName = WorldKitBrush.IsFloorBrush ? "Zemin" : Nice(WorldKitBrush.Current.name);
-                GUILayout.Label($"Fırça: <b>{brushName}</b>", s_RichLabel ??= new GUIStyle(EditorStyles.label) { richText = true });
-                GUILayout.FlexibleSpace();
-
-                GUILayout.Label("Seviye", EditorStyles.miniLabel);
-                if (GUILayout.Button("−", EditorStyles.miniButtonLeft, GUILayout.Width(20f)))
-                    WorldKitBrush.ChangeLevel(-1);
-                GUILayout.Label(WorldKitBrush.Level.ToString(), EditorStyles.miniButtonMid, GUILayout.Width(26f));
-                if (GUILayout.Button("+", EditorStyles.miniButtonRight, GUILayout.Width(20f)))
-                    WorldKitBrush.ChangeLevel(1);
-
-                if (!WorldKitBrush.IsFloorBrush && GUILayout.Button($"↻ {WorldKitBrush.Rotation * 90}°", EditorStyles.miniButton, GUILayout.Width(50f)))
-                    WorldKitBrush.Rotate(1);
-
-                if (GUILayout.Button("Bırak", EditorStyles.miniButton, GUILayout.Width(44f)))
-                    WorldKitBrush.End();
             }
         }
 
@@ -240,8 +500,8 @@ namespace WorldKit.Editor
 
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
-                m_Search = GUILayout.TextField(m_Search, EditorStyles.toolbarSearchField, GUILayout.MinWidth(80f));
-                var size = GUILayout.HorizontalSlider(m_TileSize, 56f, 140f, GUILayout.Width(70f));
+                m_Search = GUILayout.TextField(m_Search, EditorStyles.toolbarSearchField, GUILayout.MinWidth(60f));
+                var size = GUILayout.HorizontalSlider(m_TileSize, 56f, 140f, GUILayout.Width(60f));
                 if (!Mathf.Approximately(size, m_TileSize))
                 {
                     m_TileSize = size;
@@ -252,6 +512,22 @@ namespace WorldKit.Editor
             DrawPrefabGrid(tab.Prefabs);
         }
 
+        void DrawEmptyState()
+        {
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.HelpBox(
+                "Parçalar klasöründe (" + WorldKitSettings.Instance.piecesFolder + ") henüz prefab yok.\n\n" +
+                "• Kendi prefab'larını bu klasörün alt klasörlerine koy (her alt klasör bir kategori olur), veya\n" +
+                "• Başlangıç içeriğini üret.",
+                MessageType.Info);
+            if (GUILayout.Button("Başlangıç İçeriğini Üret", GUILayout.Height(32f)))
+            {
+                WorldKitStarterContent.Generate();
+                Refresh();
+            }
+            GUILayout.FlexibleSpace();
+        }
+
         void DrawPrefabGrid(List<GameObject> source)
         {
             var pieces = source
@@ -259,18 +535,11 @@ namespace WorldKit.Editor
                 .Where(p => string.IsNullOrEmpty(m_Search) || Nice(p.name).IndexOf(m_Search, StringComparison.OrdinalIgnoreCase) >= 0)
                 .ToList();
 
-            s_TileLabel ??= new GUIStyle(EditorStyles.miniLabel)
-            {
-                alignment = TextAnchor.UpperCenter,
-                wordWrap = true,
-                clipping = TextClipping.Clip
-            };
-
             const float padding = 6f;
             const float labelHeight = 28f;
             float tileWidth = m_TileSize;
             float tileHeight = m_TileSize + labelHeight;
-            float viewWidth = position.width - 16f;
+            float viewWidth = EditorGUIUtility.currentViewWidth - (Narrow ? 34f : 124f) - 20f;
             int columns = Mathf.Max(1, Mathf.FloorToInt((viewWidth - padding) / (tileWidth + padding)));
             int rows = Mathf.CeilToInt(pieces.Count / (float)columns);
 
@@ -352,29 +621,39 @@ namespace WorldKit.Editor
             }
         }
 
+        /// <summary>Alt çubuk: eklenti düğmeleri, gruplarına göre.</summary>
         void DrawFooter()
         {
-            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+            if (m_ToolbarItems.Count == 0)
+                return;
+
+            var groups = m_ToolbarItems.GroupBy(i => i.Group).OrderBy(g => g.Min(i => i.Order));
+            bool iconsOnly = position.width < 560f;
+
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar, GUILayout.Height(24f)))
+            using (new EditorGUIUtility.IconSizeScope(new Vector2(14f, 14f)))
             {
-                foreach (var item in m_ToolbarItems)
+                foreach (var group in groups)
                 {
-                    using (new EditorGUI.DisabledScope(!item.IsEnabled))
+                    if (!iconsOnly)
+                        GUILayout.Label(group.Key.ToUpperInvariant(), s_GroupLabel, GUILayout.ExpandWidth(false));
+
+                    foreach (var item in group)
                     {
-                        if (GUILayout.Button(new GUIContent(item.Label, item.Tooltip), EditorStyles.toolbarButton))
-                            item.Execute();
+                        var content = item.Icon == null ? new GUIContent(item.Label, item.Tooltip)
+                            : iconsOnly ? new GUIContent(item.Icon, $"{item.Label}\n{item.Tooltip}")
+                            : new GUIContent(" " + item.Label, item.Icon, item.Tooltip);
+
+                        using (new EditorGUI.DisabledScope(!item.IsEnabled))
+                        {
+                            if (GUILayout.Button(content, EditorStyles.toolbarButton, GUILayout.ExpandWidth(false)))
+                                item.Execute();
+                        }
                     }
-                }
 
+                    GUILayout.Space(8f);
+                }
                 GUILayout.FlexibleSpace();
-
-                if (GUILayout.Button(EditorGUIUtility.IconContent("Refresh", "|Önizlemeleri ve listeyi yenile"), EditorStyles.toolbarButton))
-                {
-                    WorldKitThumbnails.Clear();
-                    Refresh();
-                }
-
-                if (GUILayout.Button(EditorGUIUtility.IconContent("_Help", "|Kısayollar"), EditorStyles.toolbarButton))
-                    ShowHelp();
             }
         }
 
@@ -392,6 +671,8 @@ namespace WorldKit.Editor
                 "  E / Q: seviye yukarı / aşağı\n" +
                 "  Esc: sürüklerken iptal, değilse fırçayı bırak\n" +
                 "  Alt + sürükle: kamerayı döndür\n\n" +
+                "Fırça kapalıyken seçili parçalar:\n" +
+                "  Oklar: taşı · PgUp/PgDn: kat · R: döndür · G: grid'e oturt · Delete: sil\n\n" +
                 "Kısayollar Edit > Shortcuts > World Kit altından değiştirilebilir.",
                 "Tamam");
         }

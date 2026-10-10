@@ -106,6 +106,7 @@ public sealed class CheckerTool : WorldKitTool
 | Üye | Ne zaman değiştirilir |
 |---|---|
 | `Order` | Mod çubuğundaki sıra. İlk 9 mod 1-9 tuşlarıyla seçilir |
+| `Icon` | Mod çubuğundaki ikon (`WorldKitIcons` veya kendi çiziminiz); yoksa adın ilk harfi |
 | `Supports` | Mod bazı hedeflerde anlamsızsa (ör. duvarda "Alan"). Desteklenmeyince fırça bir önceki desteklenen moda düşer |
 | `PaintsWhileDragging` | `true`: sürüklerken her yeni hücrede anında uygular (Tek modu gibi) |
 | `Erases` | `true`: silme modu. Ctrl basılıyken ilk silme modu kullanılır |
@@ -130,12 +131,15 @@ Kod ile sekme, özel arayüz gerektiğinde kullanılır.
 
 ```csharp
 using UnityEditor;
+using UnityEngine;
 using WorldKit.Editor;
 
 public sealed class StatsTab : WorldKitPaletteTab
 {
     public override string Title => "İstatistik";
     public override int Order => 2000;   // Zemin: 0, klasörler: 100+, varsayılan: 1000
+    public override string Section => AnalysisSection;     // İnşa, Analiz, Çıktı veya kendi bölümünüz
+    public override Texture2D Icon => WorldKitIcons.Stats;
 
     public override void OnGUI(WorldKitPaletteWindow window)
     {
@@ -150,12 +154,15 @@ public sealed class StatsTab : WorldKitPaletteTab
 
 ```csharp
 using UnityEditor;
+using UnityEngine;
 using WorldKit.Editor;
 
 public sealed class FrameWorldItem : WorldKitToolbarItem
 {
     public override string Label => "Dünyayı Göster";
     public override int Order => 30;
+    public override string Group => "Görünüm";              // alt çubukta grup
+    public override Texture2D Icon => WorldKitIcons.Camera; // isteğe bağlı
     public override bool IsEnabled => WorldKitBrush.FindRoot() != null;
     public override void Execute() => Selection.activeGameObject = WorldKitBrush.FindRoot();
 }
@@ -275,3 +282,28 @@ Bir değişiklikten sonra en azından şunları deneyin:
 Alt-mesh düzeni: `0` tür 0 yer seviyesi, `1` tür 0 yükseltilmiş, `1 + t` tür t. Zemini koddan değiştirdikten
 sonra `WorldKitBrush.SyncFloorMaterials(floor)` çağırın; materyaller ayarlardaki türlerle eşitlenir.
 Undo için değişiklikten önce `Undo.RecordObject(floor, ...)` kullanın.
+
+## Arayüz ve ikonlar
+
+Palet üç katmandan oluşur: **bölümler** (`WorldKitPaletteTab.Section`), **kategoriler/sekmeler** ve
+**alt çubuk grupları** (`WorldKitToolbarItem.Group`). İnşa bölümündeki sekmeler sol listede, fırça kartı ve
+mod çubuğunun altında görünür; diğer bölümlerde sekmeler üstte sıralanır.
+
+Mod çubuğu modları kendiliğinden gruplar: `ModifiesScene && !Erases` → YERLEŞTİR, `Erases` → SİL,
+`!ModifiesScene` → ÖLÇ.
+
+**İkonlar (`WorldKitIcons`)** kodla, 64×64 kenar yumuşatmalı bir tuvalde çizilir ve temaya göre renklenir.
+Kendi ikonunuz için:
+
+```cs
+public override Texture2D Icon => WorldKitIcons.Get("benim-ikon", c =>
+{
+    c.Circle(32, 32, 20);          // dolu daire
+    c.ClearCircle(32, 32, 10);     // ortasını boşalt
+    c.Line(8, 56, 56, 8, 6);       // kalın çizgi
+});
+```
+
+Tuval metotları: `Rect`, `RoundRect`, `RectStroke`, `Circle`, `Ring`, `Line`, `Triangle`, `Clear`, `ClearCircle`
+(koordinatlar sol üstten). Parça klasörüne ikon vermek için kod gerekmez: klasöre `_icon.png` koyun.
+Bütün ikonlar: `Documentation~/images/ikonlar.png`.

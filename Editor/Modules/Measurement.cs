@@ -15,6 +15,7 @@ namespace WorldKit.Editor
         public override string Name => "Cetvel";
         public override string Tooltip => "Tut-çek: mesafe, hücre sayısı ve yürüme/koşma süresi. Sahneyi değiştirmez. (Sil'den sonra gelir.)";
         public override int Order => 95;
+        public override Texture2D Icon => WorldKitIcons.RulerTool;
         public override bool ModifiesScene => false;
         public override string Hint(BrushContext c) => c.Dragging ? Measure(c) : "Tut-çek: ölç";
 
@@ -62,6 +63,8 @@ namespace WorldKit.Editor
     {
         public override string Title => "İstatistik";
         public override int Order => 2000;
+        public override string Section => AnalysisSection;
+        public override Texture2D Icon => WorldKitIcons.Stats;
 
         sealed class Stats
         {

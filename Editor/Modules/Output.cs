@@ -222,6 +222,8 @@ namespace WorldKit.Editor
     {
         public override string Title => "Çıktı";
         public override int Order => 2100;
+        public override string Section => OutputSection;
+        public override Texture2D Icon => WorldKitIcons.Output;
 
         public override void OnGUI(WorldKitPaletteWindow window)
         {

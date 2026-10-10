@@ -2,6 +2,23 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.7.0] - 2026-10-10
+
+Arayüz yeniden düzenlendi.
+
+### Değişti
+- **Palet düzeni:** Üstte bölümler (İnşa / Analiz / Çıktı), İnşa'da solda kategori listesi, sağda fırça kartı,
+  gruplu mod çubuğu (Yerleştir / Sil / Ölç) ve içerik. Alt çubuk gruplara ayrıldı (Görünüm / Test / Seçim).
+- Ayarlar, yenile ve yardım başlığa taşındı ("Ayarlar" alt çubuk düğmesi kaldırıldı).
+- Dar pencerelerde kategori listesi, bölümler ve alt çubuk yalnızca ikonla gösterilir.
+- Zemin işlemleri ikonlu düğme ızgarası oldu.
+
+### Eklendi
+- **İkonlar** (`WorldKitIcons`): Bütün modlar, kategoriler, bölümler ve düğmeler için kodla çizilen, temaya uyumlu ikonlar.
+  Kendi ikonlarınız için `WorldKitIcons.Get(key, canvas => ...)`.
+- Eklenti API'si: `WorldKitTool.Icon`, `WorldKitPaletteTab.Section` / `Icon`, `WorldKitToolbarItem.Group` / `Icon`.
+- Parça klasörüne `_icon.png` koyarak kategori ikonu verme.
+
 ## [0.6.0] - 2026-10-10
 
 Zemin ve arazi.

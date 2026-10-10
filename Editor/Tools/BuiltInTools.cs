@@ -11,6 +11,7 @@ namespace WorldKit.Editor
         public override string Name => "Tek";
         public override string Tooltip => "Tıkla: tek parça. Sürükle: imlecin geçtiği yerlere boya.";
         public override int Order => 10;
+        public override Texture2D Icon => WorldKitIcons.Single;
         public override bool PaintsWhileDragging => true;
         public override string Hint(BrushContext c) => "Tıkla: koy   Sürükle: boya";
     }
@@ -21,6 +22,7 @@ namespace WorldKit.Editor
         public override string Name => "Hat";
         public override string Tooltip => "Tut-çek: düz hat/sıra. Duvar ve çit köşeden başlar, boylarının katlarına yuvarlanır.";
         public override int Order => 20;
+        public override Texture2D Icon => WorldKitIcons.Line;
         public override string Hint(BrushContext c) => c.IsLinear ? "Tut-çek: düz hat (köşeden başlar)" : "Tut-çek: düz sıra";
 
         public override void CollectPlacements(BrushContext c, List<Placement> result)
@@ -50,6 +52,7 @@ namespace WorldKit.Editor
         public override string Name => "Alan";
         public override string Tooltip => "Tut-çek: dikdörtgeni doldur. Duvar ve çitte kullanılamaz.";
         public override int Order => 30;
+        public override Texture2D Icon => WorldKitIcons.Area;
         public override bool Supports(BrushContext c) => !c.IsLinear;
         public override string Hint(BrushContext c) => "Tut-çek: alanı doldur";
 
@@ -78,6 +81,7 @@ namespace WorldKit.Editor
         public override string LinearName => "Oda";
         public override string Tooltip => "Tut-çek: çerçeve. Duvar ve çitte 4 kenarlı oda çizer.";
         public override int Order => 40;
+        public override Texture2D Icon => WorldKitIcons.Outline;
         public override string Hint(BrushContext c) => c.IsLinear ? "Tut-çek: oda (4 kenar)" : "Tut-çek: çerçeve";
 
         public override void CollectPlacements(BrushContext c, List<Placement> result)
@@ -107,6 +111,7 @@ namespace WorldKit.Editor
         public override string Name => "Sil";
         public override string Tooltip => "Tıkla: parça sil. Tut-çek: alanı sil. (Ctrl her modda geçici olarak siler.)";
         public override int Order => 90;
+        public override Texture2D Icon => WorldKitIcons.Erase;
         public override bool Erases => true;
         public override string Hint(BrushContext c) => c.IsFloor ? "Tut-çek: zemini sil" : "Tıkla: parça sil   Tut-çek: alanı sil";
 

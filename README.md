@@ -68,10 +68,32 @@ kendiliğinden devre dışı kalır, geri kalan her şey çalışır.
 ## Kullanım
 
 ### Palet
-- **Sekmeler:** *Zemin*, parçalar klasörünün her alt klasörü ve kodla eklenen sekmeler.
-- **Parçaya tıkla:** Fırça seçilir. **Scene'e sürükle:** Tek bir parça bırakılır.
-- **Sağ tık:** Project'te göster veya prefab'ı düzenle.
-- **Alt çubuk:** Üstten Kamera, Oyuncu Ekle (test modülü), Ayarlar.
+```
+┌──────────────────────────────────────────────┐
+│ [İnşa] [Analiz] [Çıktı]          ⟳  ⚙  ⓘ    │  bölümler · yenile · ayarlar · yardım
+├───────────┬──────────────────────────────────┤
+│ Zemin     │ [önizleme] Duvar 2m              │  seçili fırça: mod · kat · açı
+│ ───────── │            Alan · Kat 0 · 0°     │  [− kat +] [↻] [Bırak]
+│ Yapı      │ YERLEŞTİR ▪ ━ ▦ ▢ ∴  SİL ✕  ÖLÇ ▭ │  modlar (1-7)
+│ Bina      │ (seçili modun ayarları)          │
+│ Dekor     │ 🔍 ara                    boyut   │
+│ Şablonlar │ [parça] [parça] [parça] ...       │
+│ NPC       │                                  │
+│ Referans  │                                  │
+├───────────┴──────────────────────────────────┤
+│ GÖRÜNÜM Üstten Kamera · Üst Katları Gizle   TEST Oyuncu Ekle   SEÇİM Şablon Kaydet │
+└──────────────────────────────────────────────┘
+```
+- **Bölümler:** *İnşa* (yerleştirme), *Analiz* (istatistik, harita), *Çıktı* (bake, OBJ). Eklentiler kendi bölümlerini ekleyebilir.
+- **Kategoriler (sol):** *Zemin* ve parçalar klasörünün her alt klasörü. Kendi klasörüne ikon vermek için içine
+  `_icon.png` koy.
+- **Fırça kartı:** Seçili parçanın önizlemesi, modu, katı ve açısı; kat, döndür ve bırak düğmeleri.
+- **Mod çubuğu:** Yerleştir / Sil / Ölç grupları. Üzerine gelince adı, kısayolu ve açıklaması görünür.
+- **Parçaya tıkla:** Fırça seçilir. **Scene'e sürükle:** Tek bir parça bırakılır. **Sağ tık:** Project'te göster veya düzenle.
+- **Alt çubuk:** Görünüm, Test ve Seçim gruplarında düğmeler. Dar pencerede yalnızca ikonlar görünür.
+- Pencere daraldığında (440 px altı) kategori listesi ikon moduna geçer.
+
+![Palet ikonları (koyu ve açık tema)](Documentation~/images/ikonlar.png)
 
 ### Fırça modları
 | Tuş | Mod | Ne yapar |

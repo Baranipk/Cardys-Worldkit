@@ -158,6 +158,8 @@ namespace WorldKit.Editor
         public override string Label => "Şablon Kaydet";
         public override string Tooltip => "Seçili parçaları (ve altlarındaki zemini) palete şablon olarak kaydeder.";
         public override int Order => 30;
+        public override string Group => "Seçim";
+        public override Texture2D Icon => WorldKitIcons.SaveStamp;
         public override bool IsEnabled => WorldKitScene.SelectedPieces().Count > 0;
         public override void Execute() => Stamps.CreateFromSelection();
     }

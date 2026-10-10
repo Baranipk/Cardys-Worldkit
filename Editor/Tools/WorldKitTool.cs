@@ -23,6 +23,9 @@ namespace WorldKit.Editor
 
         public virtual string Tooltip => Name;
 
+        /// <summary>Mod çubuğundaki ikon. null ise adın ilk harfi gösterilir. Bkz. WorldKitIcons.</summary>
+        public virtual Texture2D Icon => null;
+
         /// <summary>Mod çubuğundaki sıra (küçük önce). Yerleşikler: 10, 20, 30, 40, 90.</summary>
         public virtual int Order => 100;
 

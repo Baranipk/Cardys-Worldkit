@@ -11,6 +11,8 @@ namespace WorldKit.Playtest.Editor
         public override string Label => "Oyuncu Ekle";
         public override string Tooltip => "Scene'in baktığı yere gezilebilir test oyuncusu koyar. Play: WASD, Shift, Q/E, tekerlek.";
         public override int Order => 20;
+        public override string Group => "Test";
+        public override UnityEngine.Texture2D Icon => WorldKitIcons.AddPlayer;
         public override void Execute() => WorldKitPlayerSpawner.Spawn();
     }
 }

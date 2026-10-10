@@ -24,6 +24,7 @@ namespace WorldKit.Editor
         public override string Name => "Serp";
         public override string Tooltip => "Sürükle: imlecin çevresine rastgele serpiştir (ağaç, kaya, çalı). Ayarlar palette.";
         public override int Order => 50;
+        public override Texture2D Icon => WorldKitIcons.Scatter;
         public override bool PaintsWhileDragging => true;
         public override bool Supports(BrushContext c) => !c.IsFloor && !c.IsLinear;
         public override string Hint(BrushContext c) => $"Tıkla/Sürükle: serp (yarıçap {Radius:0.#} m, {Count} adet)";
