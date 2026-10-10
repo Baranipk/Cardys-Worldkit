@@ -72,7 +72,7 @@ Ekip arkadaşları için adım adım anlatım: [Ekip rehberi](Documentation~/Reh
 | | Parça değiştirme: placeholder → gerçek model, toplu | ✅ |
 | **İşaretleme** | Bölgeler: spawn, görev, güvenli / tehlikeli alan (tetikleyici kutu, olaylar) | ✅ |
 | **Test** *(modül)* | Test oyuncusu, Cinemachine top-down kamera, engelden kaçma | ✅ |
-| **İçerik** *(isteğe bağlı)* | Duvar, pencereli duvar, geçit, kale duvarı, köprü, iskele; ev, han, dükkan, ahır, kule, kale kulesi; ağaç, kaya, ot, fener, tabela; chibi NPC ve ölçü referansları | ✅ |
+| **İçerik** *(isteğe bağlı)* | Düz kutu greybox parçalar: duvar, kapılı duvar, geçit, kale duvarı, köprü, iskele, merdiven, rampa; ev, han, dükkan, ahır, kule, kale kulesi; ağaç, kaya, ot, fener, tabela; NPC ve ölçü referansları. Paylaşılan mesh, basit collider | ✅ |
 
 ---
 
@@ -196,8 +196,9 @@ rastgele dönüş ve boyut aralığı.
 
 ### Çıktı
 Palette **Çıktı** sekmesi veya **Tools → World Kit → Çıktı**:
-- **Bake:** Parçalar ve zemin materyal başına birleştirilip tek mesh asset'i olarak `Assets/WorldKit/Baked`
-  altına kaydedilir. Sonuç tek bir renderer ve collider olur; orijinal istenirse gizlenir (Ctrl+Z ile geri alınır).
+- **Bake:** Parçalar ve zemin, bölge bölge (*Bölge boyutu*, varsayılan 16 m; 0 = tek mesh) ve materyal başına
+  birleştirilip `Assets/WorldKit/Baked` altına tek asset dosyasında kaydedilir. Her bölge ayrı renderer + collider olur,
+  böylece kameranın görmediği bölgeler çizilmez. Orijinal istenirse gizlenir (Ctrl+Z ile geri alınır).
   Sonra düzenlemeye devam edip yeniden bake edebilirsin.
 - **OBJ:** `.obj` + `.mtl` (renkler materyallerden alınır). Blender, Maya vb. için.
 - İkisi de EditorOnly etiketli objeleri (ölçü referansları) ve gizli objeleri atlar.
@@ -285,6 +286,28 @@ değiştikçe güncellenir. Yalnızca görünümdür: sahneye kaydedilmez, Play'
    - Bir ekseni **0** (ör. `2×0`) → çizgi parçası (duvar/çit gibi köşeden köşeye)
    - Bileşen yoksa boyut render sınırlarından tahmin edilir.
 4. Parçanın **ön yüzü +Z** yönüne bakmalı (kapılar, NPC'ler).
+5. **Performans:** ProBuilder ile yaptıysan **Tools → World Kit → Performans → Parça Prefab'larını Optimize Et**'e bas
+   (mesh paylaşılır). Basit şekillerde MeshCollider yerine Box/Capsule collider kullan; küçük süslerde gölgeyi kapat.
+
+## Performans
+
+Yüzlerce ağaç, kaya ve bina olduğunda maliyeti belirleyen şeyler ve World Kit'in yaptıkları:
+
+| Konu | Başlangıç içeriği | Kendi parçaların |
+|---|---|---|
+| **Paylaşılan mesh:** aynı parçanın bütün kopyaları tek mesh | Mesh'ler `Assets/WorldKit/Meshes` altında asset | ProBuilder'lı prefab'lar için *Parça Prefab'larını Optimize Et* |
+| **Basit collider** | Kutu parçalar BoxCollider, ağaçta yalnızca gövde, ot/çalıda yok; MeshCollider sadece kapı, geçit, merdiven, rampa | Elle seç |
+| **Gölge** | Ot ve çalı gölge atmaz | Küçük süslerde *Cast Shadows: Off* |
+| **Static** | Bina/yapı: Occluder + Occludee; dekor: Occludee | Hareket etmeyenlerde aynısı |
+| **GPU instancing** | Materyallerde açık | Materyalde *Enable GPU Instancing* |
+
+- **İstatistik sekmesi → Performans:** Benzersiz mesh, "kendi mesh'ini taşıyan" parça, collider ve gölge sayıları ve
+  öneriler. *Sahnedeki Parçaları Düzelt*: eski kopyalarda kalmış ayrı mesh'leri prefab'ın paylaşılan mesh'ine döndürür
+  (başka sahnelerin varsa her birini açıp bir kez bas).
+- **GPU Resident Drawer (Unity 6, URP):** Aynı parçadan yüzlerce olduğunda en büyük kazanç. URP Asset → *GPU Resident
+  Drawer: Instanced Drawing*, Renderer → *Forward+*, Graphics → *BatchRendererGroup Variants: Keep All*.
+  Performans raporu açık olup olmadığını gösterir.
+- **Bitmiş bölümler için Bake:** Bölge bölge birleştirir (varsayılan 16 m); kameranın görmediği bölgeler çizilmez.
 
 ## Proje ayarları
 

@@ -2,6 +2,27 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.17.0] - 2026-10-10
+
+Sade greybox ve performans.
+
+### Değişti
+- **Başlangıç içeriği düz kutular:** Binalarda kapı, çatı, tente, mazgal yok; ağaç = gövde + tepe kutusu; kaya, çalı,
+  ot, fener, tabela, çit, varil tek kutu; NPC ve oyuncu referansı karakter boyunda tek kutu. Yalnızca oyunu etkileyen
+  açıklıklar (kapılı duvar, geniş geçit) ve yürünen şekiller (merdiven, rampa) korunur.
+- `Pencereli_Duvar_2m` ve `Yuvarlak_Sutun` artık üretilmiyor (var olanlara dokunulmaz).
+- **Bake bölge bölge:** Varsayılan 16 m'lik bölgeler (Çıktı → Bölge boyutu; 0 = eski davranış). Tek asset dosyası.
+
+### Eklendi
+- **Paylaşılan mesh:** Başlangıç parçalarının mesh'leri `Assets/WorldKit/Meshes` altına asset olarak yazılır; ProBuilder
+  bileşeni prefab'dan çıkar. Aynı parçanın bütün kopyaları tek mesh'i kullanır.
+- **Basit collider'lar:** Kutu parçalarda BoxCollider, ağaçta gövde collider'ı, ot/çalıda collider yok.
+  MeshCollider yalnızca kapılı duvar, geçit, merdiven ve rampada.
+- **Gölge ve static:** Ot/çalı gölge atmaz; parçalar Occludee (bina/yapı ayrıca Occluder) static. Materyallerde GPU instancing.
+- **Performans araçları** (`WorldKitPerformance`, Tools → World Kit → Performans): *Parça Prefab'larını Optimize Et*
+  (kendi ProBuilder prefab'ların için), *Sahnedeki Parçaları Düzelt* (eski kopyaların ayrı mesh'lerini temizler).
+  İstatistik sekmesinde performans raporu ve GPU Resident Drawer kontrolü.
+
 ## [0.16.0] - 2026-10-10
 
 ### Eklendi

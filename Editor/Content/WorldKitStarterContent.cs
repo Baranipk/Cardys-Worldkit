@@ -95,179 +95,109 @@ namespace WorldKit.Editor
             var foliage = CreateMaterial("Bitki", new Color(0.42f, 0.66f, 0.36f), grid);
             var wood = CreateMaterial("Ahsap", new Color(0.6f, 0.43f, 0.28f), grid);
             var reference = CreateMaterial("Referans", new Color(0.92f, 0.3f, 0.3f), grid);
+            var light = CreateMaterial("Isik", new Color(1f, 0.85f, 0.45f), grid);
 
             float h = settings.wallHeight;
             float t = settings.wallThickness * 0.5f;
 
+            // Greybox: her şey düz kutu. Ayrıntı (kapı, pencere, çatı, mazgal) yok; yalnızca oyunu etkileyen
+            // açıklıklar (kapılı duvar, geçit) ve yürünen şekiller (merdiven, rampa) korunur.
+
             // ---------- Yapı ----------
             // Zemin ve platformlar prefab değil: palette "Zemin" fırçasıyla tek mesh olarak boyanır (WorldKitFloor).
 
-            Save(Structure, "Duvar_1m", new Vector2Int(1, 0), Box(new Vector3(-0.5f, 0f, -t), new Vector3(0.5f, h, t), wall));
-            Save(Structure, "Duvar_2m", new Vector2Int(2, 0), Box(new Vector3(-1f, 0f, -t), new Vector3(1f, h, t), wall));
-            Save(Structure, "Duvar_4m", new Vector2Int(4, 0), Box(new Vector3(-2f, 0f, -t), new Vector3(2f, h, t), wall));
-            Save(Structure, "Alcak_Duvar_2m", new Vector2Int(2, 0), Box(new Vector3(-1f, 0f, -t), new Vector3(1f, 1f, t), wall));
-            Save(Structure, "Kose_Diregi", new Vector2Int(0, 0), Box(new Vector3(-0.15f, 0f, -0.15f), new Vector3(0.15f, h + 0.05f, 0.15f), wall));
-            Save(Structure, "Kapili_Duvar_3m", new Vector2Int(3, 0),
+            Save(Structure, "Duvar_1m", new Vector2Int(1, 0), Collision.Box, Box(new Vector3(-0.5f, 0f, -t), new Vector3(0.5f, h, t), wall));
+            Save(Structure, "Duvar_2m", new Vector2Int(2, 0), Collision.Box, Box(new Vector3(-1f, 0f, -t), new Vector3(1f, h, t), wall));
+            Save(Structure, "Duvar_4m", new Vector2Int(4, 0), Collision.Box, Box(new Vector3(-2f, 0f, -t), new Vector3(2f, h, t), wall));
+            Save(Structure, "Alcak_Duvar_2m", new Vector2Int(2, 0), Collision.Box, Box(new Vector3(-1f, 0f, -t), new Vector3(1f, 1f, t), wall));
+            Save(Structure, "Kose_Diregi", new Vector2Int(0, 0), Collision.Box, Box(new Vector3(-0.15f, 0f, -0.15f), new Vector3(0.15f, h + 0.05f, 0.15f), wall));
+            Save(Structure, "Kale_Duvari_2m", new Vector2Int(2, 0), Collision.Box, Box(new Vector3(-1f, 0f, -0.3f), new Vector3(1f, h + 1f, 0.3f), wall));
+            Save(Structure, "Sutun", new Vector2Int(1, 1), Collision.Box, Box(new Vector3(-0.3f, 0f, -0.3f), new Vector3(0.3f, h, 0.3f), wall));
+
+            // Açıklıklar (içinden geçilir)
+            Save(Structure, "Kapili_Duvar_3m", new Vector2Int(3, 0), Collision.Mesh,
                 Box(new Vector3(-1.5f, 0f, -t), new Vector3(-0.7f, h, t), wall),
                 Box(new Vector3(0.7f, 0f, -t), new Vector3(1.5f, h, t), wall),
                 Box(new Vector3(-0.7f, 2.3f, -t), new Vector3(0.7f, h, t), wall));
-
-            Save(Structure, "Sutun", new Vector2Int(1, 1), Box(new Vector3(-0.3f, 0f, -0.3f), new Vector3(0.3f, h, 0.3f), wall));
-            Save(Structure, "Yuvarlak_Sutun", new Vector2Int(1, 1), Cylinder(Vector3.zero, 0.35f, h, 8, wall));
-
-            Save(Structure, "Merdiven_2x2", new Vector2Int(2, 2), Stair(new Vector3(-1f, 0f, -1f), new Vector3(2f, 1f, 2f), 5, platform));
-            Save(Structure, "Rampa_2x2", new Vector2Int(2, 2), Wedge(new Vector3(-1f, 0f, -1f), new Vector3(1f, 1f, 1f), platform));
-
-            // Pencere ve geçitler
-            float sill = Mathf.Min(1f, h * 0.35f), lintel = Mathf.Min(2f, h - 0.4f);
-            Save(Structure, "Pencereli_Duvar_2m", new Vector2Int(2, 0),
-                Box(new Vector3(-1f, 0f, -t), new Vector3(1f, sill, t), wall),
-                Box(new Vector3(-1f, lintel, -t), new Vector3(1f, h, t), wall),
-                Box(new Vector3(-1f, sill, -t), new Vector3(-0.5f, lintel, t), wall),
-                Box(new Vector3(0.5f, sill, -t), new Vector3(1f, lintel, t), wall));
             float gate = Mathf.Min(2.6f, h - 0.3f);
-            Save(Structure, "Genis_Gecit_4m", new Vector2Int(4, 0),
+            Save(Structure, "Genis_Gecit_4m", new Vector2Int(4, 0), Collision.Mesh,
                 Box(new Vector3(-2f, 0f, -t), new Vector3(-1.2f, h, t), wall),
                 Box(new Vector3(1.2f, 0f, -t), new Vector3(2f, h, t), wall),
                 Box(new Vector3(-1.2f, gate, -t), new Vector3(1.2f, h, t), wall));
 
-            // Kale duvarı: daha yüksek ve kalın, üstünde mazgallar
-            float castle = h + 1f;
-            Save(Structure, "Kale_Duvari_2m", new Vector2Int(2, 0),
-                Box(new Vector3(-1f, 0f, -0.3f), new Vector3(1f, castle, 0.3f), wall),
-                Box(new Vector3(-1f, castle, -0.3f), new Vector3(-0.6f, castle + 0.6f, 0.3f), wall),
-                Box(new Vector3(-0.2f, castle, -0.3f), new Vector3(0.2f, castle + 0.6f, 0.3f), wall),
-                Box(new Vector3(0.6f, castle, -0.3f), new Vector3(1f, castle + 0.6f, 0.3f), wall));
-
-            // Köprü: üst yüzü 1. katta, iki platformu birbirine bağlar (Z boyunca 4 hücre)
+            // Yürünen şekiller
+            Save(Structure, "Merdiven_2x2", new Vector2Int(2, 2), Collision.Mesh, Stair(new Vector3(-1f, 0f, -1f), new Vector3(2f, 1f, 2f), 5, platform));
+            Save(Structure, "Rampa_2x2", new Vector2Int(2, 2), Collision.Mesh, Wedge(new Vector3(-1f, 0f, -1f), new Vector3(1f, 1f, 1f), platform));
             float deck = WorldKitGrid.LevelHeight;
-            Save(Structure, "Kopru_2x4", new Vector2Int(2, 4),
-                Box(new Vector3(-1f, deck - 0.2f, -2f), new Vector3(1f, deck, 2f), wood),
-                Box(new Vector3(-1f, deck, -2f), new Vector3(-0.9f, deck + 0.9f, 2f), wood),
-                Box(new Vector3(0.9f, deck, -2f), new Vector3(1f, deck + 0.9f, 2f), wood));
-
-            // İskele: yer seviyesinde güverte, suya (alt kata) inen direkler
-            Save(Structure, "Iskele_2x3", new Vector2Int(2, 3),
-                Box(new Vector3(-1f, -0.15f, -1.5f), new Vector3(1f, 0.05f, 1.5f), wood),
-                Cylinder(new Vector3(-0.85f, -1.2f, -1.35f), 0.1f, 1.2f, 6, wood),
-                Cylinder(new Vector3(0.85f, -1.2f, -1.35f), 0.1f, 1.2f, 6, wood),
-                Cylinder(new Vector3(-0.85f, -1.2f, 1.35f), 0.1f, 1.2f, 6, wood),
-                Cylinder(new Vector3(0.85f, -1.2f, 1.35f), 0.1f, 1.2f, 6, wood));
+            Save(Structure, "Kopru_2x4", new Vector2Int(2, 4), Collision.Box, Box(new Vector3(-1f, deck - 0.2f, -2f), new Vector3(1f, deck, 2f), wood));
+            Save(Structure, "Iskele_2x3", new Vector2Int(2, 3), Collision.Box, Box(new Vector3(-1f, -0.15f, -1.5f), new Vector3(1f, 0.05f, 1.5f), wood));
 
             // ---------- Dekor ----------
-            Save(Decor, "Kaya_Kucuk", new Vector2Int(1, 1), Rock(Vector3.zero, new Vector3(0.9f, 0.6f, 0.8f), 1, rock));
-            Save(Decor, "Kaya_Buyuk", new Vector2Int(2, 2), Rock(Vector3.zero, new Vector3(1.9f, 1.3f, 1.7f), 2, rock));
-            Save(Decor, "Cali", new Vector2Int(1, 1), Rock(Vector3.zero, new Vector3(0.9f, 0.6f, 0.9f), 3, foliage));
-            Save(Decor, "Agac_Cam", new Vector2Int(1, 1),
-                Cylinder(Vector3.zero, 0.15f, 0.8f, 6, wood),
-                Cone(new Vector3(0f, 0.6f, 0f), 0.9f, 2.6f, 7, foliage));
-            Save(Decor, "Agac_Yuvarlak", new Vector2Int(1, 1),
-                Cylinder(Vector3.zero, 0.18f, 1.2f, 6, wood),
-                Rock(new Vector3(0f, 1f, 0f), new Vector3(1.8f, 1.6f, 1.8f), 4, foliage));
-            Save(Decor, "Cit_2m", new Vector2Int(2, 0),
-                Box(new Vector3(-1f, 0f, -0.06f), new Vector3(-0.88f, 1.1f, 0.06f), wood),
-                Box(new Vector3(-0.06f, 0f, -0.06f), new Vector3(0.06f, 1.1f, 0.06f), wood),
-                Box(new Vector3(0.88f, 0f, -0.06f), new Vector3(1f, 1.1f, 0.06f), wood),
-                Box(new Vector3(-1f, 0.45f, -0.04f), new Vector3(1f, 0.55f, 0.04f), wood),
-                Box(new Vector3(-1f, 0.85f, -0.04f), new Vector3(1f, 0.95f, 0.04f), wood));
-            Save(Decor, "Varil", new Vector2Int(1, 1), Cylinder(Vector3.zero, 0.35f, 1f, 10, wood));
-            Save(Decor, "Kasa", new Vector2Int(1, 1), Box(new Vector3(-0.4f, 0f, -0.4f), new Vector3(0.4f, 0.8f, 0.4f), wood));
-            Save(Decor, "Kaya_Kumesi", new Vector2Int(2, 2),
-                Rock(new Vector3(-0.4f, 0f, -0.3f), new Vector3(1.2f, 0.9f, 1.1f), 5, rock),
-                Rock(new Vector3(0.5f, 0f, 0.2f), new Vector3(0.8f, 0.6f, 0.7f), 6, rock),
-                Rock(new Vector3(-0.2f, 0f, 0.6f), new Vector3(0.5f, 0.4f, 0.5f), 7, rock));
-            Save(Decor, "Ot", new Vector2Int(1, 1),
-                Cone(new Vector3(0f, 0f, 0f), 0.12f, 0.6f, 4, foliage),
-                Cone(new Vector3(0.18f, 0f, 0.1f), 0.1f, 0.45f, 4, foliage),
-                Cone(new Vector3(-0.15f, 0f, 0.12f), 0.1f, 0.5f, 4, foliage),
-                Cone(new Vector3(0.05f, 0f, -0.18f), 0.1f, 0.4f, 4, foliage));
-            Save(Decor, "Fener", new Vector2Int(1, 1),
-                Cylinder(Vector3.zero, 0.06f, 2.2f, 6, wood),
-                Box(new Vector3(-0.15f, 2.1f, -0.15f), new Vector3(0.15f, 2.45f, 0.15f), CreateMaterial("Isik", new Color(1f, 0.85f, 0.45f), grid)),
-                Cone(new Vector3(0f, 2.45f, 0f), 0.22f, 0.2f, 4, wood));
-            Save(Decor, "Tabela", new Vector2Int(1, 1),
-                Cylinder(Vector3.zero, 0.05f, 1.4f, 6, wood),
-                Box(new Vector3(-0.4f, 1f, -0.04f), new Vector3(0.4f, 1.35f, 0.04f), wood));
+            Save(Decor, "Kaya_Kucuk", new Vector2Int(1, 1), Collision.Box, Box(new Vector3(-0.45f, 0f, -0.4f), new Vector3(0.45f, 0.6f, 0.4f), rock));
+            Save(Decor, "Kaya_Buyuk", new Vector2Int(2, 2), Collision.Box, Box(new Vector3(-0.95f, 0f, -0.85f), new Vector3(0.95f, 1.3f, 0.85f), rock));
+            Save(Decor, "Kaya_Kumesi", new Vector2Int(2, 2), Collision.Box, Box(new Vector3(-0.8f, 0f, -0.7f), new Vector3(0.8f, 0.9f, 0.7f), rock));
+            Save(Decor, "Cali", new Vector2Int(1, 1), Collision.None, Box(new Vector3(-0.45f, 0f, -0.45f), new Vector3(0.45f, 0.6f, 0.45f), foliage));
+            Save(Decor, "Ot", new Vector2Int(1, 1), Collision.None, Box(new Vector3(-0.3f, 0f, -0.3f), new Vector3(0.3f, 0.4f, 0.3f), foliage));
+            Save(Decor, "Agac_Cam", new Vector2Int(1, 1), Collision.Trunk,
+                Box(new Vector3(-0.15f, 0f, -0.15f), new Vector3(0.15f, 0.8f, 0.15f), wood),
+                Box(new Vector3(-0.6f, 0.8f, -0.6f), new Vector3(0.6f, 3.2f, 0.6f), foliage));
+            Save(Decor, "Agac_Yuvarlak", new Vector2Int(1, 1), Collision.Trunk,
+                Box(new Vector3(-0.18f, 0f, -0.18f), new Vector3(0.18f, 1.1f, 0.18f), wood),
+                Box(new Vector3(-0.9f, 1.1f, -0.9f), new Vector3(0.9f, 2.7f, 0.9f), foliage));
+            Save(Decor, "Cit_2m", new Vector2Int(2, 0), Collision.Box, Box(new Vector3(-1f, 0f, -0.05f), new Vector3(1f, 1f, 0.05f), wood));
+            Save(Decor, "Varil", new Vector2Int(1, 1), Collision.Box, Box(new Vector3(-0.35f, 0f, -0.35f), new Vector3(0.35f, 1f, 0.35f), wood));
+            Save(Decor, "Kasa", new Vector2Int(1, 1), Collision.Box, Box(new Vector3(-0.4f, 0f, -0.4f), new Vector3(0.4f, 0.8f, 0.4f), wood));
+            Save(Decor, "Fener", new Vector2Int(1, 1), Collision.Box, Box(new Vector3(-0.12f, 0f, -0.12f), new Vector3(0.12f, 2.4f, 0.12f), light));
+            Save(Decor, "Tabela", new Vector2Int(1, 1), Collision.Box, Box(new Vector3(-0.4f, 0f, -0.05f), new Vector3(0.4f, 1.4f, 0.05f), wood));
 
-            // ---------- Bina (kapı her zaman +Z, yani mavi okun gösterdiği taraf) ----------
-            var roof = CreateMaterial("Cati", new Color(0.72f, 0.33f, 0.26f), grid);
-            var door = CreateMaterial("Kapi", new Color(0.36f, 0.25f, 0.18f), grid);
+            // ---------- Bina (düz kutu; içine girilmez) ----------
+            Save(Building, "Ev_Kucuk_3x3", new Vector2Int(3, 3), Collision.Box, Box(new Vector3(-1.5f, 0f, -1.5f), new Vector3(1.5f, 3.2f, 1.5f), wall));
+            Save(Building, "Ev_Buyuk_4x5", new Vector2Int(4, 5), Collision.Box, Box(new Vector3(-2f, 0f, -2.5f), new Vector3(2f, 4f, 2.5f), wall));
+            Save(Building, "Han_Iki_Katli_5x4", new Vector2Int(5, 4), Collision.Box, Box(new Vector3(-2.5f, 0f, -2f), new Vector3(2.5f, 5.5f, 2f), wall));
+            Save(Building, "Dukkan_4x3", new Vector2Int(4, 3), Collision.Box, Box(new Vector3(-2f, 0f, -1.5f), new Vector3(2f, 3f, 1.5f), wall));
+            Save(Building, "Kule_3x3", new Vector2Int(3, 3), Collision.Box, Box(new Vector3(-1.4f, 0f, -1.4f), new Vector3(1.4f, 7f, 1.4f), wall));
+            Save(Building, "Kale_Kulesi_3x3", new Vector2Int(3, 3), Collision.Box, Box(new Vector3(-1.5f, 0f, -1.5f), new Vector3(1.5f, 8f, 1.5f), wall));
+            Save(Building, "Ahir_4x3", new Vector2Int(4, 3), Collision.Box, Box(new Vector3(-2f, 0f, -1.5f), new Vector3(2f, 3.2f, 1.5f), wood));
 
-            Save(Building, "Ev_Kucuk_3x3", new Vector2Int(3, 3),
-                Box(new Vector3(-1.5f, 0f, -1.5f), new Vector3(1.5f, 2.6f, 1.5f), wall),
-                Prism(new Vector3(-1.7f, 2.6f, -1.7f), new Vector3(1.7f, 4f, 1.7f), roof),
-                Door(1.5f, 0.9f, 1.6f, door));
-            Save(Building, "Ev_Buyuk_4x5", new Vector2Int(4, 5),
-                Box(new Vector3(-2f, 0f, -2.5f), new Vector3(2f, 3f, 2.5f), wall),
-                Prism(new Vector3(-2.2f, 3f, -2.7f), new Vector3(2.2f, 4.8f, 2.7f), roof),
-                Door(2.5f, 1f, 1.7f, door));
-            Save(Building, "Han_Iki_Katli_5x4", new Vector2Int(5, 4),
-                Box(new Vector3(-2.5f, 0f, -2f), new Vector3(2.5f, 5f, 2f), wall),
-                Prism(new Vector3(-2.7f, 5f, -2.2f), new Vector3(2.7f, 6.8f, 2.2f), roof),
-                Box(new Vector3(-2.7f, 2.5f, -2.2f), new Vector3(2.7f, 2.7f, 2.2f), door), // kat ayrımı
-                Door(2f, 1.4f, 1.8f, door));
-            Save(Building, "Dukkan_4x3", new Vector2Int(4, 3),
-                Box(new Vector3(-2f, 0f, -1.5f), new Vector3(2f, 2.6f, 1.5f), wall),
-                Box(new Vector3(-2.2f, 2.6f, -1.7f), new Vector3(2.2f, 2.8f, 1.7f), roof),
-                Box(new Vector3(-1.8f, 1.9f, 1.5f), new Vector3(1.8f, 2f, 2.4f), roof),     // tente
-                Box(new Vector3(-1.4f, 0f, 1.6f), new Vector3(0.6f, 0.9f, 2.1f), door),     // tezgah
-                Door(1.5f, 0.9f, 1.6f, door, 1.3f));
-            Save(Building, "Kule_3x3", new Vector2Int(3, 3),
-                Cylinder(Vector3.zero, 1.4f, 6f, 8, wall),
-                Cone(new Vector3(0f, 6f, 0f), 1.75f, 2.2f, 8, roof),
-                Door(1.3f, 0.9f, 1.6f, door));
-            Save(Building, "Kale_Kulesi_3x3", new Vector2Int(3, 3),
-                Box(new Vector3(-1.5f, 0f, -1.5f), new Vector3(1.5f, 7f, 1.5f), wall),
-                // Mazgallar: dört köşe ve kenar ortaları
-                Box(new Vector3(-1.5f, 7f, -1.5f), new Vector3(-0.9f, 7.6f, -0.9f), wall),
-                Box(new Vector3(0.9f, 7f, -1.5f), new Vector3(1.5f, 7.6f, -0.9f), wall),
-                Box(new Vector3(-1.5f, 7f, 0.9f), new Vector3(-0.9f, 7.6f, 1.5f), wall),
-                Box(new Vector3(0.9f, 7f, 0.9f), new Vector3(1.5f, 7.6f, 1.5f), wall),
-                Box(new Vector3(-0.3f, 7f, -1.5f), new Vector3(0.3f, 7.6f, -1.1f), wall),
-                Box(new Vector3(-0.3f, 7f, 1.1f), new Vector3(0.3f, 7.6f, 1.5f), wall),
-                Box(new Vector3(-1.5f, 7f, -0.3f), new Vector3(-1.1f, 7.6f, 0.3f), wall),
-                Box(new Vector3(1.1f, 7f, -0.3f), new Vector3(1.5f, 7.6f, 0.3f), wall),
-                Door(1.5f, 1.1f, 2f, door));
-            Save(Building, "Ahir_4x3", new Vector2Int(4, 3),
-                Box(new Vector3(-2f, 0f, -1.5f), new Vector3(2f, 2.4f, 1.5f), wood),
-                Prism(new Vector3(-2.2f, 2.4f, -1.7f), new Vector3(2.2f, 3.8f, 1.7f), roof),
-                Door(1.5f, 1.8f, 2f, door));
-
-            // ---------- NPC (chibi, boy: ayarlardaki karakter boyu) ----------
-            var villager = CreateMaterial("NPC_Koylu", new Color(0.95f, 0.78f, 0.35f), grid);
-            var merchant = CreateMaterial("NPC_Tuccar", new Color(0.4f, 0.72f, 0.42f), grid);
-            var guard = CreateMaterial("NPC_Muhafiz", new Color(0.35f, 0.55f, 0.9f), grid);
-            var enemy = CreateMaterial("NPC_Dusman", new Color(0.6f, 0.35f, 0.75f), grid);
-            var skin = CreateMaterial("Ten", new Color(0.96f, 0.82f, 0.68f), grid);
-
-            Save(Npc, "NPC_Koylu", new Vector2Int(1, 1), Chibi(villager, skin));
-            Save(Npc, "NPC_Tuccar", new Vector2Int(1, 1), Chibi(merchant, skin,
-                Box(new Vector3(-0.22f, 0.35f, -0.46f), new Vector3(0.22f, 0.85f, -0.24f), wood))); // sırt çantası
-            Save(Npc, "NPC_Muhafiz", new Vector2Int(1, 1), Chibi(guard, skin,
-                Cylinder(new Vector3(0.38f, 0f, 0.05f), 0.035f, 2f, 6, wood)));                     // mızrak
+            // ---------- NPC (boy: ayarlardaki karakter boyu; renk = rol) ----------
+            Save(Npc, "NPC_Koylu", new Vector2Int(1, 1), Collision.None, Character(CreateMaterial("NPC_Koylu", new Color(0.95f, 0.78f, 0.35f), grid)));
+            Save(Npc, "NPC_Tuccar", new Vector2Int(1, 1), Collision.None, Character(CreateMaterial("NPC_Tuccar", new Color(0.4f, 0.72f, 0.42f), grid)));
+            Save(Npc, "NPC_Muhafiz", new Vector2Int(1, 1), Collision.None, Character(CreateMaterial("NPC_Muhafiz", new Color(0.35f, 0.55f, 0.9f), grid)));
             RenameIfExists(Npc, "Dusman_1.5m", "Dusman");
-            Save(Npc, "Dusman", new Vector2Int(1, 1), Chibi(enemy, enemy,
-                Cone(new Vector3(-0.17f, CharacterHeight - 0.1f, 0f), 0.07f, 0.25f, 5, enemy),                       // boynuzlar
-                Cone(new Vector3(0.17f, CharacterHeight - 0.1f, 0f), 0.07f, 0.25f, 5, enemy)));
+            Save(Npc, "Dusman", new Vector2Int(1, 1), Collision.None, Character(CreateMaterial("NPC_Dusman", new Color(0.6f, 0.35f, 0.75f), grid)));
 
             // ---------- Ölçü referansı (build'e girmez: EditorOnly) ----------
             // Eski isimli kopyalar yeniden adlandırılır (GUID korunur, sahnedekiler bozulmaz).
             RenameIfExists(Reference, "Oyuncu_1.8m", "Oyuncu");
             RenameIfExists(Reference, "Oyuncu_1.5m", "Oyuncu");
-            Save(Reference, "Oyuncu", new Vector2Int(1, 1), Chibi(reference, skin));
-            Save(Reference, "Buyuk_Dusman_3m", new Vector2Int(2, 2),
-                Cylinder(Vector3.zero, 0.9f, 3f, 12, reference),
-                Box(new Vector3(-0.15f, 2.3f, 0.85f), new Vector3(0.15f, 2.6f, 1.15f), reference));
+            Save(Reference, "Oyuncu", new Vector2Int(1, 1), Collision.None, Character(reference));
+            Save(Reference, "Buyuk_Dusman_3m", new Vector2Int(2, 2), Collision.None, Box(new Vector3(-0.9f, 0f, -0.9f), new Vector3(0.9f, 3f, 0.9f), reference));
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             WorldKitThumbnails.Clear();
-            Debug.Log($"[World Kit] Parçalar üretildi: {PiecesRoot}");
+
+            // Eski (ProBuilder'lı) kopyaların sahnede kalmış kendi mesh'lerini temizle
+            int fixedCount = WorldKitPerformance.FixSceneInstances();
+            Debug.Log($"[World Kit] Parçalar üretildi: {PiecesRoot}" + (fixedCount > 0 ? $" ({fixedCount} sahne kopyası paylaşılan mesh'e geçirildi)" : ""));
         }
 
         // ---------------- Kayıt ----------------
 
-        static void Save(string category, string name, Vector2Int footprint, params ProBuilderMesh[] parts)
+        /// <summary>Parçanın collider ve gölge ayarı.</summary>
+        enum Collision
+        {
+            /// <summary>Mesh sınırlarına oturan BoxCollider (tek kutu parçalar; en ucuzu).</summary>
+            Box,
+            /// <summary>MeshCollider (açıklıklı veya eğimli şekiller: kapı, geçit, merdiven, rampa).</summary>
+            Mesh,
+            /// <summary>Yalnızca gövdede ince BoxCollider (ağaç: tepesinin altından geçilmez ama gövdeye takılınır).</summary>
+            Trunk,
+            /// <summary>Collider yok; NPC ve referans dışındakiler gölge de atmaz (ot, çalı).</summary>
+            None
+        }
+
+        static void Save(string category, string name, Vector2Int footprint, Collision collision, params ProBuilderMesh[] parts)
         {
             var target = parts[0];
             if (parts.Length > 1)
@@ -292,16 +222,57 @@ namespace WorldKit.Editor
             go.name = name;
             go.AddComponent<WorldKitPiece>().footprint = footprint;
 
-            // Referanslar build'e girmez. NPC'ler yalnızca konum işareti; collider'ları olmaz.
+            // Mesh'i paylaşılan bir asset'e yaz ve ProBuilder bileşenini çıkar: bütün kopyalar tek mesh'i kullanır.
+            WorldKitPerformance.BakeProBuilder(go, $"{category}_{name}");
+            var mesh = go.GetComponent<MeshFilter>().sharedMesh;
+            var bounds = mesh.bounds;
+
+            bool character = category == Npc || category == Reference;
             if (category == Reference)
                 go.tag = "EditorOnly";
-            else if (category != Npc && go.GetComponent<MeshCollider>() == null)
-                go.AddComponent<MeshCollider>();
+
+            if (!character)
+            {
+                switch (collision)
+                {
+                    case Collision.Box:
+                        var box = go.AddComponent<BoxCollider>();
+                        box.center = bounds.center;
+                        box.size = bounds.size;
+                        break;
+                    case Collision.Mesh:
+                        go.AddComponent<MeshCollider>().sharedMesh = mesh;
+                        break;
+                    case Collision.Trunk:
+                        var trunk = go.AddComponent<BoxCollider>();
+                        trunk.center = new Vector3(0f, bounds.center.y, 0f);
+                        trunk.size = new Vector3(0.4f * cell, bounds.size.y, 0.4f * cell);
+                        break;
+                }
+
+                // Küçük bitkiler gölge atmaz (top-down kamerada fark edilmez, gölge çizimi ucuzlar).
+                go.GetComponent<MeshRenderer>().shadowCastingMode = collision == Collision.None
+                    ? UnityEngine.Rendering.ShadowCastingMode.Off
+                    : UnityEngine.Rendering.ShadowCastingMode.On;
+
+                // Hareket etmeyen parçalar: görünürlük (occlusion) hesabına katılsın. Bina ve yapılar başkasını da gizler.
+                var flags = StaticEditorFlags.OccludeeStatic;
+                if (category == Building || category == Structure)
+                    flags |= StaticEditorFlags.OccluderStatic;
+                GameObjectUtility.SetStaticEditorFlags(go, flags);
+            }
 
             var folder = $"{PiecesRoot}/{category}";
             WorldKitSettings.EnsureFolder(folder);
             PrefabUtility.SaveAsPrefabAsset(go, $"{folder}/{name}.prefab");
             Object.DestroyImmediate(go);
+        }
+
+        /// <summary>Karakter (NPC, oyuncu referansı): karakter boyunda tek kutu.</summary>
+        static ProBuilderMesh Character(Material material)
+        {
+            float height = CharacterHeight;
+            return Box(new Vector3(-0.3f, 0f, -0.22f), new Vector3(0.3f, height, 0.22f), material);
         }
 
         // ---------------- Materyaller ----------------
@@ -354,6 +325,7 @@ namespace WorldKit.Editor
             material.shader = shader;
             material.color = color;
             material.mainTexture = grid;
+            material.enableInstancing = true; // aynı parçadan yüzlerce olduğunda GPU toplu çizer
             if (material.HasProperty("_Smoothness"))
                 material.SetFloat("_Smoothness", 0.1f);
 
@@ -369,22 +341,6 @@ namespace WorldKit.Editor
         {
             var pb = Bake(ShapeGenerator.GenerateCube(PivotLocation.Center, max - min));
             Translate(pb, min - GetBounds(pb).min);
-            pb.SetMaterial(pb.faces, material);
-            return pb;
-        }
-
-        static ProBuilderMesh Cylinder(Vector3 bottomCenter, float radius, float height, int sides, Material material)
-        {
-            var pb = Bake(ShapeGenerator.GenerateCylinder(PivotLocation.Center, sides, radius, height, 0));
-            MoveBottomCenterTo(pb, bottomCenter);
-            pb.SetMaterial(pb.faces, material);
-            return pb;
-        }
-
-        static ProBuilderMesh Cone(Vector3 bottomCenter, float radius, float height, int sides, Material material)
-        {
-            var pb = Bake(ShapeGenerator.GenerateCone(PivotLocation.Center, radius, height, sides));
-            MoveBottomCenterTo(pb, bottomCenter);
             pb.SetMaterial(pb.faces, material);
             return pb;
         }
@@ -429,77 +385,6 @@ namespace WorldKit.Editor
             return pb;
         }
 
-        /// <summary>Hafif bozulmuş low-poly yuvarlak form (kaya, çalı, ağaç tepesi).</summary>
-        static ProBuilderMesh Rock(Vector3 bottomCenter, Vector3 size, int seed, Material material)
-        {
-            var pb = Bake(ShapeGenerator.GenerateIcosahedron(PivotLocation.Center, 0.5f, 0));
-            var random = new System.Random(seed);
-            var offsets = new Dictionary<Vector3Int, Vector3>();
-
-            pb.positions = pb.positions.Select(p =>
-            {
-                // Aynı noktadaki vertex'ler aynı miktarda kaysın ki mesh'te delik açılmasın.
-                var key = Vector3Int.RoundToInt(p * 1000f);
-                if (!offsets.TryGetValue(key, out var offset))
-                {
-                    var scale = 0.85f + (float)random.NextDouble() * 0.3f;
-                    offset = p * scale;
-                    offsets[key] = offset;
-                }
-
-                return Vector3.Scale(offset, size);
-            }).ToArray();
-
-            MoveBottomCenterTo(pb, bottomCenter);
-            pb.SetMaterial(pb.faces, material);
-            return pb;
-        }
-
-        /// <summary>Çatı: sırtı Z ekseni boyunca uzanan üçgen prizma, verilen kutuya sığdırılır.</summary>
-        static ProBuilderMesh Prism(Vector3 min, Vector3 max, Material material)
-        {
-            var pb = Bake(ShapeGenerator.GeneratePrism(PivotLocation.Center, Vector3.one));
-            FitToBox(pb, min, max);
-            pb.SetMaterial(pb.faces, material);
-            return pb;
-        }
-
-        static ProBuilderMesh Sphere(Vector3 min, Vector3 max, Material material)
-        {
-            var pb = Bake(ShapeGenerator.GenerateIcosahedron(PivotLocation.Center, 0.5f, 1));
-            FitToBox(pb, min, max);
-            pb.SetMaterial(pb.faces, material);
-            return pb;
-        }
-
-        /// <summary>Binanın +Z cephesine yapışık kapı. frontZ: cephenin Z konumu.</summary>
-        static ProBuilderMesh Door(float frontZ, float width, float height, Material material, float offsetX = 0f)
-        {
-            return Box(
-                new Vector3(offsetX - width * 0.5f, 0f, frontZ - 0.02f),
-                new Vector3(offsetX + width * 0.5f, height, frontZ + 0.06f),
-                material);
-        }
-
-        /// <summary>
-        /// Chibi karakter: kısa gövde + büyük kafa, toplam CharacterHeight. Kafadaki küçük çıkıntı ön yönü (+Z) gösterir.
-        /// </summary>
-        static ProBuilderMesh[] Chibi(Material body, Material head, params ProBuilderMesh[] extras)
-        {
-            float bodyHeight = CharacterHeight * 0.57f;              // ~0.85 m
-            float headSize = CharacterHeight - bodyHeight + 0.02f;       // ~0.67 m, gövdeye hafif gömülü
-            float half = headSize * 0.5f;
-
-            var parts = new List<ProBuilderMesh>
-            {
-                Cylinder(Vector3.zero, 0.28f, bodyHeight, 8, body),
-                Sphere(new Vector3(-half, CharacterHeight - headSize, -half), new Vector3(half, CharacterHeight, half), head),
-                Box(new Vector3(-0.06f, CharacterHeight - half - 0.05f, half - 0.04f), new Vector3(0.06f, CharacterHeight - half + 0.05f, half + 0.08f), body),
-            };
-            parts.AddRange(extras);
-            return parts.ToArray();
-        }
-
         /// <summary>Eski isimli prefab'ı yeniden adlandırır; GUID korunduğu için sahnedeki kopyalar bozulmaz.</summary>
         static void RenameIfExists(string category, string oldName, string newName)
         {
@@ -507,18 +392,6 @@ namespace WorldKit.Editor
             var newPath = $"{PiecesRoot}/{category}/{newName}.prefab";
             if (AssetDatabase.LoadAssetAtPath<GameObject>(oldPath) != null && AssetDatabase.LoadAssetAtPath<GameObject>(newPath) == null)
                 AssetDatabase.MoveAsset(oldPath, newPath);
-        }
-
-        /// <summary>Mesh'i ölçekleyip taşıyarak verilen kutuya tam sığdırır.</summary>
-        static void FitToBox(ProBuilderMesh pb, Vector3 min, Vector3 max)
-        {
-            var bounds = GetBounds(pb);
-            var target = max - min;
-            var scale = new Vector3(
-                bounds.size.x > 0f ? target.x / bounds.size.x : 1f,
-                bounds.size.y > 0f ? target.y / bounds.size.y : 1f,
-                bounds.size.z > 0f ? target.z / bounds.size.z : 1f);
-            pb.positions = pb.positions.Select(p => min + Vector3.Scale(p - bounds.min, scale)).ToArray();
         }
 
         static ProBuilderMesh Bake(ProBuilderMesh pb)
@@ -534,12 +407,6 @@ namespace WorldKit.Editor
         static void Translate(ProBuilderMesh pb, Vector3 delta)
         {
             pb.positions = pb.positions.Select(p => p + delta).ToArray();
-        }
-
-        static void MoveBottomCenterTo(ProBuilderMesh pb, Vector3 target)
-        {
-            var bounds = GetBounds(pb);
-            Translate(pb, target - new Vector3(bounds.center.x, bounds.min.y, bounds.center.z));
         }
 
         static Bounds GetBounds(ProBuilderMesh pb)

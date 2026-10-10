@@ -241,8 +241,9 @@ Modül palete düğme, sekme veya mod ekleyerek kendini gösterir.
 ## Kurallar ve tuzaklar
 
 - **Undo:** Çoklu yerleştirmeler tek grup olmalı (`Undo.IncrementCurrentGroup` → `CollapseUndoOperations`).
-- **ProBuilder mesh'leri** prefab içinde saklanmaz, `Awake`'te yeniden kurulur. Önizleme veya hesap için
-  bir kopya oluşturduğunuzda `pb.ToMesh(); pb.Refresh();` çağırın.
+- **ProBuilder mesh'leri** prefab içinde saklanmaz, her kopyada yeniden kurulur (kopya başına ayrı mesh). Parça
+  üretiyorsanız sonunda `WorldKitPerformance.BakeProBuilder(go, ad)` çağırın: mesh asset'e yazılır, ProBuilder
+  bileşeni çıkar, kopyalar mesh'i paylaşır. Önizleme için geçici kopyada `pb.ToMesh(); pb.Refresh();` yeterli.
 - **`HandleUtility`** adı hem `UnityEditor` hem `UnityEngine.ProBuilder`'da var. Gerekirse
   `using HandleUtility = UnityEditor.HandleUtility;` yazın.
 - **Kısayollar** `[Shortcut(..., typeof(BrushShortcutContext), ...)]` ile yalnızca fırça aktifken çalışır.

@@ -77,6 +77,7 @@ namespace WorldKit.Editor
         }
 
         Stats m_Stats;
+        WorldKitPerformance.Report m_Perf;
         const string PpmKey = "WorldKit.Map.PixelsPerMeter";
 
         public override void OnGUI(WorldKitPaletteWindow window)
@@ -123,6 +124,9 @@ namespace WorldKit.Editor
                 if (GUILayout.Button("Üstten Harita PNG Kaydet…"))
                     MapExporter.Export(newPpm);
             }
+
+            GUILayout.Space(10f);
+            WorldKitPerformance.DrawReportGUI(ref m_Perf);
         }
 
         static Stats Compute()

@@ -62,6 +62,13 @@ namespace WorldKit.Editor
             return false;
         }
 
+        /// <summary>Bake bölge boyutu (m). 0 = tek mesh.</summary>
+        public static float ChunkSize
+        {
+            get => EditorPrefs.GetFloat("WorldKit.Bake.ChunkSize", 16f);
+            set => EditorPrefs.SetFloat("WorldKit.Bake.ChunkSize", Mathf.Max(0f, value));
+        }
+
         static GameObject RootOrWarn()
         {
             var root = WorldKitScene.FindRoot();
@@ -80,7 +87,7 @@ namespace WorldKit.Editor
                 return;
 
             int choice = EditorUtility.DisplayDialogComplex("World Kit: Bake",
-                "Bütün parçalar ve zemin, materyal başına birleştirilip tek bir mesh asset'ine kaydedilecek.\n\n" +
+                "Bütün parçalar ve zemin, bölge bölge (Çıktı sekmesindeki bölge boyutu) ve materyal başına birleştirilip mesh asset'ine kaydedilecek.\n\n" +
                 "Orijinal (düzenlenebilir) dünya ne olsun?",
                 "Bake et, orijinali gizle", "Vazgeç", "Bake et, orijinal kalsın");
             if (choice == 1)
@@ -97,36 +104,65 @@ namespace WorldKit.Editor
             if (parts.Count == 0)
                 return;
 
-            // 1) Materyal başına birleştir, 2) hepsini alt-mesh olarak tek mesh'e koy.
-            var byMaterial = parts.GroupBy(p => p.Material).ToList();
-            var groupMeshes = new List<Mesh>();
-            var materials = new List<Material>();
-            foreach (var group in byMaterial)
+            // Bölgelere ayır: tek dev mesh, kameranın görmediği yerleri de çizdirir. Her bölge ayrı objedir.
+            float chunk = ChunkSize;
+            var chunks = parts.GroupBy(p =>
             {
-                var mesh = new Mesh { indexFormat = IndexFormat.UInt32 };
-                mesh.CombineMeshes(group.Select(p => new CombineInstance { mesh = p.Mesh, subMeshIndex = p.SubMesh, transform = p.Matrix }).ToArray(), true, true);
-                groupMeshes.Add(mesh);
-                materials.Add(group.Key);
-            }
-
-            var baked = new Mesh { name = Path.GetFileNameWithoutExtension(path), indexFormat = IndexFormat.UInt32 };
-            baked.CombineMeshes(groupMeshes.Select(m => new CombineInstance { mesh = m, transform = Matrix4x4.identity }).ToArray(), false, false);
-            baked.RecalculateBounds();
-            foreach (var m in groupMeshes)
-                Object.DestroyImmediate(m);
-
-            AssetDatabase.CreateAsset(baked, path);
-            AssetDatabase.SaveAssets();
+                if (chunk <= 0f)
+                    return Vector2Int.zero;
+                var center = p.Matrix.MultiplyPoint3x4(p.Mesh.bounds.center);
+                return new Vector2Int(Mathf.FloorToInt(center.x / chunk), Mathf.FloorToInt(center.z / chunk));
+            }).ToList();
 
             Undo.IncrementCurrentGroup();
             int undoGroup = Undo.GetCurrentGroup();
 
-            var go = new GameObject(root.name + "_Baked", typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider));
-            go.GetComponent<MeshFilter>().sharedMesh = baked;
-            go.GetComponent<MeshRenderer>().sharedMaterials = materials.ToArray();
-            go.GetComponent<MeshCollider>().sharedMesh = baked;
-            GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccluderStatic | StaticEditorFlags.OccludeeStatic);
-            Undo.RegisterCreatedObjectUndo(go, "World Kit: Bake");
+            var parent = new GameObject(root.name + "_Baked");
+            Undo.RegisterCreatedObjectUndo(parent, "World Kit: Bake");
+
+            var baseName = Path.GetFileNameWithoutExtension(path);
+            Mesh mainAsset = null;
+            int vertices = 0;
+            var allMaterials = new HashSet<Material>();
+            foreach (var chunkParts in chunks)
+            {
+                // 1) Materyal başına birleştir, 2) hepsini alt-mesh olarak tek mesh'e koy.
+                var groupMeshes = new List<Mesh>();
+                var materials = new List<Material>();
+                foreach (var group in chunkParts.GroupBy(p => p.Material))
+                {
+                    var mesh = new Mesh { indexFormat = IndexFormat.UInt32 };
+                    mesh.CombineMeshes(group.Select(p => new CombineInstance { mesh = p.Mesh, subMeshIndex = p.SubMesh, transform = p.Matrix }).ToArray(), true, true);
+                    groupMeshes.Add(mesh);
+                    materials.Add(group.Key);
+                    allMaterials.Add(group.Key);
+                }
+
+                var key = chunkParts.Key;
+                var baked = new Mesh { name = chunk > 0f ? $"{baseName}_{key.x}_{key.y}" : baseName, indexFormat = IndexFormat.UInt32 };
+                baked.CombineMeshes(groupMeshes.Select(m => new CombineInstance { mesh = m, transform = Matrix4x4.identity }).ToArray(), false, false);
+                baked.RecalculateBounds();
+                foreach (var m in groupMeshes)
+                    Object.DestroyImmediate(m);
+                vertices += baked.vertexCount;
+
+                // Bütün bölgeler tek asset dosyasında
+                if (mainAsset == null)
+                {
+                    AssetDatabase.CreateAsset(baked, path);
+                    mainAsset = baked;
+                }
+                else
+                    AssetDatabase.AddObjectToAsset(baked, mainAsset);
+
+                var go = new GameObject(baked.name, typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider));
+                go.transform.SetParent(parent.transform, false);
+                go.GetComponent<MeshFilter>().sharedMesh = baked;
+                go.GetComponent<MeshRenderer>().sharedMaterials = materials.ToArray();
+                go.GetComponent<MeshCollider>().sharedMesh = baked;
+                GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccluderStatic | StaticEditorFlags.OccludeeStatic);
+            }
+            AssetDatabase.SaveAssets();
 
             if (choice == 0)
             {
@@ -136,8 +172,8 @@ namespace WorldKit.Editor
 
             Undo.SetCurrentGroupName("World Kit: Bake");
             Undo.CollapseUndoOperations(undoGroup);
-            Selection.activeGameObject = go;
-            Debug.Log($"[World Kit] Bake: {parts.Count} parça → 1 mesh, {materials.Count} materyal, {baked.vertexCount:N0} vertex → {path}");
+            Selection.activeGameObject = parent;
+            Debug.Log($"[World Kit] Bake: {parts.Count} parça → {chunks.Count} bölge, {allMaterials.Count} materyal, {vertices:N0} vertex → {path}");
         }
 
         // ---------------- OBJ ----------------
@@ -229,11 +265,17 @@ namespace WorldKit.Editor
         {
             GUILayout.Space(8f);
             EditorGUILayout.HelpBox(
-                "Bake: Bütün parçalar ve zemin, materyal başına birleştirilip tek bir mesh asset'ine kaydedilir. " +
-                "Sonuç tek bir renderer ve collider'dır; orijinal düzenlenebilir dünya istersen gizlenir (Ctrl+Z ile geri alınır).\n\n" +
+                "Bake: Parçalar ve zemin, bölge bölge ve materyal başına birleştirilip mesh asset'ine kaydedilir. " +
+                "Her bölge ayrı obje (renderer + collider) olduğundan kameranın görmediği bölgeler çizilmez. " +
+                "Orijinal düzenlenebilir dünya istersen gizlenir (Ctrl+Z ile geri alınır).\n\n" +
                 "OBJ: Sanatçılar için .obj + .mtl (Blender, Maya vb.). Renkler materyallerden alınır.\n\n" +
                 "İkisinde de EditorOnly etiketli objeler (ölçü referansları) ve gizli objeler atlanır.",
                 MessageType.None);
+
+            float chunk = EditorGUILayout.Slider(new GUIContent("Bölge boyutu (m)", "Bake edilen dünya bu boyutta karelere bölünür. 0 = tek mesh."),
+                WorldKitOutput.ChunkSize, 0f, 64f);
+            if (!Mathf.Approximately(chunk, WorldKitOutput.ChunkSize))
+                WorldKitOutput.ChunkSize = Mathf.Round(chunk);
 
             if (GUILayout.Button("Dünyayı Bake Et…", GUILayout.Height(30f)))
                 WorldKitOutput.Bake();
