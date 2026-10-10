@@ -15,10 +15,10 @@ Amaç: olabildiğince basit kalmak, kullanıcıyı kısıtlamamak ve kolayca gen
 **Git ile (önerilen):** Package Manager → **+** → *Add package from git URL*:
 
 ```
-https://github.com/Baranipk/worldkit.git
+https://github.com/Baranipk/Cardys-Worldkit.git
 ```
 
-Belirli bir sürüm için sona etiket ekle, ör. `https://github.com/Baranipk/worldkit.git#v0.5.0`.
+Belirli bir sürüm için sona etiket ekle, ör. `https://github.com/Baranipk/Cardys-Worldkit.git#v0.5.0`.
 
 **Yerel geliştirme:** Paket klasörünü projenin `Packages/` klasörüne koy (embedded package).
 
