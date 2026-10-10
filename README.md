@@ -33,6 +33,9 @@ kendiliğinden devre dışı kalır, geri kalan her şey çalışır.
 3. **Zemin** sekmesinde *Zemin Fırçası* ile alan boya. Bir duvar seçip **Oda** modunda oda çiz.
 4. **Play**: Test modülü kuruluysa oyuncu otomatik olarak gelir. WASD, Shift, Q/E ve tekerlek ile gez.
 
+Hazır bir örnek görmek için: **Tools → World Kit → Örnek Köy Oluştur** (yeni sahnede küçük bir köy kurar).
+Ekip arkadaşları için adım adım anlatım: [Ekip rehberi](Documentation~/Rehber.md).
+
 ---
 
 ## Özellikler (kategorilere göre)
@@ -301,6 +304,7 @@ Kamera (`WorldKitCameraRig`) Cinemachine ile çalışır:
 ## Git ile ekip çalışması
 
 - `Assets/WorldKit/WorldKitSettings.asset`'i commit'le. Böylece herkes aynı ayarları kullanır.
+- Ekip arkadaşları için adım adım kurallar: [Ekip rehberi → Git](Documentation~/Rehber.md#5-git-ile-çalışma-kuralları).
 - Sahne çakışmalarını önlemek için herkes kendi sahnesinde çalışsın.
 - Unity YAML birleştirme için `.gitattributes`'a `*.unity merge=unityyamlmerge` ekle
   ve `git config merge.unityyamlmerge.driver` ayarını yap.
@@ -316,3 +320,7 @@ Kamera (`WorldKitCameraRig`) Cinemachine ile çalışır:
 | "Oyuncu Ekle" yok | Cinemachine 3.x ve Input System kurulu mu? |
 | Silinen duvarın direği kaldı | Unity menüsünden (Edit → Delete) silindiyse modüller haberdar olmaz. Direği elle sil veya parçaları Ctrl+tık / Delete (Scene odakta) ile sil |
 | Oklar parçayı değil kamerayı oynatıyor | Scene penceresine bir kez tıklayıp odakla; seçimde World Kit parçası olmalı |
+
+## Lisans
+
+[MIT](LICENSE.md). Ticari projeler dahil özgürce kullanılabilir, değiştirilebilir ve dağıtılabilir; telif satırı korunmalı.

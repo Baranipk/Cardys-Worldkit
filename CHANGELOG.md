@@ -2,6 +2,14 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.15.0] - 2026-10-10
+
+### Eklendi
+- **MIT lisansı** (`LICENSE.md`, `package.json` → `license`).
+- **Örnek Köy Oluştur** (`Tools → World Kit`, `WorldKitDemoVillage`): Yeni sahnede zemin türleri, yumuşak rampalı platform,
+  gölet, binalar, kenar süsü, ağaçlar ve NPC'lerle küçük bir köy. Gerekirse başlangıç içeriğini de üretir.
+- **Ekip rehberi** (`Documentation~/Rehber.md`): Kurulum, ilk 10 dakika, görev tablosu, teslim kontrol listesi, Git kuralları.
+
 ## [0.14.0] - 2026-10-10
 
 ### Eklendi
