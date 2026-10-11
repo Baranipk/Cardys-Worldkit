@@ -608,6 +608,7 @@ namespace WorldKit.Editor
             {
                 WorldKitStarterContent.Generate();
                 Refresh();
+                GUIUtility.ExitGUI();
             }
             GUILayout.FlexibleSpace();
         }

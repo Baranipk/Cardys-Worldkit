@@ -122,7 +122,10 @@ namespace WorldKit.Editor
             using (new EditorGUI.DisabledScope(!s.Bounds.HasValue))
             {
                 if (GUILayout.Button("Üstten Harita PNG Kaydet…"))
+                {
                     MapExporter.Export(newPpm);
+                    GUIUtility.ExitGUI(); // kaydetme penceresi açıldı: bu GUI geçişini bırak
+                }
             }
 
             GUILayout.Space(10f);

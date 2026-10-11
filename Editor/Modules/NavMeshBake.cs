@@ -168,6 +168,7 @@ namespace WorldKit.Editor
                         s_Show = true;
                         RebuildMesh();
                     }
+                    GUIUtility.ExitGUI();
                 }
 
                 using (new EditorGUI.DisabledScope(!WorldKitNavMeshBake.HasNavMesh))
@@ -176,6 +177,7 @@ namespace WorldKit.Editor
                     {
                         WorldKitNavMeshBake.Clear();
                         s_Show = false;
+                        GUIUtility.ExitGUI();
                     }
                 }
             }
@@ -187,6 +189,7 @@ namespace WorldKit.Editor
                 if (s_Show)
                     RebuildMesh();
                 SceneView.RepaintAll();
+                GUIUtility.ExitGUI();
             }
 
             if (s_Show && s_Mesh != null)

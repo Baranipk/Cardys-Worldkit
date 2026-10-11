@@ -139,6 +139,7 @@ namespace WorldKit.Editor
                     var created = WorldKitReplace.Replace(pieces, m_Target, KeepScale, m_Offset, Yaw);
                     Selection.objects = created.Cast<Object>().ToArray();
                     Debug.Log($"[World Kit] {created.Count} parça değiştirildi: {m_Source.name} → {m_Target.name}");
+                    GUIUtility.ExitGUI();
                 }
             }
             if (m_Source != null && pieces.Count == 0)

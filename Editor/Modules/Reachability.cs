@@ -305,11 +305,17 @@ namespace WorldKit.Editor
             using (new EditorGUILayout.HorizontalScope())
             {
                 if (GUILayout.Button(s_Show ? "Yeniden Hesapla" : "Hesapla ve Göster", GUILayout.Height(26f)))
+                {
                     Calculate();
+                    GUIUtility.ExitGUI();
+                }
                 using (new EditorGUI.DisabledScope(!s_Show))
                 {
                     if (GUILayout.Button("Gizle", GUILayout.Height(26f), GUILayout.Width(60f)))
+                    {
                         Hide();
+                        GUIUtility.ExitGUI();
+                    }
                 }
             }
 

@@ -283,7 +283,9 @@ namespace WorldKit.Editor
         public static void DrawReportGUI(ref Report report)
         {
             EditorGUILayout.LabelField("Performans", EditorStyles.boldLabel);
-            if (report == null || GUILayout.Button("Performansı Analiz Et"))
+            // Düğme her geçişte çizilmeli (Layout ve Repaint'te aynı sayıda kontrol); ilk açılışta da hesapla.
+            bool analyze = GUILayout.Button("Performansı Analiz Et");
+            if (analyze || report == null)
                 report = Analyze();
 
             EditorGUILayout.LabelField("Renderer / benzersiz mesh", $"{report.Renderers} / {report.UniqueMeshes}");
@@ -299,15 +301,18 @@ namespace WorldKit.Editor
 
             using (new EditorGUILayout.HorizontalScope())
             {
+                // Bu işlemler diyalog açar ve sahneyi değiştirir: bitince bu GUI geçişini bırak (düzen bozulmasın).
                 if (GUILayout.Button("Prefab'ları Optimize Et"))
                 {
                     OptimizePiecePrefabsMenu();
                     report = Analyze();
+                    GUIUtility.ExitGUI();
                 }
                 if (GUILayout.Button("Sahnedeki Parçaları Düzelt"))
                 {
                     FixSceneInstances();
                     report = Analyze();
+                    GUIUtility.ExitGUI();
                 }
             }
 

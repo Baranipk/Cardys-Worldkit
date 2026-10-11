@@ -2,6 +2,14 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.18.3] - 2026-10-11
+
+### Düzeltildi
+- **"Invalid GUILayout state in WorldKitPaletteWindow"** hatası: İstatistik sekmesi ilk açıldığında "Performansı Analiz Et"
+  düğmesi Layout geçişinde atlanıyordu (Layout ve Repaint'te farklı sayıda kontrol).
+- Diyalog açan veya sekmenin içeriğini değiştiren düğmelerden sonra GUI geçişi güvenle bitirilir (`GUIUtility.ExitGUI`):
+  harita PNG, Bake, OBJ, NavMesh (Bake/Kaldır/Göster), Erişim (Hesapla/Gizle), Değiştir, Başlangıç İçeriğini Üret.
+
 ## [0.18.2] - 2026-10-10
 
 ### Değişti

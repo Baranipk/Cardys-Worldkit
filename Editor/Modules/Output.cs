@@ -278,9 +278,15 @@ namespace WorldKit.Editor
                 WorldKitOutput.ChunkSize = Mathf.Round(chunk);
 
             if (GUILayout.Button("Dünyayı Bake Et…", GUILayout.Height(30f)))
+            {
                 WorldKitOutput.Bake();
+                GUIUtility.ExitGUI();
+            }
             if (GUILayout.Button("OBJ Olarak Dışa Aktar…", GUILayout.Height(30f)))
+            {
                 WorldKitOutput.ExportObj();
+                GUIUtility.ExitGUI();
+            }
         }
     }
 }
