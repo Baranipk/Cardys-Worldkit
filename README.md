@@ -186,6 +186,16 @@ Footprint'inin bir ekseni 0 olan parçalar grid **köşelerine** oturur:
 - Yönü önemli parçalarda (kapı) R ile seçilen yöne en yakın açı korunur. Mavi ok ön yüzü gösterir.
 - Aynı yere aynı parça, 180° çevrilmiş hali dahil, ikinci kez konmaz.
 
+### Doku (karolu ızgara yerine)
+Başlangıç materyallerinin (zemin, duvar, bina, dekor) dokusu Zemin sekmesindeki **Doku** listesinden veya
+Project Settings → World Kit → *Surface Style* ile değişir; bütün materyaller hemen güncellenir:
+- **Izgara (karolu):** ölçü okumak için 1 m karolar (varsayılan).
+- **Düz renk:** dokusuz.
+- **Yumuşak leke:** hafif, doğal renk dalgalanması (4 m'de bir tekrar), çizgi yok.
+- **Kendi dokum:** *Custom Texture* ve *Custom Texture Tiling* (metre başına tekrar). Doku renkle çarpılır; açık gri/beyaz tonlu doku önerilir.
+
+Menü: **Tools → World Kit → Yüzey Dokusunu Uygula**. Yalnızca adı `GB_` ile başlayan başlangıç materyallerine dokunur.
+
 ### Zemin türleri
 Zemin sekmesindeki renk karelerinden bir tür seç (Zemin, Çimen, Toprak, Taş, Kum, Su, Yol...) ve boya.
 - Türler **Project Settings → World Kit → Floor Types** listesindedir: ad + materyal. Yeni türleri listenin

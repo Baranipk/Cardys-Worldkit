@@ -93,7 +93,23 @@ namespace WorldKit.Editor
         [Tooltip("Cetvelde süre hesabı için koşma hızı (m/sn).")]
         [Min(0.1f)] public float runSpeed = 7.5f;
 
+        /// <summary>Başlangıç materyallerinin (GB_*) yüzey dokusu.</summary>
+        public enum SurfaceStyle
+        {
+            [InspectorName("Izgara (karolu)")] Grid,
+            [InspectorName("Düz renk")] Flat,
+            [InspectorName("Yumuşak leke")] Soft,
+            [InspectorName("Kendi dokum")] Custom
+        }
+
         [Header("Başlangıç içeriği")]
+        [Tooltip("Başlangıç materyallerinin (zemin, duvar, bina, dekor...) dokusu. Izgara: ölçü okumak için karolu; " +
+                 "Düz renk: dokusuz; Yumuşak leke: hafif doğal renk dalgalanması; Kendi dokum: aşağıdaki doku.")]
+        public SurfaceStyle surfaceStyle = SurfaceStyle.Grid;
+        [Tooltip("'Kendi dokum' seçiliyse bütün başlangıç materyallerinde kullanılacak doku (renkle çarpılır; açık gri/beyaz tonlu doku önerilir).")]
+        public Texture2D customTexture;
+        [Tooltip("Doku tekrarı: metre başına kaç kez (1 = her metrede bir; 0.25 = 4 metrede bir).")]
+        [Min(0.01f)] public float customTextureTiling = 0.5f;
         [Tooltip("Başlangıç içeriğinin materyallerinin yazılacağı klasör.")]
         public string materialsFolder = "Assets/WorldKit/Materials";
         [Min(0.5f)] public float wallHeight = 3f;

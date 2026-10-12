@@ -59,7 +59,7 @@ namespace WorldKit.Editor
         public static void Generate()
         {
             WorldKitSettings.EnsureFolder(MaterialsFolder);
-            var grid = CreateGridTexture();
+            var (grid, _) = StyleTexture();
 
             var ground = CreateMaterial("Zemin", new Color(0.62f, 0.62f, 0.64f), grid);
             var wall = CreateMaterial("Duvar", new Color(0.84f, 0.84f, 0.87f), grid);
@@ -176,6 +176,7 @@ namespace WorldKit.Editor
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+            ApplySurfaceStyle(); // doku tekrarı (ölçek) ve stil
             WorldKitThumbnails.Clear();
 
             // Eski (ProBuilder'lı) kopyaların sahnede kalmış kendi mesh'lerini temizle
@@ -277,6 +278,134 @@ namespace WorldKit.Editor
         }
 
         // ---------------- Materyaller ----------------
+
+        /// <summary>
+        /// Yumuşak leke dokusu: döşenebilir (kenarları birleşen), hafif açık-koyu dalgalanma. Renkle çarpılınca
+        /// düz renge doğal bir canlılık katar; ızgara çizgisi yoktur.
+        /// </summary>
+        static Texture2D CreateSoftTexture()
+        {
+            var path = MaterialsFolder + "/GB_Leke.png";
+            const int size = 256;
+            var random = new System.Random(11);
+
+            // Döşenebilir değer gürültüsü: her oktavda periyodik kafes
+            float[] Lattice(int period)
+            {
+                var values = new float[period * period];
+                for (int i = 0; i < values.Length; i++)
+                    values[i] = (float)random.NextDouble();
+                return values;
+            }
+            var octaves = new[] { (period: 4, weight: 0.5f), (period: 8, weight: 0.3f), (period: 32, weight: 0.2f) };
+            var lattices = octaves.Select(o => Lattice(o.period)).ToArray();
+
+            float Sample(float u, float v)
+            {
+                float sum = 0f;
+                for (int o = 0; o < octaves.Length; o++)
+                {
+                    int p = octaves[o].period;
+                    float x = u * p, y = v * p;
+                    int x0 = Mathf.FloorToInt(x), y0 = Mathf.FloorToInt(y);
+                    float fx = x - x0, fy = y - y0;
+                    fx = fx * fx * (3f - 2f * fx);
+                    fy = fy * fy * (3f - 2f * fy);
+                    float L(int ix, int iy) => lattices[o][((iy % p + p) % p) * p + ((ix % p + p) % p)];
+                    float a = Mathf.Lerp(L(x0, y0), L(x0 + 1, y0), fx);
+                    float b = Mathf.Lerp(L(x0, y0 + 1), L(x0 + 1, y0 + 1), fx);
+                    sum += Mathf.Lerp(a, b, fy) * octaves[o].weight;
+                }
+                return sum;
+            }
+
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float n = Sample(x / (float)size, y / (float)size);
+                byte v = (byte)Mathf.RoundToInt(Mathf.Lerp(205f, 255f, n));
+                pixels[y * size + x] = new Color32(v, v, v, 255);
+            }
+            texture.SetPixels32(pixels);
+            File.WriteAllBytes(path, texture.EncodeToPNG());
+            Object.DestroyImmediate(texture);
+
+            AssetDatabase.ImportAsset(path);
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            importer.wrapMode = TextureWrapMode.Repeat;
+            importer.filterMode = FilterMode.Trilinear;
+            importer.mipmapEnabled = true;
+            importer.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        }
+
+        /// <summary>Ayarlardaki yüzey stiline göre doku (düz renkte null) ve tekrar sayısı.</summary>
+        static (Texture2D texture, float tiling) StyleTexture()
+        {
+            var settings = Settings;
+            WorldKitSettings.EnsureFolder(MaterialsFolder);
+            switch (settings.surfaceStyle)
+            {
+                case WorldKitSettings.SurfaceStyle.Flat: return (null, 1f);
+                case WorldKitSettings.SurfaceStyle.Soft:
+                    return (AssetDatabase.LoadAssetAtPath<Texture2D>(MaterialsFolder + "/GB_Leke.png") ?? CreateSoftTexture(), 0.25f);
+                case WorldKitSettings.SurfaceStyle.Custom: return (settings.customTexture, settings.customTextureTiling);
+                default:
+                    return (AssetDatabase.LoadAssetAtPath<Texture2D>(MaterialsFolder + "/GB_Grid.png") ?? CreateGridTexture(), 1f);
+            }
+        }
+
+        static string s_AppliedStyle;
+
+        /// <summary>
+        /// Bütün başlangıç materyallerine (materyal klasöründeki GB_*) ayarlardaki yüzey stilini uygular.
+        /// Izgarada yüzey boyası katmanları (GB_Boya_*) dokusuz kalır.
+        /// </summary>
+        [MenuItem("Tools/World Kit/Yüzey Dokusunu Uygula", priority = 21)]
+        public static void ApplySurfaceStyle()
+        {
+            if (!AssetDatabase.IsValidFolder(MaterialsFolder))
+                return;
+            var settings = Settings;
+            var (texture, tiling) = StyleTexture();
+            foreach (var guid in AssetDatabase.FindAssets("t:Material GB_", new[] { MaterialsFolder }))
+            {
+                var material = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
+                if (material == null || !material.name.StartsWith("GB_"))
+                    continue;
+                bool paint = material.name.StartsWith("GB_Boya_");
+                var target = settings.surfaceStyle == WorldKitSettings.SurfaceStyle.Grid && paint ? null : texture;
+                if (material.mainTexture == target && Mathf.Approximately(material.mainTextureScale.x, tiling))
+                    continue;
+                material.mainTexture = target;
+                material.mainTextureScale = new Vector2(tiling, tiling);
+                EditorUtility.SetDirty(material);
+            }
+            AssetDatabase.SaveAssets();
+            s_AppliedStyle = StyleKey();
+            WorldKitThumbnails.Clear(); // palet önizlemeleri yeni dokuyla yeniden çizilsin
+        }
+
+        static string StyleKey()
+        {
+            var settings = Settings;
+            return $"{settings.surfaceStyle}|{(settings.customTexture != null ? settings.customTexture.GetInstanceID() : 0)}|{settings.customTextureTiling}";
+        }
+
+        [InitializeOnLoadMethod]
+        static void WatchSurfaceStyle()
+        {
+            // Proje ayarlarında stil değişince materyalleri hemen güncelle
+            // Başlangıçtaki stili hatırla (asset veritabanı hazır olunca)
+            EditorApplication.delayCall += () => s_AppliedStyle ??= StyleKey();
+            WorldKitEvents.SettingsChanged += () =>
+            {
+                if (s_AppliedStyle != StyleKey())
+                    EditorApplication.delayCall += ApplySurfaceStyle;
+            };
+        }
 
         static Texture2D CreateGridTexture()
         {

@@ -156,6 +156,22 @@ namespace WorldKit.Editor
             if (GUILayout.Button("Tür Ekle…", EditorStyles.miniButton, GUILayout.Width(70f)))
                 SettingsService.OpenProjectSettings("Project/World Kit");
 
+            // Başlangıç materyallerinin dokusu (karolu ızgara yerine düz renk, leke veya kendi dokun)
+            var kit = WorldKitSettings.Instance;
+            var style = (WorldKitSettings.SurfaceStyle)EditorGUILayout.EnumPopup(new GUIContent("Doku",
+                "Zemin, duvar, bina ve dekor materyallerinin dokusu. 'Kendi dokum' için dokuyu Project Settings → World Kit'te seç."),
+                kit.surfaceStyle);
+            if (style != kit.surfaceStyle)
+            {
+                Undo.RecordObject(kit, "World Kit: Doku");
+                kit.surfaceStyle = style;
+                EditorUtility.SetDirty(kit);
+                WorldKitStarterContent.ApplySurfaceStyle();
+                if (style == WorldKitSettings.SurfaceStyle.Custom && kit.customTexture == null)
+                    SettingsService.OpenProjectSettings("Project/World Kit");
+                GUIUtility.ExitGUI();
+            }
+
             DrawOperationPicker();
             DrawFloorSetSection();
         }

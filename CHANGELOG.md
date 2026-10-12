@@ -2,6 +2,14 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.23.0] - 2026-10-12
+
+### Eklendi
+- **Doku seçimi** (karolu ızgara yerine): `surfaceStyle` = Izgara / Düz renk / Yumuşak leke / Kendi dokum
+  (`customTexture`, `customTextureTiling`). Zemin sekmesinde **Doku** listesi; değişince bütün `GB_*` materyalleri güncellenir.
+- Döşenebilir yumuşak leke dokusu (`GB_Leke.png`, kod ile üretilir).
+- Menü: Tools → World Kit → Yüzey Dokusunu Uygula (`WorldKitStarterContent.ApplySurfaceStyle`).
+
 ## [0.22.1] - 2026-10-12
 
 ### Geri alındı
