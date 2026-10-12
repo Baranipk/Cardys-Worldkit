@@ -2,6 +2,17 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.25.1] - 2026-10-12
+
+### Düzeltildi
+- **Yumuşak kenarda rampanın yanlarındaki artık kenarlar:** Rampa üst katın alanında dolu sayıldığı için platformun kenarı
+  rampanın yanlarından dolanıyor, rampanın iki yanında kavisli çıkıntı ve fazladan uçurum duvarı oluşuyordu. Rampa artık
+  yalnızca kendi tabanında dolu sayılır: üst katın kenarı rampanın tepesinden düz geçer, orada duvar ve dudak üretilmez.
+  Platforma oyulmuş (iki yanı da yüksek) rampada girinti yuvarlanmaz, yanlar düz uçurum duvarıdır; tek yanı açık rampada
+  iç köşe kavisi rampanın üstünde de tamamlanır (delik kalmaz).
+- **Dudakta (çimen saçağı) yarıklar:** Her duvar parçasının dudağı ayrı ayrı dışarı itildiği için kıvrımlarda kama şeklinde
+  boşluklar ve dikey çizgiler oluşuyordu. Dudak parçaları artık ortak uçlarda birleştirilir (gönye), şerit kesintisizdir.
+
 ## [0.25.0] - 2026-10-12
 
 ### Düzeltildi

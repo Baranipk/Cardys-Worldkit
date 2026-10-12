@@ -473,6 +473,8 @@ namespace WorldKit
             var vertices = new List<Vector3>();
             var uvs = new List<Vector2>();
             var subMeshes = new List<List<int>> { new List<int>(), new List<int>() };
+            m_Lips.Clear();
+            CollectFilledRamps();
 
             foreach (var pair in m_Map)
             {
@@ -504,11 +506,18 @@ namespace WorldKit
                     Vector3.up, new Vector2(x0, z0), new Vector2(x0, z1), new Vector2(x1, z1), new Vector2(x1, z0));
 
                 AddSideFaces(cell, data, vertices, uvs, triangles, false);
+
+                // Yumuşak kenarda üst katın kavisi (iç köşe) rampanın üstüne taşabilir: o kısmı rampa hücresinde üret
+                if (smoothEdges && !m_FilledRamps.Contains(cell))
+                    BuildSmoothCell(cell, data, vertices, uvs, subMeshes, true, data.Height + 1);
             }
 
             // Yumuşak kenarda iç köşe kavisleri zeminin dışındaki boş hücrelere taşabilir: onları da işle
             if (smoothEdges)
+            {
                 BuildSmoothRing(vertices, uvs, subMeshes);
+                BuildLips(vertices, uvs, subMeshes);
+            }
 
             m_Mesh.Clear();
             m_Mesh.SetVertices(vertices);
@@ -534,7 +543,8 @@ namespace WorldKit
         /// Hücrenin köşeli yan yüzleri: her kenarda iki uç için "komşunun üstü (veya taban) → benim üstüm".
         /// smoothOnly: yumuşak kenar modunda yalnızca eğriyle üretilmeyen kenarlar (rampalı komşu, aynı kattaki tür farkı).
         /// </summary>
-        void AddSideFaces(Vector2Int cell, Cell data, List<Vector3> vertices, List<Vector2> uvs, List<int> triangles, bool smoothOnly)
+        void AddSideFaces(Vector2Int cell, Cell data, List<Vector3> vertices, List<Vector2> uvs, List<int> triangles, bool smoothOnly,
+            List<int> cliffTriangles = null)
         {
             float size = CellSize;
             float lh = levelHeight;
@@ -544,8 +554,16 @@ namespace WorldKit
             foreach (var offset in k_Neighbours)
             {
                 bool hasNeighbour = m_Map.TryGetValue(cell + offset, out var neighbour) && neighbour.Height <= m_MaxVisibleLevel;
-                if (smoothOnly && (!hasNeighbour || (neighbour.Slope == Slope.None && neighbour.Height != data.Height)))
+                // Yumuşak kenarda kat farkları (alçaktaki rampaya bakan kenar da) eğri duvarla üretilir
+                // (platforma oyulmuş rampaya bakan kenar hariç: orada eğri duvar yok, köşeli yüz iner)
+                if (smoothOnly && (!hasNeighbour || (neighbour.Slope == Slope.None && neighbour.Height != data.Height)
+                                   || (neighbour.Slope != Slope.None && neighbour.Height < data.Height
+                                       && !(neighbour.Height + 1 == data.Height && m_FilledRamps.Contains(cell + offset)))))
                     continue;
+                // Yumuşak kenarda rampanın yanı, yüksekteki düz komşuya bakıyorsa tabana kadar iner: komşunun eğri
+                // duvarı köşede içeri kıvrıldığında rampanın altı açıkta kalmaz
+                bool toBottom = smoothEdges && !smoothOnly && data.Slope != Slope.None && hasNeighbour
+                                && neighbour.Slope == Slope.None && neighbour.Height > data.Height;
 
                 // Kenarın iki ucu (hücre içi köşe koordinatları) ve komşudaki karşılıkları
                 int ax, az, bx, bz;
@@ -557,7 +575,7 @@ namespace WorldKit
                 float topA = CornerLevel(data, ax, az) * lh;
                 float topB = CornerLevel(data, bx, bz) * lh;
                 float lowA, lowB;
-                if (hasNeighbour)
+                if (hasNeighbour && !toBottom)
                 {
                     // Komşunun karşı kenarındaki köşeler: X komşusunda cx ters, Z komşusunda cz ters.
                     lowA = CornerLevel(neighbour, offset.x != 0 ? 1 - ax : ax, offset.y != 0 ? 1 - az : az) * lh;
@@ -565,7 +583,7 @@ namespace WorldKit
                 }
                 else
                 {
-                    lowA = lowB = bottom;
+                    lowA = lowB = toBottom && data.Height > 0 ? data.Height * lh : bottom;
                 }
 
                 lowA = Mathf.Min(lowA, topA);
@@ -579,7 +597,9 @@ namespace WorldKit
                 float ua = offset.x != 0 ? a.z : a.x;
                 float ub = offset.x != 0 ? b.z : b.x;
 
-                AddQuad(vertices, uvs, triangles,
+                // Oyulmuş rampanın yanındaki yüz uçurum duvarıdır
+                var target = cliffTriangles != null && neighbour.Slope != Slope.None && neighbour.Height < data.Height ? cliffTriangles : triangles;
+                AddQuad(vertices, uvs, target,
                     new Vector3(a.x, lowA, a.z), new Vector3(a.x, topA, a.z), new Vector3(b.x, topB, b.z), new Vector3(b.x, lowB, b.z),
                     normal, new Vector2(ua, lowA), new Vector2(ua, topA), new Vector2(ub, topB), new Vector2(ub, lowB));
             }
@@ -594,11 +614,67 @@ namespace WorldKit
         /// <summary>Duvarların alt-mesh'i: tür alt-mesh'lerinden sonra gelir (World Kit buraya uçurum materyalini koyar).</summary>
         int CliffSubMesh => m_TypeOffsets.Count > 0 ? 1 + m_TypeOffsets.Count : 1;
 
-        /// <summary>Hücre k katında "dolu" mu (yüksekliği k veya üstü)? Gizli üst katlar ve olmayan hücreler boş.</summary>
+        /// <summary>
+        /// Hücre k katında "dolu" mu (yüksekliği k veya üstü)? Gizli üst katlar ve olmayan hücreler boş.
+        /// Rampa yalnızca kendi tabanında doludur: üst katın kenarı rampanın önünden düz geçer, rampanın yanlarında
+        /// kavis ya da fazladan duvar oluşmaz (rampanın tepesindeki duvar AddWall'da atlanır).
+        /// </summary>
         bool Occupied(Vector2Int cell, int level) =>
             m_Map.TryGetValue(cell, out var d) && d.Height <= m_MaxVisibleLevel
-            // Rampa bir üst kata çıkar: alanda o katı da doldurur (platformla rampa arasında duvar oluşmaz)
-            && d.Height + (d.Slope != Slope.None ? 1 : 0) >= level;
+            && (d.Height >= level || (d.Height + 1 == level && m_FilledRamps.Contains(cell)));
+
+        // İki yanı da bir üst katla çevrili (platforma oyulmuş) rampalar: üst katın alanında dolu sayılır, böylece
+        // girintinin ağzı ve dibi yuvarlanmaz; rampanın yanlarındaki duvarlar köşeli yan yüzlerle üretilir.
+        readonly HashSet<Vector2Int> m_FilledRamps = new HashSet<Vector2Int>();
+
+        void CollectFilledRamps()
+        {
+            m_FilledRamps.Clear();
+            if (!smoothEdges)
+                return;
+            foreach (var pair in m_Map)
+            {
+                var d = pair.Value;
+                if (d.Slope == Slope.None || d.Height > m_MaxVisibleLevel)
+                    continue;
+                var up = Direction(d.Slope);
+                var side = new Vector2Int(up.y, up.x);
+                if (ClosedSide(pair.Key, side, d) && ClosedSide(pair.Key, new Vector2Int(-side.x, -side.y), d))
+                    m_FilledRamps.Add(pair.Key);
+            }
+        }
+
+        /// <summary>Rampanın bu yanında (aynı yöndeki bitişik rampalar geçilerek) bir üst katta düz hücre var mı?</summary>
+        bool ClosedSide(Vector2Int cell, Vector2Int step, Cell ramp)
+        {
+            for (int i = 0; i < 64; i++)
+            {
+                cell += step;
+                if (!m_Map.TryGetValue(cell, out var n) || n.Height > m_MaxVisibleLevel)
+                    return false;
+                if (n.Slope == ramp.Slope && n.Height == ramp.Height)
+                    continue;
+                return n.Slope == Slope.None && n.Height >= ramp.Height + 1;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Dışa normal yönünde bakan, k katında duran bir duvar bir rampanın tepesine mi denk geliyor? (Rampa duvara
+        /// doğru yükselir ve yüksek kenarı bu kata ulaşır: orada duvar ve dudak olmaz, rampa yüzeye bağlanır.)
+        /// </summary>
+        bool IsRampTop(Vector2 outside, Vector2Int insideCell, Vector3 normal, int level)
+        {
+            var cell = new Vector2Int(Mathf.FloorToInt(outside.x), Mathf.FloorToInt(outside.y));
+            // Rampanın kendi hücresindeki kavis duvarı (iç köşe taşması) değil, yalnızca rampanın üst ucundaki kenar
+            if (cell.Equals(insideCell) || !m_Map.TryGetValue(cell, out var ramp) || ramp.Slope == Slope.None || ramp.Height >= level || ramp.Height > m_MaxVisibleLevel)
+                return false;
+            var up = Direction(ramp.Slope);
+            if (up.x * normal.x + up.y * normal.z > -0.5f)
+                return false;
+            float highEdge = ramp.Part == RampPart.Lower ? ramp.Height + 0.5f : ramp.Height + 1f;
+            return highEdge >= level - 0.01f;
+        }
 
         /// <summary>
         /// k katı alanının p noktasındaki kapsaması (0-1): p çevresindeki (2r × 2r) karenin dolu hücrelerle örtüşen oranı.
@@ -646,7 +722,12 @@ namespace WorldKit
                 BuildSmoothCell(cell, default, vertices, uvs, subMeshes, true);
         }
 
-        void BuildSmoothCell(Vector2Int cell, Cell data, List<Vector3> vertices, List<Vector2> uvs, List<List<int>> subMeshes, bool isVirtual = false)
+        /// <summary>
+        /// Düz hücrenin yumuşak kenarlı yüzeyi ve duvarları. isVirtual: hücrenin kendi yüzeyi yok (boş hücre ya da
+        /// rampa), yalnızca komşuların taşan kavisi ve duvarı; minLevel altındaki katlar atlanır.
+        /// </summary>
+        void BuildSmoothCell(Vector2Int cell, Cell data, List<Vector3> vertices, List<Vector2> uvs, List<List<int>> subMeshes,
+            bool isVirtual = false, int minLevel = int.MinValue)
         {
             float size = CellSize;
             float lh = levelHeight;
@@ -686,9 +767,13 @@ namespace WorldKit
                 return;
             }
 
+            int cliff = CliffSubMesh;
+            while (subMeshes.Count <= cliff)
+                subMeshes.Add(new List<int>());
+
             // Eğriyle üretilmeyen kenarlar (rampalı komşu, aynı katta tür/su farkı) köşeli kalır
             if (!isVirtual)
-                AddSideFaces(cell, data, vertices, uvs, subMeshes[own], true);
+                AddSideFaces(cell, data, vertices, uvs, subMeshes[own], true, subMeshes[cliff]);
 
             int lowLevel = isVirtual ? Mathf.Min(minH, 0) : Mathf.Min(minH, Mathf.Min(data.Height, 0));
             int highLevel = maxH;
@@ -709,10 +794,6 @@ namespace WorldKit
                 field[l] = values;
             }
 
-            int cliff = CliffSubMesh;
-            while (subMeshes.Count <= cliff)
-                subMeshes.Add(new List<int>());
-
             var poly = new List<Vector2>(8);
             var clipped = new List<Vector2>(8);
             for (int b = 0; b < res; b++)
@@ -725,6 +806,8 @@ namespace WorldKit
                 for (int l = 0; l < levels - 1; l++)
                 {
                     int level = lowLevel + l;
+                    if (level < minLevel)
+                        continue;
                     var f = field[l];
                     var up = field[l + 1];
                     if (f[k0] < SmoothThreshold && f[k1] < SmoothThreshold && f[k2] < SmoothThreshold && f[k3] < SmoothThreshold)
@@ -830,6 +913,8 @@ namespace WorldKit
             // Alt: dışarıda bir alt kat yüzeyi varsa ya da altında başka bir duvar sırası gelecekse bir kat aşağı;
             // en alt sırada (harita kenarı, yuvarlatılmış köşe) zemin tabanına kadar.
             var outsideCells = new Vector2(outside.x / size, outside.z / size);
+            if (IsRampTop(outsideCells, insideCell, normal, level))
+                return;
             float radius = Mathf.Clamp(edgeRadius, 0.05f, 1.5f);
             // Bir alt katın alanı dışarıda bu katınkinden fazlaysa orada gerçek bir alt yüzey var
             bool lowerSurface = Coverage(outsideCells, level - 1, radius) > Coverage(outsideCells, level, radius) + 0.01f;
@@ -845,20 +930,73 @@ namespace WorldKit
 
             // Dudak / çimen saçağı: üst kenardan dışarı taşan ince şerit (üstteki hücrenin materyaliyle)
             // Yalnızca gerçek üst kenarda (içerideki yüzey tam bu katta); üst üste binen uçurumun ortasında değil
+            // Parçalar BuildLips'te köşelerde birleştirilerek üretilir (yoksa kıvrımlarda kama şeklinde boşluk kalır)
             if (edgeLip > 0f && hasOwner && insideData.Height == level)
             {
-                int lipSub = SubMeshOf(insideData);
-                while (subMeshes.Count <= lipSub)
-                    subMeshes.Add(new List<int>());
-                var lipTris = subMeshes[lipSub];
                 float y = top + 0.02f;
-                var o = normal * edgeLip;
-                AddQuad(vertices, uvs, lipTris,
-                    new Vector3(a.x, y, a.z), new Vector3(a.x + o.x, y, a.z + o.z), new Vector3(b.x + o.x, y, b.z + o.z), new Vector3(b.x, y, b.z),
-                    Vector3.up, new Vector2(a.x, a.z), new Vector2(a.x + o.x, a.z + o.z), new Vector2(b.x + o.x, b.z + o.z), new Vector2(b.x, b.z));
-                AddQuad(vertices, uvs, lipTris,
-                    new Vector3(a.x + o.x, y - 0.08f, a.z + o.z), new Vector3(a.x + o.x, y, a.z + o.z), new Vector3(b.x + o.x, y, b.z + o.z), new Vector3(b.x + o.x, y - 0.08f, b.z + o.z),
-                    normal, new Vector2(ua, y - 0.08f), new Vector2(ua, y), new Vector2(ub, y), new Vector2(ub, y - 0.08f));
+                m_Lips.Add(new LipSegment
+                {
+                    A = new Vector3(a.x, y, a.z), B = new Vector3(b.x, y, b.z), Normal = normal, SubMesh = SubMeshOf(insideData)
+                });
+            }
+        }
+
+        struct LipSegment
+        {
+            public Vector3 A, B, Normal;
+            public int SubMesh;
+        }
+
+        readonly List<LipSegment> m_Lips = new List<LipSegment>();
+
+        static Vector3Int LipKey(Vector3 p) =>
+            new Vector3Int(Mathf.RoundToInt(p.x * 500f), Mathf.RoundToInt(p.y * 500f), Mathf.RoundToInt(p.z * 500f));
+
+        /// <summary>
+        /// Dudak / çimen saçağı: duvar parçalarının üst kenarından dışarı taşan ince şerit. Ortak uçlarda normaller
+        /// birleştirilir (gönye), böylece kıvrımlarda şerit kesintisiz devam eder.
+        /// </summary>
+        void BuildLips(List<Vector3> vertices, List<Vector2> uvs, List<List<int>> subMeshes)
+        {
+            if (m_Lips.Count == 0)
+                return;
+
+            var sums = new Dictionary<Vector3Int, Vector3>(m_Lips.Count * 2);
+            foreach (var lip in m_Lips)
+            {
+                foreach (var key in new[] { LipKey(lip.A), LipKey(lip.B) })
+                {
+                    sums.TryGetValue(key, out var sum);
+                    sums[key] = sum + lip.Normal;
+                }
+            }
+
+            Vector3 Offset(Vector3 p, Vector3 own)
+            {
+                var n = sums[LipKey(p)];
+                n.y = 0f;
+                if (n.sqrMagnitude < 1e-6f)
+                    return own * edgeLip;
+                n.Normalize();
+                // Gönye: köşede şerit genişliği korunur (çok keskin köşelerde sınırlı)
+                float cos = Mathf.Max(0.5f, Vector3.Dot(n, own));
+                return n * (edgeLip / cos);
+            }
+
+            const float drop = 0.08f;
+            foreach (var lip in m_Lips)
+            {
+                while (subMeshes.Count <= lip.SubMesh)
+                    subMeshes.Add(new List<int>());
+                var tris = subMeshes[lip.SubMesh];
+                Vector3 a = lip.A, b = lip.B;
+                Vector3 oa = a + Offset(a, lip.Normal), ob = b + Offset(b, lip.Normal);
+                var down = new Vector3(0f, drop, 0f);
+                float ua = a.x + a.z, ub = b.x + b.z;
+                AddQuad(vertices, uvs, tris, a, oa, ob, b,
+                    Vector3.up, new Vector2(a.x, a.z), new Vector2(oa.x, oa.z), new Vector2(ob.x, ob.z), new Vector2(b.x, b.z));
+                AddQuad(vertices, uvs, tris, oa - down, oa, ob, ob - down,
+                    lip.Normal, new Vector2(ua, a.y - drop), new Vector2(ua, a.y), new Vector2(ub, b.y), new Vector2(ub, b.y - drop));
             }
         }
 
