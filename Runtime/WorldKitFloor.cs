@@ -50,6 +50,10 @@ namespace WorldKit
         [SerializeField, HideInInspector] List<float> m_TypeOffsets = new List<float>();
 
         const int PartStride = 8;
+        // m_Slopes içinde köşe modu: bu bit varsa alt 16 bit dört köşenin yükselişidir (her biri 0-12 = 0-1 kat).
+        const int CornerFlag = 1 << 20;
+        /// <summary>Köşe yükselişinin adım sayısı: 12 = bir kat (1, 2, 3, 4 ve 6 hücrelik rampalar tam bölünür).</summary>
+        public const int CornerSteps = 12;
 
         struct Cell
         {
@@ -57,6 +61,8 @@ namespace WorldKit
             public int Type;
             public Slope Slope;
             public RampPart Part;
+            // Köşe modu (0 = yok): 4 bitlik dört alan, sırasıyla köşe 00, 10, 01, 11 için 0-12 adım yükseliş.
+            public int Corners;
         }
 
         readonly Dictionary<Vector2Int, Cell> m_Map = new Dictionary<Vector2Int, Cell>();
@@ -214,6 +220,7 @@ namespace WorldKit
                 {
                     data.Slope = slope;
                     data.Part = slope == Slope.None ? RampPart.Full : part;
+                    data.Corners = 0;
                     m_Map[cell] = data;
                 }
             }
@@ -275,11 +282,115 @@ namespace WorldKit
 
         bool IsHeight(Vector2Int cell, int height) => m_Map.TryGetValue(cell, out var data) && data.Height == height;
 
+        // ---------------- Köşe rampaları ----------------
+
+        /// <summary>Köşe kodundan (cx, cz) köşesinin yükselişi (0-12 adım).</summary>
+        public static int CornerNibble(int code, int cx, int cz) => (code >> (4 * (cx + 2 * cz))) & 0xF;
+
+        /// <summary>Dört köşenin yükselişinden (0-12 adım; 00, 10, 01, 11 sırasıyla) köşe kodu.</summary>
+        public static int EncodeCorners(int c00, int c10, int c01, int c11) =>
+            Mathf.Clamp(c00, 0, CornerSteps) | Mathf.Clamp(c10, 0, CornerSteps) << 4 | Mathf.Clamp(c01, 0, CornerSteps) << 8 | Mathf.Clamp(c11, 0, CornerSteps) << 12;
+
+        /// <summary>Hücrenin köşe kodu (köşe modunda değilse 0).</summary>
+        public bool TryGetCornerCode(Vector2Int cell, out int code)
+        {
+            bool found = m_Map.TryGetValue(cell, out var data);
+            code = data.Corners;
+            return found;
+        }
+
+        /// <summary>Hücreyi köşe moduna alır (code 0 = düz). Eski yönlü eğimi siler.</summary>
+        public void SetCornerCode(Vector2Int cell, int code)
+        {
+            if (!m_Map.TryGetValue(cell, out var data))
+                return;
+            data.Corners = code & 0xFFFF;
+            data.Slope = Slope.None;
+            data.Part = RampPart.Full;
+            m_Map[cell] = data;
+            WriteBack();
+        }
+
+        /// <summary>Hücrenin üst yüzü eğimli mi (yönlü rampa veya köşe modu)?</summary>
+        public bool IsSloped(Vector2Int cell) =>
+            m_Map.TryGetValue(cell, out var data) && (data.Slope != Slope.None || data.Corners != 0);
+
+        /// <summary>
+        /// Akıllı rampa: seçili hücreleri, bir kat yüksek komşu zemine doğru köşe köşe eğimlendirir. Her köşenin yüksekliği
+        /// yüksek zemine uzaklığından hesaplanır; böylece rampa platformun köşelerinde döner (dış köşede tek köşe,
+        /// iç köşede üç köşe yükselir) ve birden çok hücreye yayılabilir.
+        /// width: rampanın kaç hücrede bir kat çıkacağı (1 = dik, 2-4 = yumuşak). rounded: dış köşeler yuvarlak
+        /// (Öklid uzaklığı) ya da köşeli (Chebyshev). eased: yumuşak (S) profil. Eğimlenen hücre sayısını döndürür.
+        /// </summary>
+        public int AutoSlopeCorners(IEnumerable<Vector2Int> cells, int width, bool rounded, bool eased)
+        {
+            width = Mathf.Clamp(width, 1, 6);
+            var selected = new HashSet<Vector2Int>();
+            foreach (var c in cells)
+                if (m_Map.ContainsKey(c))
+                    selected.Add(c);
+
+            // Köşe noktası p, h+1 yüksekliğindeki (seçim dışı) bir hücrenin köşesi mi?
+            bool IsSource(Vector2Int p, int top)
+            {
+                for (int dx = -1; dx <= 0; dx++)
+                for (int dz = -1; dz <= 0; dz++)
+                {
+                    var c = new Vector2Int(p.x + dx, p.y + dz);
+                    if (!selected.Contains(c) && m_Map.TryGetValue(c, out var d) && d.Height == top && d.Slope == Slope.None && d.Corners == 0)
+                        return true;
+                }
+                return false;
+            }
+
+            int count = 0;
+            var codes = new Dictionary<Vector2Int, int>();
+            foreach (var cell in selected)
+            {
+                int h = m_Map[cell].Height;
+                var nibbles = new int[4];
+                bool any = false;
+                for (int i = 0; i < 4; i++)
+                {
+                    int cx = i & 1, cz = i >> 1;
+                    var corner = new Vector2Int(cell.x + cx, cell.y + cz);
+                    float best = float.MaxValue;
+                    for (int qx = -width; qx <= width; qx++)
+                    for (int qz = -width; qz <= width; qz++)
+                    {
+                        float d = rounded ? Mathf.Sqrt(qx * qx + qz * qz) : Mathf.Max(Mathf.Abs(qx), Mathf.Abs(qz));
+                        if (d < best && d <= width && IsSource(new Vector2Int(corner.x + qx, corner.y + qz), h + 1))
+                            best = d;
+                    }
+                    float t = best <= width ? 1f - best / width : 0f;
+                    if (eased)
+                        t = t * t * (3f - 2f * t);
+                    nibbles[i] = Mathf.RoundToInt(t * CornerSteps);
+                    any |= nibbles[i] > 0;
+                }
+                codes[cell] = any ? EncodeCorners(nibbles[0], nibbles[1], nibbles[2], nibbles[3]) : 0;
+                if (any)
+                    count++;
+            }
+
+            foreach (var pair in codes)
+            {
+                var data = m_Map[pair.Key];
+                data.Corners = pair.Value;
+                data.Slope = Slope.None;
+                data.Part = RampPart.Full;
+                m_Map[pair.Key] = data;
+            }
+            WriteBack();
+            return count;
+        }
+
         void SetPart(Vector2Int cell, Slope slope, RampPart part)
         {
             var data = m_Map[cell];
             data.Slope = slope;
             data.Part = part;
+            data.Corners = 0;
             m_Map[cell] = data;
         }
 
@@ -309,6 +420,7 @@ namespace WorldKit
                     {
                         data.Slope = slope;
                         data.Part = RampPart.Full;
+                        data.Corners = 0;
                         m_Map[cell] = data;
                         count++;
                         break;
@@ -335,7 +447,7 @@ namespace WorldKit
             {
                 m_Cells.Add(new Vector3Int(pair.Key.x, pair.Value.Height, pair.Key.y));
                 m_Types.Add(pair.Value.Type);
-                m_Slopes.Add((int)pair.Value.Slope + PartStride * (int)pair.Value.Part);
+                m_Slopes.Add(pair.Value.Corners != 0 ? CornerFlag | pair.Value.Corners : (int)pair.Value.Slope + PartStride * (int)pair.Value.Part);
             }
             BuildMesh();
         }
@@ -347,12 +459,15 @@ namespace WorldKit
             for (int i = 0; i < m_Cells.Count; i++)
             {
                 var c = m_Cells[i];
+                int raw = i < m_Slopes.Count ? m_Slopes[i] : 0;
+                bool corners = (raw & CornerFlag) != 0;
                 m_Map[new Vector2Int(c.x, c.z)] = new Cell
                 {
                     Height = c.y,
                     Type = i < m_Types.Count ? m_Types[i] : 0,
-                    Slope = i < m_Slopes.Count ? (Slope)(m_Slopes[i] % PartStride) : Slope.None,
-                    Part = i < m_Slopes.Count ? (RampPart)(m_Slopes[i] / PartStride) : RampPart.Full
+                    Slope = corners ? Slope.None : (Slope)(raw % PartStride),
+                    Part = corners ? RampPart.Full : (RampPart)(raw / PartStride),
+                    Corners = corners ? raw & 0xFFFF : 0
                 };
             }
             BuildMesh();
@@ -397,6 +512,10 @@ namespace WorldKit
 
         static float SlopedLevel(Cell cell, int cx, int cz)
         {
+            // Köşe modu: her köşenin kendi yükselişi (köşe rampaları, geniş rampalar)
+            if (cell.Corners != 0)
+                return cell.Height + CornerNibble(cell.Corners, cx, cz) / (float)CornerSteps;
+
             // t: köşenin eğim yönündeki konumu (0 = alçak kenar, 1 = yüksek kenar)
             float t;
             switch (cell.Slope)
@@ -467,9 +586,16 @@ namespace WorldKit
                 // Üst yüz (eğimliyse köşe yükseklikleri farklı)
                 float t00 = CornerLevel(data, 0, 0) * lh, t01 = CornerLevel(data, 0, 1) * lh;
                 float t11 = CornerLevel(data, 1, 1) * lh, t10 = CornerLevel(data, 1, 0) * lh;
-                AddQuad(vertices, uvs, triangles,
-                    new Vector3(x0, t00, z0), new Vector3(x0, t01, z1), new Vector3(x1, t11, z1), new Vector3(x1, t10, z0),
-                    Vector3.up, new Vector2(x0, z0), new Vector2(x0, z1), new Vector2(x1, z1), new Vector2(x1, z0));
+                // Köşe rampalarında dört köşe farklı olabilir: yüzeyi, uçları birbirine en yakın köşegenden böl
+                // (dış köşede tek yüksek köşe, iç köşede tek alçak köşe düzgün üçgen olur).
+                if (Mathf.Abs(t00 - t11) > Mathf.Abs(t01 - t10) + 0.0001f)
+                    AddQuad(vertices, uvs, triangles,
+                        new Vector3(x0, t01, z1), new Vector3(x1, t11, z1), new Vector3(x1, t10, z0), new Vector3(x0, t00, z0),
+                        Vector3.up, new Vector2(x0, z1), new Vector2(x1, z1), new Vector2(x1, z0), new Vector2(x0, z0));
+                else
+                    AddQuad(vertices, uvs, triangles,
+                        new Vector3(x0, t00, z0), new Vector3(x0, t01, z1), new Vector3(x1, t11, z1), new Vector3(x1, t10, z0),
+                        Vector3.up, new Vector2(x0, z0), new Vector2(x0, z1), new Vector2(x1, z1), new Vector2(x1, z0));
 
                 // Yan yüzler: her kenarda iki uç için ayrı ayrı "komşunun üstü (veya taban) → benim üstüm".
                 foreach (var offset in k_Neighbours)

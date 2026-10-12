@@ -98,7 +98,7 @@ namespace WorldKit.Editor
                 return result;
 
             int Height(Vector2Int c) => floor.TryGetHeight(c, out var h) ? h : int.MinValue;
-            bool IsRamp(Vector2Int c) => floor.TryGetSlope(c, out var s) && s != WorldKitFloor.Slope.None;
+            bool IsRamp(Vector2Int c) => floor.IsSloped(c);
             bool Exists(Vector2Int c) => cells.Contains(c);
             // k dilimi (k..k+1) dolu mu? Dilimler 0. kattan başlar; rampanın eğimli dilimi dolu sayılmaz.
             bool Solid(Vector2Int c, int k) => k >= 0 && Exists(c) && Height(c) > k;

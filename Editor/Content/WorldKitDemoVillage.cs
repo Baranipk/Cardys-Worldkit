@@ -52,9 +52,11 @@ namespace WorldKit.Editor
             // Taş platform (1. kat) ve ona çıkan yumuşak rampa
             var platform = Rect(22, 22, 8, 8);
             floor.SetCells(platform, 1, stone);
-            var ramp = Rect(25, 20, 2, 2);
+            // Platformun güneybatı köşesini saran L şeklinde 2 hücrelik rampa: köşede yuvarlak döner
+            var ramp = Rect(20, 20, 8, 2);
+            ramp.AddRange(Rect(20, 22, 2, 4));
             floor.PaintType(ramp, stone);
-            floor.AutoSlopeGentle(ramp, false);
+            floor.AutoSlopeCorners(ramp, 2, true, false);
 
             WorldKitBrush.SyncFloorMaterials(floor);
             WorldKitEvents.RaiseFloorChanged(floor);
@@ -90,7 +92,7 @@ namespace WorldKit.Editor
             Place(WorldKitStarterContent.Building, "Ev_Buyuk_4x5", 8, 8);
             Place(WorldKitStarterContent.Building, "Ev_Kucuk_3x3", 10, 18);
             Place(WorldKitStarterContent.Building, "Ev_Kucuk_3x3", 19, 10);
-            Place(WorldKitStarterContent.Building, "Dukkan_4x3", 19, 18);
+            Place(WorldKitStarterContent.Building, "Dukkan_4x3", 17, 17);
             Place(WorldKitStarterContent.Building, "Han_Iki_Katli_5x4", 20, 4);
             Place(WorldKitStarterContent.Building, "Kale_Kulesi_3x3", 26, 26, level: 1);
 
@@ -129,8 +131,8 @@ namespace WorldKit.Editor
 
             // ---------- Karakterler ----------
             Place(WorldKitStarterContent.Npc, "NPC_Koylu", 13, 13);
-            Place(WorldKitStarterContent.Npc, "NPC_Tuccar", 20, 17);
-            Place(WorldKitStarterContent.Npc, "NPC_Muhafiz", 24, 20);
+            Place(WorldKitStarterContent.Npc, "NPC_Tuccar", 21, 17);
+            Place(WorldKitStarterContent.Npc, "NPC_Muhafiz", 19, 19);
             Place(WorldKitStarterContent.Npc, "Dusman", 27, 3);
             Place(WorldKitStarterContent.Reference, "Oyuncu", 15, 12);
 

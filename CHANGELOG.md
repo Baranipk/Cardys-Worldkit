@@ -2,6 +2,24 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.22.0] - 2026-10-12
+
+Rampalar.
+
+### Eklendi
+- **Köşe rampaları:** Rampa işlemi artık hücrelerin dört köşesine ayrı yükseklik verir (`WorldKitFloor.AutoSlopeCorners`).
+  Rampa platformun köşelerinde döner: dış köşede tek köşe, iç köşede üç köşe yükselir; rampa halkası kopmaz.
+- **Rampa çeşitleri:** Genişlik 1 (dik) – 4 (yamaç) hücre; köşeler yuvarlak ya da köşeli; yumuşak (S) profil.
+- Köşe modu verisi: `m_Slopes` içinde ayrı bayrak (eski kayıtlar değişmez); `TryGetCornerCode`, `SetCornerCode`, `IsSloped`.
+- Üst yüz, köşe yükseklikleri farklı olduğunda uçları en yakın köşegenden bölünür (düzgün köşe üçgenleri).
+- Şablonlar köşe rampalarını saklar ve şablonla birlikte döndürür.
+- Örnek köyde platformun köşesini saran L şeklinde 2 hücrelik rampa.
+
+### Değişti
+- Palette "Yumuşak (2 hücre)" onay kutusu yerine Genişlik / Köşeler / Yumuşak profil seçenekleri (`WorldKitBrush.RampWidth`,
+  `RampRounded`, `RampEased`; `FloorGentleRamp` geriye uyumlu).
+- Zemin seti rampa tespitinde köşe rampalarını da sayar.
+
 ## [0.21.0] - 2026-10-12
 
 Zemin seti.

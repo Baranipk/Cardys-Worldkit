@@ -131,7 +131,7 @@ Palet → **Zemin**. Bir tür seç (Zemin, Çimen, Toprak, Taş, Kum, Su, Yol...
 | **Boya** | Seçili katta, seçili türle doldurur (yeni zemin) |
 | **Sadece Renk** | Var olan zeminin türünü değiştirir, yüksekliğe dokunmaz (yol, patika) |
 | **Yükselt / Alçalt** | Var olan zemini bir kat kaldırır / indirir |
-| **Rampa** | Bir kat yüksek komşuya doğru eğim. *Yumuşak (2 hücre)*: bir kat iki hücreye yayılır |
+| **Rampa** | Bir kat yüksek zemine doğru eğim; köşelerde döner. *Genişlik* 1–4 hücre, *Köşeler* yuvarlak/köşeli, *Yumuşak profil* |
 | **Duvarla Çevir** | Alanın dış kenarlarına duvar örer |
 | **Kenar Süsle** | Alanın dış kenarlarına (uçurum, kıyı) kaya/çalı dizer |
 | **Yüzey Boya** | Kıvrımlı, yumuşak kenarlı patika ve lekeler; Fırça (8) ile sürükle, Ctrl ile sil |

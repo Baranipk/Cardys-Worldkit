@@ -277,7 +277,9 @@ Bir değişiklikten sonra en azından şunları deneyin:
 | `SetCells(cells, height)` | Hücreleri doldurur; var olanın türü korunur |
 | `SetCells(cells, height, type)` | Hücreleri yükseklik ve türle doldurur |
 | `PaintType(cells, type)` | Yalnızca var olan hücrelerin türünü değiştirir |
-| `AutoSlope(cells, preferAlongX)` / `AutoSlopeGentle(cells, preferAlongX)` / `SetSlope(cells, slope[, part])` | Rampa (eğim); yumuşak rampa iki hücre (`RampPart.Lower`/`Upper`). `Slope.None` düzleştirir |
+| `AutoSlope(cells, preferAlongX)` / `AutoSlopeGentle(cells, preferAlongX)` / `SetSlope(cells, slope[, part])` | Yönlü rampa (eski); yumuşak rampa iki hücre (`RampPart.Lower`/`Upper`). `Slope.None` düzleştirir |
+| `AutoSlopeCorners(cells, width, rounded, eased)` | Köşe rampası: her köşe yüksek zemine uzaklığına göre yükselir; köşelerde döner, 1–4 hücre genişlik. Paletteki Rampa bunu kullanır |
+| `TryGetCornerCode` / `SetCornerCode` / `EncodeCorners` / `CornerNibble` / `IsSloped` | Köşe modu: dört köşe ayrı yükseliş (0–12 adım = 0–1 kat) |
 | `AdjustHeight(cells, delta, min, max)` | Yüksekliği değiştirir, eğimi korur |
 | `RemoveCells(cells)` | Hücreleri siler |
 | `TryGetHeight` / `TryGetType` | Hücre sorgusu |

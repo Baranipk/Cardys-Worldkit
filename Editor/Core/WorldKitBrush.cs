@@ -1286,10 +1286,8 @@ namespace WorldKit.Editor
                 case FloorOperation.Raise: floor.AdjustHeight(cells, 1, range.x, range.y); break;
                 case FloorOperation.Lower: floor.AdjustHeight(cells, -1, range.x, range.y); break;
                 case FloorOperation.Ramp:
-                    if (FloorGentleRamp)
-                        floor.AutoSlopeGentle(cells, s_Context.Axis != DragAxis.Z);
-                    else
-                        floor.AutoSlope(cells, s_Context.Axis != DragAxis.Z);
+                    // Akıllı rampa: köşelerde döner, genişliği ve profili ayarlanır
+                    floor.AutoSlopeCorners(cells, RampWidth, RampRounded, RampEased);
                     break;
                 default: floor.SetCells(cells, s_Context.Level, s_FloorType); break;
             }
@@ -1337,12 +1335,33 @@ namespace WorldKit.Editor
         /// <summary>Rampa işlemi yumuşak mı (bir kat iki hücreye yayılır) yoksa dik mi (tek hücre).</summary>
         public static bool FloorGentleRamp
         {
-            get => EditorPrefs.GetBool("WorldKit.Floor.GentleRamp", false);
+            get => RampWidth >= 2;
+            set => RampWidth = value ? 2 : 1;
+        }
+
+        /// <summary>Rampanın kaç hücrede bir kat çıkacağı: 1 = dik, 2-4 = yumuşak.</summary>
+        public static int RampWidth
+        {
+            get => EditorPrefs.GetInt("WorldKit.Floor.RampWidth", EditorPrefs.GetBool("WorldKit.Floor.GentleRamp", false) ? 2 : 1);
             set
             {
-                EditorPrefs.SetBool("WorldKit.Floor.GentleRamp", value);
+                EditorPrefs.SetInt("WorldKit.Floor.RampWidth", Mathf.Clamp(value, 1, 4));
                 Changed?.Invoke();
             }
+        }
+
+        /// <summary>Rampanın platform köşelerinde yuvarlak (true) ya da köşeli dönmesi.</summary>
+        public static bool RampRounded
+        {
+            get => EditorPrefs.GetBool("WorldKit.Floor.RampRounded", true);
+            set { EditorPrefs.SetBool("WorldKit.Floor.RampRounded", value); Changed?.Invoke(); }
+        }
+
+        /// <summary>Yumuşak (S) profil: rampa üstte ve altta yataylaşır (geniş rampalarda doğal tepe).</summary>
+        public static bool RampEased
+        {
+            get => EditorPrefs.GetBool("WorldKit.Floor.RampEased", false);
+            set { EditorPrefs.SetBool("WorldKit.Floor.RampEased", value); Changed?.Invoke(); }
         }
 
         /// <summary>"Duvarla Çevir" işleminin kullandığı duvar (boşsa başlangıç içeriğindeki Duvar_1m).</summary>
