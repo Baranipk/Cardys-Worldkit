@@ -76,8 +76,8 @@ namespace WorldKit.Editor
         [Tooltip("Yumuşak kenar: kat sınırları yuvarlatılır (dış köşe yuvarlak, iç köşe kavisli, uçurum duvarı eğriyi izler). " +
                  "Kapalıysa köşeli grid. Kat, rampa, erişim ve NavMesh mantığı değişmez.")]
         public bool floorSmoothEdges;
-        [Tooltip("Köşe yuvarlaklığı (hücre; 0.5 = yarım hücre).")]
-        [Range(0.05f, 0.5f)] public float floorEdgeRadius = 0.35f;
+        [Tooltip("Köşe yuvarlaklığı (hücre; 0.5 = yarım hücre; 1 ve üstü çapraz zikzak kenarları düz eğriye çevirir).")]
+        [Range(0.05f, 1.5f)] public float floorEdgeRadius = 1f;
         [Tooltip("Hücre başına kenar örneği: yüksek = daha pürüzsüz eğri, daha çok üçgen.")]
         [Range(2, 8)] public int floorEdgeResolution = 4;
         [Tooltip("Uçurumun üst kenarından dışarı taşan dudak / çimen saçağı (m). 0 = yok.")]

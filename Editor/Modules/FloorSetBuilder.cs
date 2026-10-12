@@ -94,7 +94,8 @@ namespace WorldKit.Editor
             float cs = WorldKitGrid.CellSize;
             float lh = WorldKitGrid.LevelHeight;
             var cells = new HashSet<Vector2Int>(floor.Cells);
-            if (cells.Count == 0)
+            // Yumuşak kenarda zemin seti kapalı: grid'e göre konan parçalar eğri duvardan taşar (duvar ve dudak zeminin kendisinde)
+            if (cells.Count == 0 || floor.smoothEdges)
                 return result;
 
             int Height(Vector2Int c) => floor.TryGetHeight(c, out var h) ? h : int.MinValue;
@@ -146,9 +147,6 @@ namespace WorldKit.Editor
             }
 
             // ---------- Köşeler ----------
-            // Yumuşak kenarda köşeler yuvarlak: köşeli köşe parçaları eğriden taşar, konmaz.
-            if (floor.smoothEdges)
-                return result;
 
             // Köşe noktası (ix, iz); çevresindeki dört hücre: SW, SE, NW, NE
             var corners = new HashSet<Vector2Int>();

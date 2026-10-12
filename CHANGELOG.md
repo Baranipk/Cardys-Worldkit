@@ -2,6 +2,16 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.24.1] - 2026-10-12
+
+### Düzeltildi
+- Yumuşak kenarda zemin setinin grid'e göre konan parçaları eğri duvardan taşıyordu (köşelerde sütun gibi çıkıntılar, yerde
+  saçak şeritleri). Yumuşak kenarda zemin seti artık tamamen kapalı; duvar ve dudak zeminin kendisinden gelir.
+
+### Değişti
+- Yuvarlaklık en fazla 1.5 hücre (önceden 0.5); 1 ve üstü çapraz (zikzak) kenarları düz bir eğriye çevirir. Varsayılan 1.
+  Komşuluk penceresi yarıçapa göre genişler.
+
 ## [0.24.0] - 2026-10-12
 
 Yumuşak kenar.

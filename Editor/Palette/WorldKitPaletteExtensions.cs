@@ -199,7 +199,7 @@ namespace WorldKit.Editor
             if (kit.floorSmoothEdges)
             {
                 EditorGUI.BeginChangeCheck();
-                float radius = EditorGUILayout.Slider(new GUIContent("Yuvarlaklık", "Köşe yarıçapı (hücre)."), kit.floorEdgeRadius, 0.05f, 0.5f);
+                float radius = EditorGUILayout.Slider(new GUIContent("Yuvarlaklık", "Köşe yarıçapı (hücre). 1 ve üstü çapraz (zikzak) kenarları düz bir eğriye çevirir."), kit.floorEdgeRadius, 0.05f, 1.5f);
                 float lip = EditorGUILayout.Slider(new GUIContent("Dudak (m)", "Uçurumun üst kenarından dışarı taşan çimen saçağı. 0 = yok."), kit.floorEdgeLip, 0f, 0.4f);
                 int resolution = EditorGUILayout.IntSlider(new GUIContent("Pürüzsüzlük", "Hücre başına kenar örneği (yüksek = daha pürüzsüz, daha çok üçgen)."), kit.floorEdgeResolution, 2, 8);
                 var cliff = (Material)EditorGUILayout.ObjectField(new GUIContent("Uçurum materyali"), kit.floorCliffMaterial, typeof(Material), false);
@@ -229,6 +229,12 @@ namespace WorldKit.Editor
         {
             GUILayout.Space(8f);
             EditorGUILayout.LabelField("Zemin Seti (uçurum duvarları)", EditorStyles.boldLabel);
+            if (WorldKitSettings.Instance.floorSmoothEdges)
+            {
+                EditorGUILayout.HelpBox("Yumuşak kenarda zemin seti kullanılmaz (grid'e göre konan parçalar eğri duvardan taşar). " +
+                                        "Duvar ve dudak zeminin kendisinde: Uçurum materyali ve Dudak ayarlarını kullan.", MessageType.Info);
+                return;
+            }
             var settings = WorldKitSettings.Instance;
             var set = (WorldKitFloorSet)EditorGUILayout.ObjectField(new GUIContent("Set",
                 "Kat kenarlarına otomatik dizilecek duvar, köşe ve çimen saçağı parçaları. Boş = kapalı."),

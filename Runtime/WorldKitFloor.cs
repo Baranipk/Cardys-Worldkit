@@ -42,8 +42,8 @@ namespace WorldKit
         [Header("Kenar (World Kit ayarlarından doldurulur)")]
         [Tooltip("Yumuşak kenar: kat sınırları yuvarlatılır (dış köşe yuvarlak, iç köşe kavisli). Kapalıysa köşeli grid.")]
         public bool smoothEdges;
-        [Tooltip("Köşe yuvarlaklığı (hücre). 0.5 = yarım hücre yarıçap.")]
-        [Range(0.05f, 0.5f)] public float edgeRadius = 0.35f;
+        [Tooltip("Köşe yuvarlaklığı (hücre). 0.5 = yarım hücre; 1 ve üstü çapraz (zikzak) kenarları düz eğriye çevirir.")]
+        [Range(0.05f, 1.5f)] public float edgeRadius = 1f;
         [Tooltip("Hücre başına kenar örneği (yüksek = daha pürüzsüz eğri, daha çok üçgen).")]
         [Range(2, 8)] public int edgeResolution = 4;
         [Tooltip("Üst kenardan dışarı taşan dudak / çimen saçağı genişliği (m). 0 = yok.")]
@@ -152,7 +152,7 @@ namespace WorldKit
         /// <summary>Kenar stilini ayarlar; değiştiyse mesh yeniden kurulur. World Kit bunu ayarlardan çağırır.</summary>
         public void SetEdgeStyle(bool smooth, float radius, int resolution, float lip)
         {
-            radius = Mathf.Clamp(radius, 0.05f, 0.5f);
+            radius = Mathf.Clamp(radius, 0.05f, 1.5f);
             resolution = Mathf.Clamp(resolution, 2, 8);
             lip = Mathf.Max(0f, lip);
             if (smoothEdges == smooth && Mathf.Approximately(edgeRadius, radius) && edgeResolution == resolution && Mathf.Approximately(edgeLip, lip))
@@ -627,8 +627,9 @@ namespace WorldKit
             // Komşuluk: 3×3 pencerede yükseklikler. Hepsi aynı ve rampasızsa hızlı yol (tek dörtgen).
             int minH = data.Height, maxH = data.Height;
             bool uniform = true;
-            for (int dx = -1; dx <= 1; dx++)
-            for (int dz = -1; dz <= 1; dz++)
+            int window = Mathf.CeilToInt(Mathf.Clamp(edgeRadius, 0.05f, 1.5f));  // yarıçapa göre etkilenen komşuluk
+            for (int dx = -window; dx <= window; dx++)
+            for (int dz = -window; dz <= window; dz++)
             {
                 if (dx == 0 && dz == 0)
                     continue;
@@ -660,7 +661,7 @@ namespace WorldKit
             int lowLevel = Mathf.Min(minH, Mathf.Min(data.Height, 0));
             int highLevel = maxH;
             int res = Mathf.Clamp(edgeResolution, 2, 8);
-            float r = Mathf.Clamp(edgeRadius, 0.05f, 0.5f);
+            float r = Mathf.Clamp(edgeRadius, 0.05f, 1.5f);
             int levels = highLevel - lowLevel + 2;   // f[L] için L = lowLevel .. highLevel+1
             int stride = res + 1;
 
@@ -793,7 +794,7 @@ namespace WorldKit
             // Alt: dışarıda bir alt kat yüzeyi varsa ya da altında başka bir duvar sırası gelecekse bir kat aşağı;
             // en alt sırada (harita kenarı, yuvarlatılmış köşe) zemin tabanına kadar.
             var outsideCells = new Vector2(outside.x / size, outside.z / size);
-            float radius = Mathf.Clamp(edgeRadius, 0.05f, 0.5f);
+            float radius = Mathf.Clamp(edgeRadius, 0.05f, 1.5f);
             // Bir alt katın alanı dışarıda bu katınkinden fazlaysa orada gerçek bir alt yüzey var
             bool lowerSurface = Coverage(outsideCells, level - 1, radius) > Coverage(outsideCells, level, radius) + 0.01f;
             bool stacked = level > Mathf.Min(0, insideData.Height);
@@ -836,8 +837,9 @@ namespace WorldKit
             float best = float.MaxValue;
             Cell found = default;
             bool any = false;
-            for (int dx = -1; dx <= 1; dx++)
-            for (int dz = -1; dz <= 1; dz++)
+            int window = Mathf.CeilToInt(Mathf.Clamp(edgeRadius, 0.05f, 1.5f));
+            for (int dx = -window; dx <= window; dx++)
+            for (int dz = -window; dz <= window; dz++)
             {
                 if (!m_Map.TryGetValue(new Vector2Int(cell.x + dx, cell.y + dz), out var n) || n.Height != level)
                     continue;
