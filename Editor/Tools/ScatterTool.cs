@@ -55,7 +55,7 @@ namespace WorldKit.Editor
             int count = Count;
 
             // Aynı hücre → aynı tohum → önizleme ile yerleşim aynı.
-            int seed = unchecked(cell.x * 73856093 ^ cell.y * 19349663 ^ c.Level * 83492791 ^ (c.Prefab != null ? c.Prefab.GetInstanceID() : 0));
+            int seed = unchecked(cell.x * 73856093 ^ cell.y * 19349663 ^ c.Level * 83492791 ^ (c.Prefab != null ? c.Prefab.GetInstanceID() : 0) ^ WorldKitFreePlacement.Salt * 486187739);
             var random = new System.Random(seed);
 
             // Yakındaki mevcut parçalar (aynı kattaki) aralık kontrolüne girer.

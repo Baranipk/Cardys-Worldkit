@@ -116,6 +116,7 @@ Mod çubuğunda gruplar halinde durur; sayı tuşlarıyla seçilir. Bir mod seç
   - *Rastgele dönüş / Rastgele boyut (min–max):* Her parça farklı görünsün. Konumdan türetilir: önizleme = sonuç.
   - *Yüzeye otur:* Kapalıysa parça seçili katın düzlemine konur.
   - *Eğime yatır:* Rampa ve eğimlerde parça yüzeye paralel durur.
+  - *Komşuya hizala:* Yakındaki parçanın yönüne döner ve onun ızgarasına oturur (duvar önüne sandık dizmek).
 - **Serp, Yol Boyu, Halka** grid'e bağlı değildir; serbest kapalı olsa da imleç ve parçalar yüzeye oturur.
   Binanın içine düşecek noktalar atlanır.
 - **Sonradan düzeltme:** Alt çubuk → *Yere Oturt* (seçimi altındaki yüzeye indirir), *Çeşitlendir* (seçime rastgele
@@ -240,6 +241,9 @@ WASD yürü, Shift koş, Q/E kamera döndür, tekerlek zoom. Kamera binaların i
 | R / Shift+R | Döndür (grid: 90°, serbest: adım) |
 | E / Q | Kat yukarı / aşağı |
 | G | Serbest yerleştirme aç/kapa |
+| H | Yarım hücre snap |
+| Shift + tekerlek | Döndür |
+| Boşluk | Rastgeleyi yeniden at |
 | Ctrl + tık/sürükle | Sil |
 | Shift + tık | Son noktadan buraya doldur |
 | Esc | Çizimi iptal / fırçayı bırak |

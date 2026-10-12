@@ -2,6 +2,20 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.19.0] - 2026-10-12
+
+Yerleştirme deneyimi.
+
+### Eklendi
+- **Okunur önizleme:** Işıklı yarı saydam hayalet (`Hidden/WorldKit/Ghost` shader'ı), dış çizgi kutusu, zemin izi ve ok uçlu yön işareti.
+  Başka bir objeyle çakışan yerleşim kırmızı gösterilir.
+- **Döndürme:** Shift + tekerlek ile döndür. Tek modunda *Sürükle: yön ver* ayarı: bas, fareyi çek, parça o yöne bakarak konur;
+  sonraki parçalar aynı yönde gelir (`BrushContext.PlacementFacing`).
+- **Yarım hücre snap** (H, fırça kartında ½): grid yerleşiminde yarım hücre adımları (`WorldKitGrid.SnapHalf`).
+- **Komşuya hizala** (serbest yerleştirme): yakındaki parçanın yönüne döner ve onun yarım hücre ızgarasına oturur.
+- **Otomatik kat** (fırça kartında Oto): prefab fırçası imlecin altındaki zeminin katına kendiliğinden geçer; E/Q kapatır.
+- **Rastgeleyi yeniden at** (Boşluk): rastgele dönüş, boyut, varyasyon ve serpme sonucu değişir (`WorldKitFreePlacement.Salt`).
+
 ## [0.18.3] - 2026-10-11
 
 ### Düzeltildi

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace WorldKit.Editor
@@ -8,12 +9,53 @@ namespace WorldKit.Editor
     /// <summary>Tıkla: tek parça. Sürükle: imlecin geçtiği yerlere boya.</summary>
     public sealed class SingleTool : WorldKitTool
     {
+        const string DragKey = "WorldKit.Single.DragRotates";
+
         public override string Name => "Tek";
-        public override string Tooltip => "Tıkla: tek parça. Sürükle: imlecin geçtiği yerlere boya.";
+        public override string Tooltip => "Tıkla: tek parça. Sürükle: imlecin geçtiği yerlere boya, ya da (ayar) basılı tutup çekerek yön ver.";
         public override int Order => 10;
         public override Texture2D Icon => WorldKitIcons.Single;
-        public override bool PaintsWhileDragging => true;
-        public override string Hint(BrushContext c) => "Tıkla: koy   Sürükle: boya";
+        public override bool PaintsWhileDragging => !RotatesOnDrag;
+        public override bool HasSettings => true;
+
+        /// <summary>true: sürüklemek boyamaz; basılan yere tek parça konur ve fareye doğru bakar (yön verme).</summary>
+        public static bool RotatesOnDrag
+        {
+            get => EditorPrefs.GetBool(DragKey, false);
+            set => EditorPrefs.SetBool(DragKey, value);
+        }
+
+        public override string Hint(BrushContext c) =>
+            RotatesOnDrag && !c.IsFloor && !c.IsLinear
+                ? (c.Dragging ? "Bırak: koy (fareye doğru bakar)" : "Bas ve çek: yön ver   Shift+tekerlek: döndür")
+                : "Tıkla: koy   Sürükle: boya   Shift+tekerlek: döndür";
+
+        public override void OnSettingsGUI()
+        {
+            int mode = GUILayout.Toolbar(RotatesOnDrag ? 1 : 0, new[]
+            {
+                new GUIContent("Sürükle: boya", "Sürükledikçe geçtiğin yerlere parça koyar."),
+                new GUIContent("Sürükle: yön ver", "Basılan yere tek parça koyar; fareyi çektiğin yöne bakar. Sonraki parçalar da o yönde gelir.")
+            });
+            if ((mode == 1) != RotatesOnDrag)
+                RotatesOnDrag = mode == 1;
+        }
+
+        public override void CollectPlacements(BrushContext c, List<Placement> result)
+        {
+            if (RotatesOnDrag && c.Dragging && !c.IsFloor && !c.IsLinear)
+                result.Add(c.PlacementFacing(c.Anchor, c.Hit));
+            else
+                result.Add(c.SinglePlacement());
+        }
+
+        public override void OnPreviewGUI(BrushContext c)
+        {
+            if (!RotatesOnDrag || !c.Dragging || c.IsFloor || c.IsLinear)
+                return;
+            using (new Handles.DrawingScope(new Color(1f, 0.85f, 0.3f, 0.9f)))
+                Handles.DrawDottedLine(c.Anchor + Vector3.up * 0.05f, c.Hit + Vector3.up * 0.05f, 3f);
+        }
     }
 
     /// <summary>Tut-çek: düz hat. İlk harekette eksene kilitlenir.</summary>

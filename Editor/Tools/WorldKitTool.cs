@@ -120,6 +120,8 @@ namespace WorldKit.Editor
         public bool FreePlacement { get; internal set; }
         /// <summary>Serbest yerleştirme gerçekten uygulanıyor mu (açık, prefab fırçası, çizgi parçası değil)?</summary>
         public bool IsFree => FreePlacement && !IsFloor && !IsLinear;
+        /// <summary>Yarım hücre snap (H): grid yerleşiminde parça yarım hücre adımlarla oturur.</summary>
+        public bool HalfSnap { get; internal set; }
         /// <summary>Serbest yerleştirmedeki dönüş (derece, R ile ayarlardaki adım kadar değişir).</summary>
         public float FreeYaw { get; internal set; }
         /// <summary>İmlecin altındaki yüzeyin normali (yüzeye oturma kapalıysa yukarı).</summary>
@@ -138,8 +140,34 @@ namespace WorldKit.Editor
             if (IsLinear)
                 return WorldKitLayout.LinearSingle(Hit, Footprint, Rotation, Level);
             if (IsFree)
+            {
+                // Yakında bir parça varsa ona hizalan (aynı yöne dön, onun ızgarasına otur)
+                if (WorldKitFreePlacement.TryAlignToNeighbor(Hit, FreeYaw, out var aligned, out var alignedYaw))
+                    return WorldKitFreePlacement.MakeFacing(aligned, alignedYaw, SurfaceNormal);
                 return WorldKitFreePlacement.Make(Hit, FreeYaw, SurfaceNormal);
+            }
+            if (HalfSnap)
+                return new Placement(WorldKitGrid.SnapHalf(Hit, Level), RotationQuaternion);
             return new Placement(WorldKitGrid.Snap(Hit, Footprint, Rotation, Level), RotationQuaternion);
+        }
+
+        /// <summary>
+        /// "Sürükleyerek yön ver": parça at noktasına konur ve target'a doğru bakar. Grid'de yön 90°'ye, serbestte
+        /// 5°'ye yuvarlanır. Hedef çok yakınsa mevcut yön kullanılır.
+        /// </summary>
+        public Placement PlacementFacing(Vector3 at, Vector3 target)
+        {
+            var dir = target - at;
+            dir.y = 0f;
+            bool hasDir = dir.magnitude > 0.3f;
+            float yaw = hasDir ? Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg : (IsFree ? FreeYaw : Rotation * 90f);
+
+            if (IsFree)
+                return WorldKitFreePlacement.MakeFacing(at, Mathf.Round(yaw / 5f) * 5f, SurfaceNormal);
+
+            int steps = ((Mathf.RoundToInt(yaw / 90f) % 4) + 4) % 4;
+            var position = HalfSnap ? WorldKitGrid.SnapHalf(at, Level) : WorldKitGrid.Snap(at, Footprint, steps, Level);
+            return new Placement(position, Quaternion.Euler(0f, steps * 90f, 0f));
         }
 
         /// <summary>Başlangıçtan imlece kadar hücre dikdörtgeni.</summary>

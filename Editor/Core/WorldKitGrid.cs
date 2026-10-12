@@ -25,6 +25,13 @@ namespace WorldKit.Editor
             return new Vector3(SnapAxis(point.x, f.x), level * LevelHeight, SnapAxis(point.z, f.y));
         }
 
+        /// <summary>Yarım hücre adımlarına oturtur (footprint'ten bağımsız). İnce ayar için.</summary>
+        public static Vector3 SnapHalf(Vector3 point, int level)
+        {
+            float half = CellSize * 0.5f;
+            return new Vector3(Mathf.Round(point.x / half) * half, level * LevelHeight, Mathf.Round(point.z / half) * half);
+        }
+
         static float SnapAxis(float value, int cells)
         {
             float cell = CellSize;

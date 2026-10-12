@@ -174,6 +174,7 @@ namespace WorldKit.Editor
 
             s_Ghosts.Clear();
             s_VariantParts.Clear();
+            s_VariantBounds.Clear();
             s_Variants.Clear();
             s_GhostParts.Clear();
             s_StampCells = null;
@@ -224,9 +225,67 @@ namespace WorldKit.Editor
 
         public static void ChangeLevel(int delta)
         {
+            // Elle kat seçmek otomatik katı kapatır (prefab fırçasında; palette "Oto" ile geri açılır)
+            if (s_Mode == Mode.Prefab && AutoLevel)
+                AutoLevel = false;
             var range = Settings.levelRange;
             s_Context.Level = Mathf.Clamp(s_Context.Level + delta, range.x, range.y);
             SceneView.RepaintAll();
+            Changed?.Invoke();
+        }
+
+        /// <summary>Yarım hücre snap (H): grid'de parça yarım hücre adımlarla oturur.</summary>
+        public static bool HalfSnap
+        {
+            get => s_Context.HalfSnap;
+            set
+            {
+                if (s_Context.HalfSnap == value)
+                    return;
+                s_Context.HalfSnap = value;
+                SceneView.RepaintAll();
+                Changed?.Invoke();
+            }
+        }
+
+        /// <summary>
+        /// Otomatik kat: prefab fırçasında kat, imlecin altındaki zeminin katına kendiliğinden geçer
+        /// (platformun üstüne gelince 1, aşağı inince 0). E/Q ile elle kat seçmek bunu kapatır.
+        /// </summary>
+        public static bool AutoLevel
+        {
+            get => EditorPrefs.GetBool("WorldKit.Brush.AutoLevel", true);
+            set
+            {
+                EditorPrefs.SetBool("WorldKit.Brush.AutoLevel", value);
+                SceneView.RepaintAll();
+                Changed?.Invoke();
+            }
+        }
+
+        [Shortcut("World Kit/Yarım Hücre Snap", typeof(BrushShortcutContext), KeyCode.H)]
+        static void ToggleHalfSnap()
+        {
+            if (s_Mode == Mode.Prefab)
+                HalfSnap = !HalfSnap;
+        }
+
+        /// <summary>Rastgele sonuçları (dönüş, boyut, varyasyon, serpme) yeniden atar; önizleme hemen değişir.</summary>
+        [Shortcut("World Kit/Rastgeleyi Yeniden At", typeof(BrushShortcutContext), KeyCode.Space)]
+        public static void Reroll()
+        {
+            WorldKitFreePlacement.Salt++;
+            SceneView.RepaintAll();
+        }
+
+        /// <summary>Sürükleyerek yön verilen son parçanın yönünü fırçaya aktarır (sonraki parçalar da öyle baksın).</summary>
+        static void RememberFacing(Quaternion rotation)
+        {
+            float yaw = rotation.eulerAngles.y;
+            if (s_Context.IsFree)
+                s_Context.FreeYaw = Mathf.Repeat(yaw, 360f);
+            else
+                s_Context.Rotation = ((Mathf.RoundToInt(yaw / 90f) % 4) + 4) % 4;
             Changed?.Invoke();
         }
 
@@ -323,6 +382,7 @@ namespace WorldKit.Editor
                 ghost.SetActive(false);
                 s_Ghosts.Add(ghost);
                 s_VariantParts[variant] = parts;
+                s_VariantBounds[variant] = LocalBounds(parts);
             }
 
             s_GhostParts.Clear();
@@ -337,6 +397,8 @@ namespace WorldKit.Editor
         static readonly List<GameObject> s_Variants = new List<GameObject>();
         static readonly List<GameObject> s_Ghosts = new List<GameObject>();
         static readonly Dictionary<GameObject, List<GhostPart>> s_VariantParts = new Dictionary<GameObject, List<GhostPart>>();
+        // Varyasyonun yerel sınırları (önizleme dış çizgisi ve çakışma kontrolü için)
+        static readonly Dictionary<GameObject, Bounds> s_VariantBounds = new Dictionary<GameObject, Bounds>();
 
         /// <summary>Fırçadaki parçalar (ilki ana parça). Birden fazlaysa her yerleşimde aralarından biri seçilir.</summary>
         public static IReadOnlyList<GameObject> Variants => s_Variants;
@@ -374,9 +436,31 @@ namespace WorldKit.Editor
                 return s_Prefab;
 
             var key = Vector3Int.RoundToInt(position * 10f);
-            int hash = unchecked(key.x * 73856093 ^ key.y * 19349663 ^ key.z * 83492791);
+            int hash = unchecked(key.x * 73856093 ^ key.y * 19349663 ^ key.z * 83492791 ^ WorldKitFreePlacement.Salt * 486187739);
             return s_Variants[(hash & int.MaxValue) % s_Variants.Count];
         }
+
+        static Bounds LocalBounds(List<GhostPart> parts)
+        {
+            bool any = false;
+            var bounds = new Bounds();
+            foreach (var part in parts)
+            {
+                var b = part.Mesh.bounds;
+                // Parçanın 8 köşesini kök uzayına taşı
+                for (int i = 0; i < 8; i++)
+                {
+                    var corner = b.center + Vector3.Scale(b.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                    var p = part.Local.MultiplyPoint3x4(corner);
+                    if (!any) { bounds = new Bounds(p, Vector3.zero); any = true; }
+                    else bounds.Encapsulate(p);
+                }
+            }
+            return any ? bounds : new Bounds(Vector3.up * 0.5f, Vector3.one);
+        }
+
+        static Bounds BoundsFor(Vector3 position) =>
+            s_VariantBounds.TryGetValue(PickVariant(position), out var b) ? b : new Bounds(Vector3.up * 0.5f, Vector3.one);
 
         static GameObject PlaceVariant(Vector3 position, Quaternion rotation, Vector3? scale = null)
         {
@@ -417,6 +501,10 @@ namespace WorldKit.Editor
             }
             else
             {
+                // Otomatik kat (prefab fırçası, sürüklemiyorken): imlecin altındaki zeminin katına geç
+                if (s_Mode == Mode.Prefab && !s_Context.Dragging && AutoLevel)
+                    FollowFloorLevel(ray);
+
                 var plane = new Plane(Vector3.up, new Vector3(0f, LevelY, 0f));
                 s_HasHit = plane.Raycast(ray, out var distance) && distance < 5000f;
                 if (!s_HasHit)
@@ -426,6 +514,25 @@ namespace WorldKit.Editor
 
             if (s_Context.Dragging)
                 s_Context.Axis = WorldKitLayout.UpdateAxisLock(s_Context.Axis, s_Context.Anchor, s_Context.Hit);
+        }
+
+        /// <summary>Işın zemine nerede değiyorsa o hücrenin katını fırçanın katı yapar (değiştiyse palet yenilenir).</summary>
+        static void FollowFloorLevel(Ray ray)
+        {
+            var root = WorldKitScene.FindRoot();
+            var floor = root != null ? root.GetComponentInChildren<WorldKitFloor>() : null;
+            if (floor == null || !floor.TryGetComponent<MeshCollider>(out var collider) || collider.sharedMesh == null)
+                return;
+            if (!collider.Raycast(ray, out var hit, 5000f))
+                return;
+
+            // Yan yüze değdiyse (uçurum duvarı) hücrenin içine doğru biraz kaydır
+            var point = hit.point - new Vector3(hit.normal.x, 0f, hit.normal.z) * 0.05f;
+            if (!floor.TryGetHeight(WorldKitGrid.ToCell(point), out var level) || level == s_Context.Level)
+                return;
+            var range = Settings.levelRange;
+            s_Context.Level = Mathf.Clamp(level, range.x, range.y);
+            Changed?.Invoke();
         }
 
         // ---------------- Shift+tık zinciri ----------------
@@ -535,6 +642,16 @@ namespace WorldKit.Editor
                     UpdateCursor(e.mousePosition);
                     sceneView.Repaint();
                     break;
+
+                // Shift + tekerlek: döndür (grid'de 90°, serbestte ayarlardaki adım). Kamera zoom'u tekerleğin kendisinde kalır.
+                case EventType.ScrollWheel when e.shift && s_Mode == Mode.Prefab:
+                {
+                    float delta = Mathf.Abs(e.delta.y) >= Mathf.Abs(e.delta.x) ? e.delta.y : e.delta.x;
+                    if (Mathf.Abs(delta) > 0.01f)
+                        Rotate(delta > 0f ? 1 : -1);
+                    e.Use();
+                    break;
+                }
 
                 case EventType.MouseDown when e.button == 0 && !e.alt:
                     UpdateCursor(e.mousePosition);
@@ -741,6 +858,10 @@ namespace WorldKit.Editor
                     tool.CollectPlacements(s_Context, s_Placements);
                     PlaceAll();
                     RememberPlacements(anchorCorner);
+
+                    // Sürükleyerek yön verildiyse sonraki parçalar da o yöne baksın
+                    if (tool is SingleTool && SingleTool.RotatesOnDrag && s_Placements.Count == 1 && !s_Context.IsLinear)
+                        RememberFacing(s_Placements[0].Rotation);
                 }
             }
             else if (s_HasHit && tool != null && !tool.ModifiesScene)
@@ -806,11 +927,18 @@ namespace WorldKit.Editor
                 tool.CollectPlacements(s_Context, s_Placements);
             }
 
-            // Önizleme mavi ve yarı saydam: sahnedeki gerçek parçalarla karışmaz.
+            // Önizleme: ışıklı yarı saydam hayalet + dış çizgi + zemin izi + yön oku.
+            // Az sayıda yerleşimde başka bir objeyle çakışan hayalet kırmızı olur (yine de konabilir).
             var camera = sceneView.camera;
-            var material = GhostMaterial;
+            bool detailed = s_Placements.Count <= 30;
+            bool checkOverlap = detailed && !s_Context.IsLinear;
+            if (checkOverlap)
+                Physics.SyncTransforms();
             foreach (var placement in s_Placements)
             {
+                var bounds = BoundsFor(placement.Position);
+                bool blocked = checkOverlap && Overlaps(placement, bounds);
+                var material = blocked ? BlockedMaterial : GhostMaterial;
                 var matrix = Matrix4x4.TRS(placement.Position, placement.Rotation, placement.ScaleVector);
                 foreach (var part in PartsFor(placement.Position))
                 {
@@ -819,8 +947,24 @@ namespace WorldKit.Editor
                         Graphics.DrawMesh(part.Mesh, world, material, 0, camera, i);
                 }
 
-                DrawFootprint(placement);
+                if (detailed)
+                {
+                    using (new Handles.DrawingScope(blocked ? k_Danger : k_Accent, matrix))
+                        Handles.DrawWireCube(bounds.center, bounds.size);
+                }
+                DrawFootprint(placement, blocked ? k_Danger : k_Accent);
                 DrawStampCells(placement);
+            }
+
+            // Serbestte komşuya hizalanınca hangi parçaya hizalandığını göster
+            var neighbor = WorldKitFreePlacement.AlignedNeighbor;
+            if (s_Context.IsFree && neighbor != null && s_Placements.Count == 1)
+            {
+                using (new Handles.DrawingScope(new Color(1f, 0.85f, 0.3f, 0.9f)))
+                {
+                    Handles.DrawDottedLine(s_Placements[0].Position + Vector3.up * 0.1f, neighbor.position + Vector3.up * 0.1f, 3f);
+                    Handles.Label(s_Placements[0].Position + Vector3.up * 0.4f, "hizalı", EditorStyles.whiteMiniLabel);
+                }
             }
 
             // Çizgi parçalarında başlangıç köşesini işaretle.
@@ -844,24 +988,53 @@ namespace WorldKit.Editor
             }
         }
 
-        static Material GhostMaterial
-        {
-            get
-            {
-                if (s_GhostMaterial != null)
-                    return s_GhostMaterial;
+        static Material s_BlockedMaterial;
 
-                // Unity'nin Handles için kullandığı basit renkli shader; her render pipeline'da çalışır.
-                s_GhostMaterial = new Material(Shader.Find("Hidden/Internal-Colored")) { hideFlags = HideFlags.HideAndDontSave };
-                s_GhostMaterial.SetColor("_Color", new Color(0.25f, 0.65f, 1f, 0.45f));
-                s_GhostMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                s_GhostMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                s_GhostMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Back);
-                s_GhostMaterial.SetInt("_ZWrite", 0);
-                s_GhostMaterial.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.LessEqual);
-                s_GhostMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-                return s_GhostMaterial;
+        static Material GhostMaterial => s_GhostMaterial != null ? s_GhostMaterial : s_GhostMaterial = CreateGhostMaterial(new Color(0.25f, 0.65f, 1f, 0.55f));
+
+        /// <summary>Başka bir objeyle çakışan yerleşimin hayaleti.</summary>
+        static Material BlockedMaterial => s_BlockedMaterial != null ? s_BlockedMaterial : s_BlockedMaterial = CreateGhostMaterial(new Color(1f, 0.3f, 0.25f, 0.55f));
+
+        static Material CreateGhostMaterial(Color color)
+        {
+            // Işıklı hayalet shader'ı (Editor/Shaders); bulunamazsa Unity'nin düz renkli shader'ı.
+            var shader = Shader.Find("Hidden/WorldKit/Ghost");
+            if (shader != null)
+            {
+                var lit = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
+                lit.SetColor("_Color", color);
+                lit.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                return lit;
             }
+
+            var material = new Material(Shader.Find("Hidden/Internal-Colored")) { hideFlags = HideFlags.HideAndDontSave };
+            material.SetColor("_Color", new Color(color.r, color.g, color.b, 0.45f));
+            material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Back);
+            material.SetInt("_ZWrite", 0);
+            material.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.LessEqual);
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            return material;
+        }
+
+        /// <summary>
+        /// Yerleşim başka bir objeyle çakışıyor mu? Zemin, tetikleyiciler ve parçanın oturduğu yüzey (alt kısım biraz
+        /// yukarıdan başlar) sayılmaz.
+        /// </summary>
+        static bool Overlaps(Placement placement, Bounds local)
+        {
+            var scale = placement.ScaleVector;
+            var size = Vector3.Scale(local.size, scale) * 0.85f;
+            if (size.x < 0.05f || size.z < 0.05f)
+                return false;
+            var center = placement.Position + placement.Rotation * Vector3.Scale(local.center, scale) + Vector3.up * 0.05f;
+            foreach (var collider in Physics.OverlapBox(center, size * 0.5f, placement.Rotation, ~(1 << 2), QueryTriggerInteraction.Ignore))
+            {
+                if (collider.GetComponentInParent<WorldKitFloor>() == null)
+                    return true;
+            }
+            return false;
         }
 
         static void DrawLocalGrid()
@@ -935,12 +1108,15 @@ namespace WorldKit.Editor
             Handles.DrawSolidRectangleWithOutline(corners, filled ? new Color(color.r, color.g, color.b, 0.2f) : Color.clear, color);
         }
 
-        static void DrawFootprint(Placement placement)
+        static void DrawFootprint(Placement placement, Color color)
         {
             var footprint = s_Context.Footprint;
             var f = new Vector3(Mathf.Max(footprint.x, 0.1f), 0f, Mathf.Max(footprint.y, 0.1f)) * (WorldKitGrid.CellSize * 0.5f);
+            if (s_Context.IsFree)
+                f *= placement.Scale > 0f ? placement.Scale : 1f;
             var p = placement.Position + Vector3.up * 0.02f;
-            var r = placement.Rotation;
+            // Zemin izi yatay kalsın (eğime yatırılmış parçalarda bile)
+            var r = Quaternion.Euler(0f, placement.Rotation.eulerAngles.y, 0f);
             var corners = new[]
             {
                 p + r * new Vector3(-f.x, 0f, -f.z),
@@ -948,13 +1124,20 @@ namespace WorldKit.Editor
                 p + r * new Vector3(f.x, 0f, f.z),
                 p + r * new Vector3(f.x, 0f, -f.z),
             };
-            Handles.DrawSolidRectangleWithOutline(corners, new Color(k_Accent.r, k_Accent.g, k_Accent.b, 0.12f), k_Accent);
+            Handles.DrawSolidRectangleWithOutline(corners, new Color(color.r, color.g, color.b, 0.12f), color);
 
-            // Ön yön oku: kapı gibi yönü önemli parçalar için hangi tarafa baktığını gösterir.
+            // Ön yön oku: kapı, NPC gibi yönü önemli parçalar için hangi tarafa baktığını gösterir.
             if (s_Placements.Count <= 40)
             {
-                using (new Handles.DrawingScope(k_Accent))
-                    Handles.DrawLine(p, p + r * Vector3.forward * (Mathf.Max(f.z, 0.1f) + 0.35f), 2f);
+                float length = Mathf.Max(f.z, 0.1f) + 0.45f;
+                var tip = p + r * Vector3.forward * length;
+                var back = p + r * Vector3.forward * (length - 0.28f);
+                var side = r * Vector3.right * 0.16f;
+                using (new Handles.DrawingScope(color))
+                {
+                    Handles.DrawLine(p, back, 3f);
+                    Handles.DrawAAConvexPolygon(tip, back + side, back - side);
+                }
             }
         }
 
@@ -976,6 +1159,10 @@ namespace WorldKit.Editor
             string status = $"<b>{name}</b>   Mod: <b>{tool.DisplayName(s_Context)}</b>   Seviye: {s_Context.Level}";
             if (s_Mode == Mode.Prefab)
                 status += s_Context.IsFree ? $"   Açı: {s_Context.FreeYaw:0}°   <b>Serbest</b> (G)" : $"   Açı: {s_Context.Rotation * 90}°";
+            if (s_Mode == Mode.Prefab && !s_Context.IsFree && AutoLevel)
+                status += "   <color=#9ad>kat oto</color>";
+            if (s_Mode == Mode.Prefab && s_Context.HalfSnap && !s_Context.IsFree)
+                status += "   <b>½ snap</b> (H)";
 
             bool chaining = IsChaining;
             if (chaining || (s_Context.Dragging && !tool.PaintsWhileDragging))

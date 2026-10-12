@@ -127,7 +127,84 @@ namespace WorldKit.Editor
             return new Placement(position, rotation, scale);
         }
 
-        static int Hash(Vector3 p) => unchecked(Mathf.RoundToInt(p.x * 100f) * 73856093 ^ Mathf.RoundToInt(p.y * 100f) * 19349663 ^ Mathf.RoundToInt(p.z * 100f) * 83492791);
+        /// <summary>
+        /// Serbest yerleşim, rastgele dönüş olmadan: parça tam olarak yaw yönüne bakar (sürükleyerek yön verme,
+        /// komşuya hizalama). Rastgele boyut ve eğime yatırma yine uygulanır.
+        /// </summary>
+        public static Placement MakeFacing(Vector3 position, float yaw, Vector3 surfaceNormal)
+        {
+            var random = new System.Random(Hash(position));
+            float scale = RandomScale ? Mathf.Lerp(Mathf.Min(ScaleMin, ScaleMax), Mathf.Max(ScaleMin, ScaleMax), (float)random.NextDouble()) : 1f;
+            var rotation = Quaternion.Euler(0f, yaw, 0f);
+            if (AlignToSurface && surfaceNormal.sqrMagnitude > 0.5f)
+                rotation = Quaternion.FromToRotation(Vector3.up, surfaceNormal) * rotation;
+            return new Placement(position, rotation, scale);
+        }
+
+        /// <summary>Rastgele sonuçların tohumu. Boşluk tuşu artırır: aynı yerde farklı dönüş/boyut/varyasyon.</summary>
+        public static int Salt { get; set; }
+
+        static int Hash(Vector3 p) => unchecked(Mathf.RoundToInt(p.x * 100f) * 73856093 ^ Mathf.RoundToInt(p.y * 100f) * 19349663
+                                               ^ Mathf.RoundToInt(p.z * 100f) * 83492791 ^ Salt * 486187739);
+
+        // ---------------- Komşuya hizalama ----------------
+
+        /// <summary>İmleç bir parçaya bu kadar yakınsa (m) ona hizalanılır.</summary>
+        const float NeighborRange = 0.9f;
+
+        /// <summary>Yakındaki bir parçaya hizalansın mı (aynı yön, onun yarım hücre ızgarası)?</summary>
+        public static bool AlignToNeighbor
+        {
+            get => EditorPrefs.GetBool(Prefix + "Neighbor", true);
+            set => EditorPrefs.SetBool(Prefix + "Neighbor", value);
+        }
+
+        /// <summary>Son önizlemede hizalanılan parça (önizlemede çizgiyle gösterilir; yoksa null).</summary>
+        public static Transform AlignedNeighbor { get; private set; }
+
+        /// <summary>
+        /// İmlecin yakınında bir parça varsa: konumu o parçanın yerel yarım hücre ızgarasına oturtur, yönü de parçanın
+        /// yönüne (90° katları; yaw'a en yakın olanı) eşitler. Böylece döndürülmüş bir duvarın önüne sandık dizmek kolaylaşır.
+        /// </summary>
+        public static bool TryAlignToNeighbor(Vector3 hit, float yaw, out Vector3 position, out float alignedYaw)
+        {
+            position = hit;
+            alignedYaw = yaw;
+            AlignedNeighbor = null;
+            if (!AlignToNeighbor)
+                return false;
+
+            Transform best = null;
+            float bestDistance = NeighborRange;
+            foreach (var collider in Physics.OverlapSphere(hit, NeighborRange, ~(1 << 2), QueryTriggerInteraction.Ignore))
+            {
+                if (collider.GetComponentInParent<WorldKitFloor>() != null)
+                    continue;
+                var piece = WorldKitScene.GetPiece(collider.gameObject);
+                if (piece == null)
+                    continue;
+                float distance = Vector3.Distance(collider.ClosestPoint(hit), hit);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    best = piece.transform;
+                }
+            }
+            if (best == null)
+                return false;
+
+            float half = WorldKitGrid.CellSize * 0.5f;
+            var local = best.InverseTransformPoint(hit);
+            local.x = Mathf.Round(local.x / half) * half;
+            local.z = Mathf.Round(local.z / half) * half;
+            position = best.TransformPoint(local);
+            position.y = hit.y;
+
+            float baseYaw = best.eulerAngles.y;
+            alignedYaw = baseYaw + Mathf.Round(Mathf.DeltaAngle(baseYaw, yaw) / 90f) * 90f;
+            AlignedNeighbor = best;
+            return true;
+        }
 
         /// <summary>Paletteki serbest yerleştirme ayarları (dar pencerede de taşmaz: ikişer seçenek bir satırda).</summary>
         public static void DrawSettingsGUI()
@@ -144,6 +221,13 @@ namespace WorldKit.Editor
             {
                 if (Toggle("Yüzeye otur", "Zemin, platform veya objenin üstüne konur. Kapalıysa seçili katın düzlemine.", SnapToSurface, out var surface)) SnapToSurface = surface;
                 if (Toggle("Eğime yatır", "Rampa ve eğimlerde parça yüzeye paralel durur.", AlignToSurface, out var align)) AlignToSurface = align;
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (Toggle("Komşuya hizala", "Yakında bir parça varsa onun yönüne döner ve ızgarasına oturur (duvar önüne sandık dizmek gibi).",
+                        AlignToNeighbor, out var neighbor)) AlignToNeighbor = neighbor;
+                GUILayout.Label("Boşluk: yeniden zar at", EditorStyles.miniLabel);
             }
 
             if (RandomScale)

@@ -398,7 +398,7 @@ namespace WorldKit.Editor
                 if (!active)
                     return;
 
-                using (new EditorGUILayout.VerticalScope(GUILayout.Width(Narrow ? 70f : 120f)))
+                using (new EditorGUILayout.VerticalScope(GUILayout.Width(Narrow ? 96f : 150f)))
                 {
                     GUILayout.FlexibleSpace();
                     using (new EditorGUILayout.HorizontalScope())
@@ -410,11 +410,25 @@ namespace WorldKit.Editor
                         GUILayout.Label(WorldKitBrush.Level.ToString(), EditorStyles.miniButtonMid, GUILayout.Width(24f));
                         if (GUILayout.Button(new GUIContent("+", "Kat yukarı (E)"), EditorStyles.miniButtonRight, GUILayout.Width(20f)))
                             WorldKitBrush.ChangeLevel(1);
+                        if (!WorldKitBrush.IsFloorBrush)
+                        {
+                            bool auto = GUILayout.Toggle(WorldKitBrush.AutoLevel, new GUIContent("Oto",
+                                "Otomatik kat: imlecin altındaki zeminin katına kendiliğinden geçer. E/Q ile elle seçmek kapatır."), EditorStyles.miniButton);
+                            if (auto != WorldKitBrush.AutoLevel)
+                                WorldKitBrush.AutoLevel = auto;
+                        }
                     }
                     using (new EditorGUILayout.HorizontalScope())
                     {
-                        if (!WorldKitBrush.IsFloorBrush && GUILayout.Button(new GUIContent("↻", "Döndür (R)"), EditorStyles.miniButtonLeft, GUILayout.Width(Narrow ? 30f : 42f)))
+                        if (!WorldKitBrush.IsFloorBrush && GUILayout.Button(new GUIContent("↻", "Döndür (R, Shift+tekerlek)"), EditorStyles.miniButtonLeft, GUILayout.Width(Narrow ? 30f : 42f)))
                             WorldKitBrush.Rotate(1);
+                        if (!WorldKitBrush.IsFloorBrush && !WorldKitBrush.FreePlacement)
+                        {
+                            bool half = GUILayout.Toggle(WorldKitBrush.HalfSnap, new GUIContent("½", "Yarım hücre snap (H): ince konumlandırma."),
+                                EditorStyles.miniButtonMid, GUILayout.Width(24f));
+                            if (half != WorldKitBrush.HalfSnap)
+                                WorldKitBrush.HalfSnap = half;
+                        }
                         if (GUILayout.Button(new GUIContent("Bırak", "Fırçayı bırak (Esc)"), WorldKitBrush.IsFloorBrush ? EditorStyles.miniButton : EditorStyles.miniButtonRight))
                             WorldKitBrush.End();
                     }

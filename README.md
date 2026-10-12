@@ -131,6 +131,7 @@ Grid'siz koyma: parça imlecin tam altına, zeminin, platformun veya bir objenin
   Rastgelelik konumdan türetilir: önizleme = sonuç.
 - Çizgi parçaları (duvar, çit) ve zemin her zaman grid'dedir. Serp, Yol Boyu ve Halka da yüzeye oturur; bina içine düşen noktalar atlanır.
 - Sonradan: alt çubuk → **Yere Oturt** (seçimi altındaki yüzeye indirir), **Çeşitlendir** (rastgele dönüş ve boyut).
+- **Komşuya hizala** (varsayılan açık): yakında bir parça varsa yeni parça onun yönüne döner ve onun yarım hücre ızgarasına oturur (önizlemede sarı kesik çizgi, "hizalı").
 
 Palette arama kutusu bütün kategorilerde arar.
 
@@ -141,8 +142,18 @@ Palette arama kutusu bütün kategorilerde arar.
 | Ctrl + tık / tut-çek | Her modda siler |
 | R / Shift+R | 90° döndürür (serbest yerleştirmede ayarlardaki adım kadar) |
 | G | Serbest yerleştirme aç / kapa |
-| E / Q | Seviye yukarı / aşağı |
+| E / Q | Seviye yukarı / aşağı (prefab fırçasında otomatik katı kapatır) |
+| Shift + tekerlek | Döndür (grid 90°, serbest adım) |
+| H | Yarım hücre snap aç / kapa |
+| Boşluk | Rastgeleyi yeniden at (dönüş, boyut, varyasyon, serpme) |
 | Esc | Sürüklerken iptal eder, değilse fırçayı bırakır |
+
+**Önizleme:** Hayalet ışıklı ve yarı saydamdır; dış çizgisi, zemindeki izi ve ön yön oku görünür. Başka bir objeyle
+çakışırsa **kırmızı** olur (yine de konabilir).
+**Otomatik kat** (fırça kartında *Oto*, varsayılan açık): Prefab fırçası imlecin altındaki zeminin katına kendiliğinden geçer;
+platformun üstüne gelince 1, aşağıda 0. E/Q ile elle kat seçmek bunu kapatır.
+**Tek modunda yön verme:** Mod ayarlarından *Sürükle: yön ver* seçilirse basılan yere tek parça konur ve fareyi çektiğin yöne
+bakar; sonraki parçalar da o yönde gelir.
 | Alt + sürükle | Kamerayı döndürür |
 
 Hepsi **Edit → Shortcuts → World Kit** altından değiştirilebilir.
