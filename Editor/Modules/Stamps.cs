@@ -89,7 +89,6 @@ namespace WorldKit.Editor
                     floor.TryGetType(c, out var type);
                     floor.TryGetSlope(c, out var slope);
                     floor.TryGetRampPart(c, out var part);
-                    floor.TryGetCornerCode(c, out var cornerCode);
                     var slopeDir = WorldKitFloor.Direction(slope);
                     var center = WorldKitGrid.CellCenter(c, 0);
                     stamp.floorCells.Add(new WorldKitStamp.FloorCell
@@ -98,8 +97,7 @@ namespace WorldKit.Editor
                         height = height - baseLevel,
                         type = type,
                         localSlopeDirection = new Vector3(slopeDir.x, 0f, slopeDir.y),
-                        rampPart = (int)part,
-                        cornerCode = cornerCode
+                        rampPart = (int)part
                     });
                 }
             }
@@ -141,22 +139,6 @@ namespace WorldKit.Editor
                     .GroupBy(c => (WorldKitFloor.SlopeFromDirection(placed.transform.rotation * c.localSlopeDirection), (WorldKitFloor.RampPart)c.rampPart));
                 foreach (var ramp in ramps)
                     floor.SetSlope(ramp.Select(c => WorldKitGrid.ToCell(placed.transform.TransformPoint(c.localCenter))).ToList(), ramp.Key.Item1, ramp.Key.Item2);
-
-                // Köşe rampaları: her köşenin yükselişi şablonun dönüşüne göre yeni köşesine taşınır.
-                foreach (var corner in stamp.floorCells.Where(c => c.cornerCode != 0))
-                {
-                    var cell = WorldKitGrid.ToCell(placed.transform.TransformPoint(corner.localCenter));
-                    var nibbles = new int[4];
-                    for (int i = 0; i < 4; i++)
-                    {
-                        int cx = i & 1, cz = i >> 1;
-                        // Köşenin hücre merkezine göre yönü, şablonla birlikte döner
-                        var offset = placed.transform.rotation * new Vector3(cx - 0.5f, 0f, cz - 0.5f);
-                        int nx = offset.x > 0f ? 1 : 0, nz = offset.z > 0f ? 1 : 0;
-                        nibbles[nx + 2 * nz] = WorldKitFloor.CornerNibble(corner.cornerCode, cx, cz);
-                    }
-                    floor.SetCornerCode(cell, WorldKitFloor.EncodeCorners(nibbles[0], nibbles[1], nibbles[2], nibbles[3]));
-                }
                 WorldKitBrush.SyncFloorMaterials(floor);
                 EditorUtility.SetDirty(floor);
                 WorldKitEvents.RaiseFloorChanged(floor);

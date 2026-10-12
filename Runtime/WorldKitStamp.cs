@@ -25,8 +25,6 @@ namespace WorldKit
             public Vector3 localSlopeDirection;
             [Tooltip("Rampa parçası: 0 = tam (dik), 1 = yumuşak rampanın alt yarısı, 2 = üst yarısı.")]
             public int rampPart;
-            [Tooltip("Köşe rampası kodu (0 = yok): dört köşenin yükselişi, şablon köküne göre. Şablon döndürülünce köşeler de döner.")]
-            public int cornerCode;
         }
 
         public List<FloorCell> floorCells = new List<FloorCell>();

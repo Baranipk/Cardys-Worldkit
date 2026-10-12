@@ -294,31 +294,11 @@ namespace WorldKit.Editor
 
             if (WorldKitBrush.FloorOp == WorldKitBrush.FloorOperation.Ramp)
             {
-                // Genişlik: bir kat kaç hücrede çıkılsın
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorGUILayout.LabelField(new GUIContent("Genişlik", "Bir kat kaç hücrede çıkılsın. Platformun çevresinde bu kadar sıra seç."),
-                        GUILayout.Width(70f));
-                    int width = GUILayout.Toolbar(WorldKitBrush.RampWidth - 1, new[]
-                    {
-                        new GUIContent("1", "Dik (45°)"), new GUIContent("2", "Yumuşak"), new GUIContent("3", "Daha yumuşak"), new GUIContent("4", "Tepe / yamaç")
-                    }) + 1;
-                    if (width != WorldKitBrush.RampWidth)
-                        WorldKitBrush.RampWidth = width;
-                }
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorGUILayout.LabelField(new GUIContent("Köşeler", "Rampa platformun dış köşesinde nasıl dönsün."), GUILayout.Width(70f));
-                    int rounded = GUILayout.Toolbar(WorldKitBrush.RampRounded ? 0 : 1, new[] { "Yuvarlak", "Köşeli" });
-                    if ((rounded == 0) != WorldKitBrush.RampRounded)
-                        WorldKitBrush.RampRounded = rounded == 0;
-                }
-                bool eased = EditorGUILayout.ToggleLeft(new GUIContent("Yumuşak profil (S)",
-                    "Rampa üstte ve altta yataylaşır; geniş rampalarda doğal tepe görünümü."), WorldKitBrush.RampEased);
-                if (eased != WorldKitBrush.RampEased)
-                    WorldKitBrush.RampEased = eased;
-                EditorGUILayout.HelpBox("Platformun çevresindeki hücreleri seç (Alan, Çerçeve, Fırça): rampa köşelerde kendiliğinden döner. " +
-                                        $"Genişlik {WorldKitBrush.RampWidth} ise platformdan {WorldKitBrush.RampWidth} sıra seç.", MessageType.None);
+                bool gentle = EditorGUILayout.ToggleLeft(new GUIContent("Yumuşak (2 hücre)",
+                    "Açıksa bir kat iki hücreye yayılır (yarım + yarım). Platforma doğru 2 hücrelik bir hat çiz."),
+                    WorldKitBrush.FloorGentleRamp);
+                if (gentle != WorldKitBrush.FloorGentleRamp)
+                    WorldKitBrush.FloorGentleRamp = gentle;
             }
 
             if (WorldKitBrush.FloorOp == WorldKitBrush.FloorOperation.Surface)
