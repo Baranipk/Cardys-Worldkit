@@ -56,12 +56,19 @@ namespace WorldKit.Editor
             if (any == null)
                 return null;
 
+            // Parça = kökün torunu (Kök / Grup / Parça). Alt objeden başlayıp parça seviyesine çık.
             var t = any.transform;
-            while (t.parent != null && t.parent.parent != null)
+            while (t.parent != null && t.parent.parent != null && t.parent.parent.parent != null)
                 t = t.parent;
 
-            var root = t.parent != null ? t.parent.parent : null;
-            if (root == null || root.parent != null || root.name != Settings.rootName)
+            if (t.parent == null || t.parent.parent == null)
+                return null;
+            var root = t.parent.parent;
+            if (root.parent != null || root.name != Settings.rootName)
+                return null;
+
+            // Zeminin çocukları (yüzey boyası, zemin seti) parça değildir
+            if (t.parent.GetComponent<WorldKitFloor>() != null)
                 return null;
 
             return t.gameObject;
@@ -75,8 +82,13 @@ namespace WorldKit.Editor
                 yield break;
 
             foreach (Transform group in root.transform)
-            foreach (Transform piece in group)
-                yield return piece.gameObject;
+            {
+                // Zeminin çocukları (yüzey boyası, zemin seti) parça değildir
+                if (group.GetComponent<WorldKitFloor>() != null)
+                    continue;
+                foreach (Transform piece in group)
+                    yield return piece.gameObject;
+            }
         }
 
         /// <summary>Seçimdeki parçalar (alt objeler seçiliyse parçalarına çevrilir, tekrarlar atılır).</summary>

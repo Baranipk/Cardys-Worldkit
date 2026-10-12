@@ -143,6 +143,11 @@ Palet → **Zemin**. Bir tür seç (Zemin, Çimen, Toprak, Taş, Kum, Su, Yol...
 - **Uçurum dibi:** Kenar Süsle'de *Uçurum dibine koy* açıksa kayalar aşağıya konur.
 - **Üst katları gizle** (alt çubuk): Çalıştığın katın üstündekileri gizler; iç mekan ve alt katlarda çalışmak için.
 
+### Zemin seti (katlı uçurumlar)
+Zemin sekmesi → **Zemin Seti** → *Greybox Setini Oluştur ve Kullan*. Platform boyadıkça kenarlarına katmanlı taş duvar ve
+çimen saçağı kendiliğinden dizilir. Kendi parçalarını modelleyince **Create → World Kit → Zemin Seti** ile yeni set oluştur,
+parçaları yuvalara bağla, palette seti seç. Parça kuralları README'de (*Zemin seti*).
+
 ## 7. Duvar, çit, kapı
 
 - Çizgi parçaları köşeye yapışır (mavi nokta) ve R ile seçilen yöne uzanır. Hat ve oda uzunlukları parça boyunun

@@ -163,6 +163,22 @@ Zemin obje obje değil, **veri olarak** tutulur ve tek bir mesh'e çevrilir. Ne 
 sahnede 1 obje, 1 mesh ve 1 collider kalır; görünmeyen yüzler üretilmez.
 Üst seviyede boyamak platform yapar ve kenar duvarları otomatik oluşur.
 
+### Zemin seti (katlı uçurumlar)
+Zeminin kat kenarlarına **kendi modellediğin** taş duvar, köşe ve çimen saçağı parçaları otomatik dizilir
+(Link's Awakening tarzı katlı uçurumlar). Zemin değiştikçe kendiliğinden güncellenir; tasarım bozulmadan "giydirilir".
+- Zemin sekmesi → **Zemin Seti** → *Greybox Setini Oluştur ve Kullan* (deneme seti) ya da kendi setin
+  (**Create → World Kit → Zemin Seti**).
+- Yuvalar: *Duvar, Dış Köşe, İç Köşe* (her kat için bir sıra) ve *Saçak, Saçak Dış Köşe, Saçak İç Köşe* (üst kenar).
+  Her yuvaya birden fazla parça konabilir; konuma göre biri seçilir (taş çeşitliliği).
+- **Parça kuralları** (1 hücre × 1 kat, ölçek 1):
+  - *Duvar:* pivot hücre kenarının ortası, tabanda; yerel **+Z dışarı** (alçak tarafa) bakar; genişlik 1 hücre (X), yükseklik 1 kat.
+    Ön yüz kenardan biraz dışarı taşmalı.
+  - *Köşeler:* pivot köşe noktası; yerel **+X ve +Z**, köşede birleşen iki duvarın baktığı yönler (dış köşede dışarı,
+    iç köşede boşluğa doğru).
+  - *Saçak:* duvarla aynı; pivot üst kenarda (zemin yüzeyi hizası), dışarı taşabilir.
+- Rampaların eğimli kısmına parça konmaz (zeminin yan yüzü görünür). Parçalar `Zemin_Seti` objesinin altındadır; elle düzenleme
+  bir sonraki zemin değişikliğinde silinir.
+
 ### Duvar, çit, direk ("çizgi parçaları")
 Footprint'inin bir ekseni 0 olan parçalar grid **köşelerine** oturur:
 - İmleç en yakın köşeye yapışır (mavi nokta). Parça o köşeden R ile seçilen yöne uzanır.

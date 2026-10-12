@@ -55,7 +55,21 @@ namespace WorldKit.Editor
             }
 
             foreach (var floor in Object.FindObjectsByType<WorldKitFloor>(FindObjectsSortMode.None))
+            {
                 floor.MaxVisibleLevel = s_Active ? level : int.MaxValue;
+
+                // Zemin setinin (uçurum duvarları, saçak) üst kattaki parçaları da gizlensin
+                var set = floor.transform.Find(WorldKitFloorSetBuilder.ContainerName);
+                if (set == null)
+                    continue;
+                foreach (Transform part in set)
+                {
+                    if (s_Active && part.position.y > limit)
+                        visibility.Hide(part.gameObject, true);
+                    else
+                        visibility.Show(part.gameObject, true);
+                }
+            }
 
             SceneView.RepaintAll();
         }

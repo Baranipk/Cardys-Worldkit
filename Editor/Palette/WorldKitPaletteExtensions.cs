@@ -157,6 +157,55 @@ namespace WorldKit.Editor
                 SettingsService.OpenProjectSettings("Project/World Kit");
 
             DrawOperationPicker();
+            DrawFloorSetSection();
+        }
+
+        /// <summary>Zemin seti: kat kenarlarına otomatik dizilen uçurum duvarı ve çimen saçağı.</summary>
+        static void DrawFloorSetSection()
+        {
+            GUILayout.Space(8f);
+            EditorGUILayout.LabelField("Zemin Seti (uçurum duvarları)", EditorStyles.boldLabel);
+            var settings = WorldKitSettings.Instance;
+            var set = (WorldKitFloorSet)EditorGUILayout.ObjectField(new GUIContent("Set",
+                "Kat kenarlarına otomatik dizilecek duvar, köşe ve çimen saçağı parçaları. Boş = kapalı."),
+                settings.floorSet, typeof(WorldKitFloorSet), false);
+            if (set != settings.floorSet)
+            {
+                Undo.RecordObject(settings, "World Kit: Zemin Seti");
+                settings.floorSet = set;
+                EditorUtility.SetDirty(settings);
+                WorldKitFloorSetBuilder.RebuildActive();
+                GUIUtility.ExitGUI();
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (settings.floorSet == null)
+                {
+                    if (GUILayout.Button(new GUIContent("Greybox Setini Oluştur ve Kullan",
+                        "Katmanlı taş duvar ve çimen saçağından oluşan deneme seti. Kendi parçaların gelince seti değiştir.")))
+                    {
+                        Undo.RecordObject(settings, "World Kit: Zemin Seti");
+                        settings.floorSet = WorldKitStarterContent.CreateGreyboxFloorSet();
+                        EditorUtility.SetDirty(settings);
+                        WorldKitFloorSetBuilder.RebuildActive();
+                        GUIUtility.ExitGUI();
+                    }
+                }
+                else
+                {
+                    if (GUILayout.Button("Yeniden Kur", EditorStyles.miniButton))
+                    {
+                        WorldKitFloorSetBuilder.RebuildActive();
+                        GUIUtility.ExitGUI();
+                    }
+                    if (GUILayout.Button("Seti Düzenle", EditorStyles.miniButton))
+                        Selection.activeObject = settings.floorSet;
+                }
+            }
+            if (settings.floorSet != null)
+                EditorGUILayout.HelpBox("Zemini değiştirdikçe uçurum duvarları ve saçak kendiliğinden güncellenir. " +
+                                        "Kendi parçalarını sete bağla (Seti Düzenle); kurallar setin açıklamasında.", MessageType.None);
         }
 
         static readonly (WorldKitBrush.FloorOperation op, string tip)[] k_Operations =

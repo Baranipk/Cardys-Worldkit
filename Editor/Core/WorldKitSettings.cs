@@ -69,6 +69,9 @@ namespace WorldKit.Editor
         [Tooltip("Yüzey boyası katmanları (Zemin sekmesi → Yüzey Boya). Hücreden bağımsız, yumuşak kenarlı patika ve lekeler. " +
                  "Sırayı değiştirmek boyanmış katmanları da değiştirir; yenilerini sona ekleyin.")]
         public List<PaintLayer> paintLayers = new List<PaintLayer>();
+        [Tooltip("Zemin seti: kat kenarlarına (uçurumlara) otomatik dizilen duvar, köşe ve çimen saçağı parçaları. Boş = kapalı. " +
+                 "Kendi setini Create → World Kit → Zemin Seti ile oluştur.")]
+        public WorldKitFloorSet floorSet;
 
         [Header("Düzenleme")]
         [Tooltip("Bir çizgi parçası (duvar, çit) aynı hatta başka bir çizgi parçasının üstüne konunca eskisi kaldırılır. " +

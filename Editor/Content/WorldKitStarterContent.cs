@@ -311,6 +311,74 @@ namespace WorldKit.Editor
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
+        /// <summary>
+        /// Greybox zemin seti: katmanlı taş duvar (iki kademe), köşe dolgusu ve dışa taşan çimen saçağı.
+        /// Link's Awakening tarzı katlı uçurumları kendi modellerin gelmeden denemek için. Var olanın üzerine yazar.
+        /// </summary>
+        public static WorldKitFloorSet CreateGreyboxFloorSet()
+        {
+            var settings = Settings;
+            WorldKitSettings.EnsureFolder(MaterialsFolder);
+            var stone = CreateMaterial("Ucurum", new Color(0.56f, 0.37f, 0.25f), null);
+            var grass = CreateMaterial("CimenKenar", new Color(0.42f, 0.7f, 0.3f), null);
+            float lh = settings.levelHeight;
+
+            var folder = (Path.GetDirectoryName(PiecesRoot) ?? "Assets/WorldKit").Replace('\\', '/') + "/ZeminSeti";
+            WorldKitSettings.EnsureFolder(folder);
+
+            GameObject SavePart(string name, params ProBuilderMesh[] parts)
+            {
+                var target = parts[0];
+                if (parts.Length > 1)
+                {
+                    CombineMeshes.Combine(parts, target);
+                    foreach (var part in parts.Skip(1))
+                        if (part != null)
+                            Object.DestroyImmediate(part.gameObject);
+                }
+                float cell = settings.cellSize;
+                if (!Mathf.Approximately(cell, 1f))
+                    target.positions = target.positions.Select(p => new Vector3(p.x * cell, p.y, p.z * cell)).ToArray();
+                target.ToMesh();
+                target.Refresh();
+                var go = target.gameObject;
+                go.name = name;
+                WorldKitPerformance.BakeProBuilder(go, "ZeminSeti_" + name);
+                var path = $"{folder}/{name}.prefab";
+                var prefab = PrefabUtility.SaveAsPrefabAsset(go, path);
+                Object.DestroyImmediate(go);
+                return prefab;
+            }
+
+            // Duvar: iki kademeli taş (alt daha dışarıda), ön yüz kenardan dışarı taşar
+            var wall = SavePart("Duvar",
+                Box(new Vector3(-0.5f, 0f, -0.04f), new Vector3(0.5f, lh * 0.5f, 0.1f), stone),
+                Box(new Vector3(-0.5f, lh * 0.5f, -0.04f), new Vector3(0.5f, lh, 0.07f), stone));
+            var wallOuter = SavePart("Duvar_DisKose",
+                Box(new Vector3(-0.04f, 0f, -0.04f), new Vector3(0.1f, lh * 0.5f, 0.1f), stone),
+                Box(new Vector3(-0.04f, lh * 0.5f, -0.04f), new Vector3(0.07f, lh, 0.07f), stone));
+            // Çimen saçağı: üst kenarda, dışarı taşan ince şerit
+            var trim = SavePart("Sacak", Box(new Vector3(-0.5f, -0.04f, -0.2f), new Vector3(0.5f, 0.06f, 0.16f), grass));
+            var trimOuter = SavePart("Sacak_DisKose", Box(new Vector3(-0.04f, -0.04f, -0.04f), new Vector3(0.16f, 0.06f, 0.16f), grass));
+
+            var assetPath = $"{folder}/ZeminSeti_Greybox.asset";
+            var set = AssetDatabase.LoadAssetAtPath<WorldKitFloorSet>(assetPath);
+            if (set == null)
+            {
+                set = ScriptableObject.CreateInstance<WorldKitFloorSet>();
+                AssetDatabase.CreateAsset(set, assetPath);
+            }
+            set.wall = new List<GameObject> { wall };
+            set.wallOuterCorner = new List<GameObject> { wallOuter };
+            set.wallInnerCorner = new List<GameObject>();
+            set.trim = new List<GameObject> { trim };
+            set.trimOuterCorner = new List<GameObject> { trimOuter };
+            set.trimInnerCorner = new List<GameObject>();
+            EditorUtility.SetDirty(set);
+            AssetDatabase.SaveAssets();
+            return set;
+        }
+
         /// <summary>Yüzey boyası katmanı yoksa hazır üç katman oluşturur: Patika, Koyu Çimen, Taş Yol.</summary>
         public static void EnsureDefaultPaintLayers()
         {

@@ -2,6 +2,23 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.21.0] - 2026-10-12
+
+Zemin seti.
+
+### Eklendi
+- **Zemin seti** (`WorldKitFloorSet` asset, `WorldKitFloorSetBuilder`): Kat kenarlarına otomatik dizilen modüler parçalar:
+  duvar / dış köşe / iç köşe (her kat için) ve çimen saçağı / saçak köşeleri. Varyasyonlar konuma göre seçilir.
+  Zemin değiştikçe yalnızca değişen parçalar eklenir/silinir (Undo'lu). Ayarlarda `floorSet`; palette Zemin Seti bölümü.
+- **Greybox zemin seti** (`WorldKitStarterContent.CreateGreyboxFloorSet`): iki kademeli taş duvar ve dışa taşan çimen saçağı.
+- Üst katları gizle, zemin setinin üst kat parçalarını da gizler.
+
+### Düzeltildi
+- **`WorldKitScene.GetPiece` her zaman null dönüyordu** (hiyerarşide bir seviye fazla çıkıyordu). Seçime dayanan her şey
+  çalışmıyordu: seçimi düzenleme kısayolları, Üste Kopyala, Yere Oturt, Çeşitlendir, Şablon Kaydet, Değiştir → Seçimden,
+  komşuya hizalama.
+- Zeminin çocukları (yüzey boyası, zemin seti) artık parça sayılmaz (silme, istatistik, seçim).
+
 ## [0.20.0] - 2026-10-12
 
 Yüzey boyası.
