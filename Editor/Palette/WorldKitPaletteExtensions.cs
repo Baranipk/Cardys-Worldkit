@@ -172,8 +172,56 @@ namespace WorldKit.Editor
                 GUIUtility.ExitGUI();
             }
 
+            DrawEdgeSection(kit);
             DrawOperationPicker();
             DrawFloorSetSection();
+        }
+
+        /// <summary>Kenar stili: köşeli grid ya da yumuşak (yuvarlak köşeli uçurum, dudak).</summary>
+        static void DrawEdgeSection(WorldKitSettings kit)
+        {
+            bool changed = false;
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField(new GUIContent("Kenar", "Kat sınırlarının görünüşü. Yumuşak: dış köşe yuvarlak, iç köşe kavisli, " +
+                    "uçurum eğriyi izler. Kat, rampa, erişim ve NavMesh mantığı değişmez."), GUILayout.Width(EditorGUIUtility.labelWidth - 4f));
+                int mode = GUILayout.Toolbar(kit.floorSmoothEdges ? 1 : 0, new[] { "Köşeli", "Yumuşak" });
+                if ((mode == 1) != kit.floorSmoothEdges)
+                {
+                    Undo.RecordObject(kit, "World Kit: Kenar");
+                    kit.floorSmoothEdges = mode == 1;
+                    if (kit.floorSmoothEdges && kit.floorCliffMaterial == null)
+                        kit.floorCliffMaterial = WorldKitStarterContent.CreateCliffMaterial();
+                    changed = true;
+                }
+            }
+
+            if (kit.floorSmoothEdges)
+            {
+                EditorGUI.BeginChangeCheck();
+                float radius = EditorGUILayout.Slider(new GUIContent("Yuvarlaklık", "Köşe yarıçapı (hücre)."), kit.floorEdgeRadius, 0.05f, 0.5f);
+                float lip = EditorGUILayout.Slider(new GUIContent("Dudak (m)", "Uçurumun üst kenarından dışarı taşan çimen saçağı. 0 = yok."), kit.floorEdgeLip, 0f, 0.4f);
+                int resolution = EditorGUILayout.IntSlider(new GUIContent("Pürüzsüzlük", "Hücre başına kenar örneği (yüksek = daha pürüzsüz, daha çok üçgen)."), kit.floorEdgeResolution, 2, 8);
+                var cliff = (Material)EditorGUILayout.ObjectField(new GUIContent("Uçurum materyali"), kit.floorCliffMaterial, typeof(Material), false);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(kit, "World Kit: Kenar");
+                    kit.floorEdgeRadius = radius;
+                    kit.floorEdgeLip = lip;
+                    kit.floorEdgeResolution = resolution;
+                    kit.floorCliffMaterial = cliff;
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                EditorUtility.SetDirty(kit);
+                foreach (var floor in UnityEngine.Object.FindObjectsByType<WorldKitFloor>(FindObjectsSortMode.None))
+                    WorldKitBrush.SyncFloorMaterials(floor);
+                WorldKitFloorSetBuilder.RebuildActive();
+                SceneView.RepaintAll();
+            }
         }
 
         /// <summary>Zemin seti: kat kenarlarına otomatik dizilen uçurum duvarı ve çimen saçağı.</summary>

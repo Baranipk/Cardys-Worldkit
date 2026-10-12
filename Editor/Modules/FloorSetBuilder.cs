@@ -146,6 +146,10 @@ namespace WorldKit.Editor
             }
 
             // ---------- Köşeler ----------
+            // Yumuşak kenarda köşeler yuvarlak: köşeli köşe parçaları eğriden taşar, konmaz.
+            if (floor.smoothEdges)
+                return result;
+
             // Köşe noktası (ix, iz); çevresindeki dört hücre: SW, SE, NW, NE
             var corners = new HashSet<Vector2Int>();
             foreach (var cell in cells)

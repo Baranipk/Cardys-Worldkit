@@ -1403,17 +1403,6 @@ namespace WorldKit.Editor
         public static void SyncFloorMaterials(WorldKitFloor floor)
         {
             var settings = Settings;
-            var materials = new List<Material> { settings.floorGroundMaterial, settings.floorRaisedMaterial };
-            materials.AddRange(settings.floorTypes.Select(t => t.material != null ? t.material : settings.floorGroundMaterial));
-            while (materials.Count < floor.SubMeshCount)
-                materials.Add(settings.floorGroundMaterial);
-
-            var renderer = floor.GetComponent<MeshRenderer>();
-            if (!renderer.sharedMaterials.SequenceEqual(materials))
-            {
-                Undo.RecordObject(renderer, "World Kit: Zemin Materyalleri");
-                renderer.sharedMaterials = materials.ToArray();
-            }
 
             // Tür başına yüzey kayması (su vb.); 0 = varsayılan tür
             var offsets = new List<float> { 0f };
@@ -1423,6 +1412,32 @@ namespace WorldKit.Editor
                 Undo.RecordObject(floor, "World Kit: Zemin Türleri");
                 floor.SetTypeOffsets(offsets);
                 EditorUtility.SetDirty(floor);
+            }
+
+            // Kenar stili (köşeli / yumuşak)
+            if (floor.smoothEdges != settings.floorSmoothEdges || !Mathf.Approximately(floor.edgeRadius, settings.floorEdgeRadius)
+                || floor.edgeResolution != settings.floorEdgeResolution || !Mathf.Approximately(floor.edgeLip, settings.floorEdgeLip))
+            {
+                Undo.RecordObject(floor, "World Kit: Zemin Kenarı");
+                floor.SetEdgeStyle(settings.floorSmoothEdges, settings.floorEdgeRadius, settings.floorEdgeResolution, settings.floorEdgeLip);
+                EditorUtility.SetDirty(floor);
+            }
+
+            // Alt-mesh sırası: 0 zemin, 1 platform, 1+t türler, sonra (yumuşak kenarda) uçurum duvarı
+            var materials = new List<Material> { settings.floorGroundMaterial, settings.floorRaisedMaterial };
+            materials.AddRange(settings.floorTypes.Select(t => t.material != null ? t.material : settings.floorGroundMaterial));
+            materials.Add(settings.floorCliffMaterial != null ? settings.floorCliffMaterial : settings.floorRaisedMaterial);
+            while (materials.Count < floor.SubMeshCount)
+                materials.Add(settings.floorGroundMaterial);
+            // Alt-mesh'ten fazla materyal olursa Unity fazlasını son alt-mesh'e tekrar çizer: kırp
+            if (materials.Count > floor.SubMeshCount)
+                materials.RemoveRange(floor.SubMeshCount, materials.Count - floor.SubMeshCount);
+
+            var renderer = floor.GetComponent<MeshRenderer>();
+            if (!renderer.sharedMaterials.SequenceEqual(materials))
+            {
+                Undo.RecordObject(renderer, "World Kit: Zemin Materyalleri");
+                renderer.sharedMaterials = materials.ToArray();
             }
         }
 

@@ -73,6 +73,18 @@ namespace WorldKit.Editor
                  "Kendi setini Create → World Kit → Zemin Seti ile oluştur.")]
         public WorldKitFloorSet floorSet;
 
+        [Tooltip("Yumuşak kenar: kat sınırları yuvarlatılır (dış köşe yuvarlak, iç köşe kavisli, uçurum duvarı eğriyi izler). " +
+                 "Kapalıysa köşeli grid. Kat, rampa, erişim ve NavMesh mantığı değişmez.")]
+        public bool floorSmoothEdges;
+        [Tooltip("Köşe yuvarlaklığı (hücre; 0.5 = yarım hücre).")]
+        [Range(0.05f, 0.5f)] public float floorEdgeRadius = 0.35f;
+        [Tooltip("Hücre başına kenar örneği: yüksek = daha pürüzsüz eğri, daha çok üçgen.")]
+        [Range(2, 8)] public int floorEdgeResolution = 4;
+        [Tooltip("Uçurumun üst kenarından dışarı taşan dudak / çimen saçağı (m). 0 = yok.")]
+        [Range(0f, 0.4f)] public float floorEdgeLip = 0.1f;
+        [Tooltip("Yumuşak kenarda uçurum duvarlarının materyali (boşsa platform materyali).")]
+        public Material floorCliffMaterial;
+
         [Header("Düzenleme")]
         [Tooltip("Bir çizgi parçası (duvar, çit) aynı hatta başka bir çizgi parçasının üstüne konunca eskisi kaldırılır. " +
                  "Duvara kapı açmak için: kapılı duvarı mevcut duvarın üstüne koy.")]

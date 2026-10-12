@@ -508,6 +508,14 @@ namespace WorldKit.Editor
             return set;
         }
 
+        /// <summary>Yumuşak kenarlı uçurum duvarları için taş rengi materyal (GB_Ucurum).</summary>
+        public static Material CreateCliffMaterial()
+        {
+            WorldKitSettings.EnsureFolder(MaterialsFolder);
+            var (texture, _) = StyleTexture();
+            return CreateMaterial("Ucurum", new Color(0.56f, 0.37f, 0.25f), texture);
+        }
+
         /// <summary>Yüzey boyası katmanı yoksa hazır üç katman oluşturur: Patika, Koyu Çimen, Taş Yol.</summary>
         public static void EnsureDefaultPaintLayers()
         {

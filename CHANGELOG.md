@@ -2,6 +2,22 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.24.0] - 2026-10-12
+
+Yumuşak kenar.
+
+### Eklendi
+- **Yumuşak kenar** (`floorSmoothEdges`): Zemin mesh'i kat sınırlarını yuvarlatılmış eğriyle üretir: dış köşe yuvarlak, iç köşe
+  kavisli, harita kenarı ve çukurlar da yumuşak; uçurum duvarları ve collider eğriyi izler. Her kat alanının hücre başına
+  `floorEdgeResolution` örnekli kutu bulanıklığı (yarıçap `floorEdgeRadius`) 0.5 eşiğinden kesilir; iç hücreler tek dörtgen.
+- **Dudak** (`floorEdgeLip`): uçurumun üst kenarından dışarı taşan saçak. **Uçurum materyali** (`floorCliffMaterial`, ayrı alt-mesh).
+- Palette Zemin sekmesinde Kenar (Köşeli / Yumuşak), Yuvarlaklık, Dudak, Pürüzsüzlük, Uçurum materyali.
+- `WorldKitFloor.SetEdgeStyle`, `smoothEdges`, `edgeRadius`, `edgeResolution`, `edgeLip`.
+
+### Değişti
+- Zemin renderer'ının materyal listesi alt-mesh sayısına kırpılır (fazla materyal son alt-mesh'i tekrar çizmesin).
+- Zemin seti yumuşak kenarda köşe parçalarını koymaz.
+
 ## [0.23.0] - 2026-10-12
 
 ### Eklendi

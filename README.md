@@ -163,6 +163,15 @@ Zemin obje obje değil, **veri olarak** tutulur ve tek bir mesh'e çevrilir. Ne 
 sahnede 1 obje, 1 mesh ve 1 collider kalır; görünmeyen yüzler üretilmez.
 Üst seviyede boyamak platform yapar ve kenar duvarları otomatik oluşur.
 
+### Yumuşak kenar
+Zemin sekmesi → **Kenar: Köşeli / Yumuşak**. Yumuşakta kat sınırları yuvarlatılır: dış köşeler yuvarlak, iç köşeler kavisli
+dolar, harita kenarı ve çukurlar da yumuşak döner; uçurum duvarı eğriyi izler (collider da). Grid mantığı aynı kalır.
+- **Yuvarlaklık:** köşe yarıçapı (0.05–0.5 hücre). **Pürüzsüzlük:** hücre başına kenar örneği (2–8).
+- **Dudak:** uçurumun üst kenarından dışarı taşan çimen saçağı (üst yüzeyin materyaliyle). 0 = yok.
+- **Uçurum materyali:** duvarların materyali (varsayılan taş rengi `GB_Ucurum`).
+- Rampalı hücreler köşeli kalır. Zemin setinin köşe parçaları yumuşak kenarda konmaz (düz duvar ve saçak konur).
+- Yüzey boyası hücre katına göre çizilir; yuvarlatılmış köşenin dışına taşan boya havada kalabilir, kenarlardan uzak boyayın.
+
 ### Zemin seti (katlı uçurumlar)
 Zeminin kat kenarlarına **kendi modellediğin** taş duvar, köşe ve çimen saçağı parçaları otomatik dizilir
 (Link's Awakening tarzı katlı uçurumlar). Zemin değiştikçe kendiliğinden güncellenir; tasarım bozulmadan "giydirilir".
