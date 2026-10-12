@@ -283,6 +283,7 @@ Bir değişiklikten sonra en azından şunları deneyin:
 | `TryGetHeight` / `TryGetType` | Hücre sorgusu |
 | `Cells` / `TryGetCornerLevel(cell, cx, cz, out level)` | Bütün hücreler; köşe yüksekliği (rampalarda köşeye göre) |
 | `SetTypeOffsets(offsets)` / `TypeOffsets` | Tür başına yüzey kayması (m); World Kit ayarlardan doldurur. Köşe yükseklikleri bunu içerir |
+| `Rebuilt` (olay) | Zemin mesh'i yeniden kurulunca; zemine bağlı görünüşler (yüzey boyası) bunu dinler |
 | `MaxVisibleLevel` | Görünüm sınırı (kaydedilmez) |
 | `SubMeshCount` | Renderer'da gereken materyal sayısı |
 

@@ -192,6 +192,7 @@ uygulanacağını ise üstteki mod belirler (Tek = fırça, Hat = şerit, Alan =
 | **Rampa** | Hücreyi yanındaki bir kat yüksek zemine doğru eğimli rampa yapar; yön kendiliğinden bulunur. Zeminin parçasıdır (tek mesh, yürünebilir). **Boya** ile düzleşir. **Yumuşak (2 hücre)** açıksa bir kat iki hücreye yayılır: platforma doğru 2 hücrelik bir hat çiz |
 | **Duvarla Çevir** | Seçilen alanın dış kenarlarına duvar örer; zemini değiştirmez. Duvar sekmede seçilir (boşsa `Duvar_1m`) |
 | **Kenar Süsle** | Seçilen alanın dış kenarlarına (uçurum, platform kenarı, kıyı) kaya, çalı gibi parçaları rastgele dizer. Parçalar, yoğunluk ve "uçurum dibine koy" sekmede ayarlanır. Aynı alanı tekrar süslemek üst üste koymaz |
+| **Yüzey Boya** | Hücreden bağımsız, yumuşak ve tırtıklı kenarlı **patika, koyu çimen, taş yol** (kıvrımlı yollar). **Fırça (8)** ile sürükle, **Ctrl** ile sil; Alan/Hat hücreleri doldurur. Katmanlar ve materyalleri: Project Settings → World Kit → *Paint Layers* (kendi dokunu kullanabilirsin). Zemine dokunmaz, collider'ı yoktur; kat ve rampaları takip eder |
 
 Duvarla Çevir'de bir kenar, komşu hücre seçimin dışındaysa veya farklı yükseklikteyse dış kenar sayılır;
 duvar her hücrenin kendi yüksekliğine oturur. Uzun duvarlar (ör. 2 m) kenara sığdığı yerlerde kullanılır,

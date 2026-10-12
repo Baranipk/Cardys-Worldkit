@@ -134,6 +134,7 @@ Palet → **Zemin**. Bir tür seç (Zemin, Çimen, Toprak, Taş, Kum, Su, Yol...
 | **Rampa** | Bir kat yüksek komşuya doğru eğim. *Yumuşak (2 hücre)*: bir kat iki hücreye yayılır |
 | **Duvarla Çevir** | Alanın dış kenarlarına duvar örer |
 | **Kenar Süsle** | Alanın dış kenarlarına (uçurum, kıyı) kaya/çalı dizer |
+| **Yüzey Boya** | Kıvrımlı, yumuşak kenarlı patika ve lekeler; Fırça (8) ile sürükle, Ctrl ile sil |
 
 İşlem, seçili modun şekliyle uygulanır: **Tek** (hücre hücre), **Hat**, **Alan**, **Çerçeve**, **Fırça** (yuvarlak, yarıçap palette).
 
