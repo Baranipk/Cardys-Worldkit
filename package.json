@@ -1,6 +1,6 @@
 {
   "name": "com.baran.worldkit",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "displayName": "World Kit",
   "description": "Grid tabanlı, sürükle-bırak world building aracı. Zemin boyama, duvar/hat çizme, parça paleti ve modüler genişletme sistemi. Proje ayarlarıyla her oyuna uyarlanır.",
   "unity": "6000.0",

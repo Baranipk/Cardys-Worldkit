@@ -168,6 +168,7 @@ namespace WorldKit.Editor
             (WorldKitBrush.FloorOperation.Ramp, "Hücreyi yanındaki bir kat yüksek zemine doğru rampa yap (yön kendiliğinden). Boya ile düzleşir."),
             (WorldKitBrush.FloorOperation.Wall, "Seçilen alanın dış kenarlarına duvar ör. Zemini değiştirmez."),
             (WorldKitBrush.FloorOperation.EdgeDecor, "Seçilen alanın dış kenarlarına (uçurum, platform kenarı, kıyı) kaya, çalı gibi parçalar diz. Zemini değiştirmez."),
+            (WorldKitBrush.FloorOperation.Surface, "Yüzey boyası: hücreden bağımsız, yumuşak ve tırtıklı kenarlı patika, koyu çimen, taş yol. Fırça (8) ile sürükle, Ctrl ile sil."),
         };
 
         static GUIStyle s_OperationButton;
@@ -182,6 +183,7 @@ namespace WorldKit.Editor
                 case WorldKitBrush.FloorOperation.Ramp: return WorldKitIcons.Ramp;
                 case WorldKitBrush.FloorOperation.Wall: return WorldKitIcons.Wall;
                 case WorldKitBrush.FloorOperation.EdgeDecor: return WorldKitIcons.EdgeDecor;
+                case WorldKitBrush.FloorOperation.Surface: return WorldKitIcons.SurfacePaint;
                 default: return WorldKitIcons.Paint;
             }
         }
@@ -218,6 +220,13 @@ namespace WorldKit.Editor
                                 WorldKitBrush.FloorOp = op;
                                 if (!WorldKitBrush.IsFloorBrush)
                                     WorldKitBrush.BeginFloor();
+                                // Yüzey boyası yuvarlak fırçayla en doğal sonucu verir
+                                if (op == WorldKitBrush.FloorOperation.Surface)
+                                {
+                                    var round = WorldKitTools.All.OfType<RoundBrushTool>().FirstOrDefault();
+                                    if (round != null)
+                                        WorldKitBrush.Tool = round;
+                                }
                             }
                         }
                         GUILayout.FlexibleSpace();
@@ -242,6 +251,9 @@ namespace WorldKit.Editor
                 if (gentle != WorldKitBrush.FloorGentleRamp)
                     WorldKitBrush.FloorGentleRamp = gentle;
             }
+
+            if (WorldKitBrush.FloorOp == WorldKitBrush.FloorOperation.Surface)
+                WorldKitSurfaceBrush.DrawSettingsGUI();
 
             if (WorldKitBrush.FloorOp == WorldKitBrush.FloorOperation.EdgeDecor)
                 DrawEdgeDecorSettings();

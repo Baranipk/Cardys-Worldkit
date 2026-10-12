@@ -59,6 +59,32 @@ namespace WorldKit.Editor
             WorldKitBrush.SyncFloorMaterials(floor);
             WorldKitEvents.RaiseFloorChanged(floor);
 
+            // ---------- Yüzey boyası: kıvrımlı patikalar ve koyu çimen lekeleri ----------
+            WorldKitStarterContent.EnsureDefaultPaintLayers();
+            float cs = WorldKitGrid.CellSize;
+            var toPond = new List<Vector3>();      // ana yoldan göletin kıyısına
+            for (int i = 0; i <= 24; i++)
+            {
+                float t = i / 24f;
+                toPond.Add(World(15f - t * 6f, 0, 23f + t * 2f + Mathf.Sin(t * Mathf.PI * 2f) * 1.2f));
+            }
+            WorldKitSurfaceBrush.PaintPath(floor, toPond, 0.75f * cs, 0);
+
+            var toRamp = new List<Vector3>();      // ana yoldan taş platformun rampasına
+            for (int i = 0; i <= 30; i++)
+            {
+                float t = i / 30f;
+                toRamp.Add(World(17f + t * 9f, 0, 16.5f + t * 3.5f + Mathf.Sin(t * Mathf.PI * 3f) * 0.8f));
+            }
+            WorldKitSurfaceBrush.PaintPath(floor, toRamp, 0.65f * cs, 0);
+
+            var patches = new System.Random(3);
+            for (int i = 0; i < 7; i++)
+            {
+                var center = World(2f + (float)patches.NextDouble() * 28f, 0, 2f + (float)patches.NextDouble() * 28f);
+                WorldKitSurfaceBrush.PaintPath(floor, new[] { center, center + new Vector3(1.2f, 0f, 0.6f) * cs }, (1.2f + (float)patches.NextDouble()) * cs, 1);
+            }
+
             // ---------- Binalar ----------
             Place(WorldKitStarterContent.Building, "Ahir_4x3", 3, 3);
             Place(WorldKitStarterContent.Building, "Ev_Buyuk_4x5", 8, 8);

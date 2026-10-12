@@ -193,6 +193,12 @@ namespace WorldKit.Editor
         {
             c.RoundRect(6, 30, 26, 50, 3); c.RoundRect(36, 12, 58, 34, 3); c.Circle(48, 52, 8);
         });
+        // Kıvrımlı patika
+        public static Texture2D SurfacePaint => Get("surfacepaint", c =>
+        {
+            c.Line(6, 58, 18, 44, 9); c.Line(18, 44, 36, 40, 9); c.Line(36, 40, 44, 26, 9); c.Line(44, 26, 58, 8, 9);
+            c.Circle(18, 44, 4.5f); c.Circle(36, 40, 4.5f); c.Circle(44, 26, 4.5f);
+        }, new Color(0.9f, 0.65f, 0.35f));
         public static Texture2D EdgeDecor => Get("edgedecor", c => { c.Rect(4, 30, 60, 60); c.Circle(14, 24, 7); c.Circle(32, 22, 9); c.Circle(50, 25, 6); });
 
         /// <summary>Temaya göre önbelleğe alınmış bir ikon. draw, 64×64 bir tuval üzerinde (sol üst = 0,0) çizer.</summary>

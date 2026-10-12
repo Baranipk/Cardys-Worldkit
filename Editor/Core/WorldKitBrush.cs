@@ -332,7 +332,9 @@ namespace WorldKit.Editor
             get
             {
                 bool erase = s_Context.Dragging ? s_EraseDrag : EditorGUI.actionKey;
-                if (erase && WorldKitTools.Eraser != null)
+                // Yüzey boyasında Ctrl silme modlarına geçmez: aynı fırça boyayı siler (zemine dokunulmaz)
+                bool surface = s_Mode == Mode.Floor && s_FloorOperation == FloorOperation.Surface;
+                if (erase && !surface && WorldKitTools.Eraser != null)
                     return WorldKitTools.Eraser;
 
                 var tool = Tool;
@@ -907,7 +909,9 @@ namespace WorldKit.Editor
                     s_Cells.Clear();
                     tool.CollectCells(s_Context, s_Cells);
                 }
-                DrawCells(s_Cells, color);
+                // Yuvarlak fırçayla yüzey boyasında hücre kareleri yanıltır; fırçanın kendi dairesi yeterli
+                if (!(s_FloorOperation == FloorOperation.Surface && tool is RoundBrushTool))
+                    DrawCells(s_Cells, s_FloorOperation == FloorOperation.Surface && EditorGUI.actionKey ? k_Danger : color);
                 return;
             }
 
@@ -1245,10 +1249,22 @@ namespace WorldKit.Editor
 
         static void PaintFloor(ICollection<Vector2Int> cells, bool erase)
         {
-            if (cells.Count == 0)
+            // Yuvarlak fırçayla yüzey boyası hücre listesine bakmaz (aynı hücreye tekrar boyanabilir)
+            bool surfaceDab = s_FloorOperation == FloorOperation.Surface && EffectiveTool is RoundBrushTool;
+            if (cells.Count == 0 && !surfaceDab)
                 return;
 
             var floor = GetFloor();
+            if (s_FloorOperation == FloorOperation.Surface)
+            {
+                // Ctrl (sürüklemenin başında basılıysa) boyayı siler; zemin hücrelerine hiç dokunulmaz.
+                bool eraseSurface = erase || (s_Context.Dragging ? s_EraseDrag : EditorGUI.actionKey);
+                if (EffectiveTool is RoundBrushTool)
+                    WorldKitSurfaceBrush.Dab(floor, s_Context.Hit, RoundBrushTool.Radius * WorldKitGrid.CellSize, eraseSurface);
+                else
+                    WorldKitSurfaceBrush.FillCells(floor, cells, eraseSurface);
+                return;
+            }
             if (!erase && s_FloorOperation == FloorOperation.Wall)
             {
                 FloorWalls.Build(floor, cells, FloorWallPrefab);
@@ -1298,7 +1314,9 @@ namespace WorldKit.Editor
             /// <summary>Hücre alanının kenarlarına duvar ör (zemini değiştirmez).</summary>
             Wall,
             /// <summary>Hücre alanının dış kenarlarına kaya, çalı gibi süs parçaları diz (zemini değiştirmez).</summary>
-            EdgeDecor
+            EdgeDecor,
+            /// <summary>Yüzey boyası: hücreden bağımsız, yumuşak kenarlı patika ve lekeler (zemini değiştirmez; Ctrl siler).</summary>
+            Surface
         }
 
         static int s_FloorType;
@@ -1350,6 +1368,7 @@ namespace WorldKit.Editor
                 case FloorOperation.Ramp: return "Rampa";
                 case FloorOperation.Wall: return "Duvarla Çevir";
                 case FloorOperation.EdgeDecor: return "Kenar Süsle";
+                case FloorOperation.Surface: return "Yüzey Boya";
                 default: return "Boya";
             }
         }

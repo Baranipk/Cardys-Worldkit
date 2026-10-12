@@ -2,6 +2,20 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.20.0] - 2026-10-12
+
+Yüzey boyası.
+
+### Eklendi
+- **Yüzey Boya** zemin işlemi: Hücreden bağımsız, yumuşak ve tırtıklı kenarlı patika, koyu çimen, taş yol. Yuvarlak Fırça (8)
+  ile sürükleyerek boyanır (darbeler arası doldurulur), Ctrl ile silinir; diğer modlar hücreleri doldurur. Zemine dokunmaz.
+- `WorldKitSurfacePaint` (runtime): katman başına hücre × çözünürlük örnek ağırlıkları (16×16 parçalar); marching squares ile
+  zemin yüzeyini (kat, rampa, su) takip eden mesh, katmanın materyaliyle. Collider yok; zemin değişince kendiliğinden güncellenir.
+- Ayarlar: `paintLayers` (ad, materyal, kenar tırtıklılığı). Hazır katmanlar: Patika, Koyu Çimen, Taş Yol
+  (`WorldKitStarterContent.EnsureDefaultPaintLayers`). Palette katman seçimi, yumuşaklık, yarıçap, katmanı temizle.
+- API: `WorldKitSurfaceBrush.Dab`, `FillCells`, `PaintPath`; `WorldKitFloor.Rebuilt` olayı.
+- Örnek köyde kıvrımlı patikalar ve koyu çimen lekeleri.
+
 ## [0.19.0] - 2026-10-12
 
 Yerleştirme deneyimi.

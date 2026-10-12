@@ -24,6 +24,17 @@ namespace WorldKit.Editor
             public float surfaceOffset;
         }
 
+        /// <summary>Yüzey boyası katmanı (patika, koyu çimen...). Sıra = çizim sırası; sonraki üstte.</summary>
+        [System.Serializable]
+        public class PaintLayer
+        {
+            public string name = "Yeni Katman";
+            [Tooltip("Katmanın materyali (kendi dokunu kullanabilirsin; UV dünya XZ × 0.5).")]
+            public Material material;
+            [Tooltip("Kenar tırtıklılığı: 0 = pürüzsüz, 1 = çok tırtıklı.")]
+            [Range(0f, 1f)] public float edgeNoise = 0.5f;
+        }
+
         public const string DefaultAssetPath = "Assets/WorldKit/WorldKitSettings.asset";
 
         [Header("Grid")]
@@ -55,6 +66,9 @@ namespace WorldKit.Editor
         [Tooltip("Ek zemin türleri (çimen, taş, su...). Palette Zemin sekmesinden seçilir. " +
                  "Sırayı değiştirmek boyanmış hücrelerin türünü de değiştirir; yeni türleri sona ekleyin.")]
         public List<FloorType> floorTypes = new List<FloorType>();
+        [Tooltip("Yüzey boyası katmanları (Zemin sekmesi → Yüzey Boya). Hücreden bağımsız, yumuşak kenarlı patika ve lekeler. " +
+                 "Sırayı değiştirmek boyanmış katmanları da değiştirir; yenilerini sona ekleyin.")]
+        public List<PaintLayer> paintLayers = new List<PaintLayer>();
 
         [Header("Düzenleme")]
         [Tooltip("Bir çizgi parçası (duvar, çit) aynı hatta başka bir çizgi parçasının üstüne konunca eskisi kaldırılır. " +

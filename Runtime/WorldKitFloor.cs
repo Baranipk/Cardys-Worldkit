@@ -136,6 +136,9 @@ namespace WorldKit
             return found;
         }
 
+        /// <summary>Zemin mesh'i yeniden kurulduğunda (hücre, yükseklik, görünür kat değişince). Yüzey boyası bunu dinler.</summary>
+        public event System.Action Rebuilt;
+
         /// <summary>Zemini olan bütün hücreler.</summary>
         public IEnumerable<Vector2Int> Cells => m_Map.Keys;
 
@@ -526,6 +529,7 @@ namespace WorldKit
                 meshCollider.sharedMesh = null;
                 meshCollider.sharedMesh = vertices.Count > 0 ? m_Mesh : null;
             }
+            Rebuilt?.Invoke();
         }
 
         /// <summary>Dörtgen ekler; sarma yönünü verilen normale göre kendisi ayarlar.</summary>

@@ -91,6 +91,7 @@ namespace WorldKit.Editor
                 AddType("Yol", "Zemin_Yol", new Color(0.72f, 0.66f, 0.56f));
             }
             EditorUtility.SetDirty(settings);
+            EnsureDefaultPaintLayers();
             var rock = CreateMaterial("Kaya", new Color(0.52f, 0.52f, 0.57f), grid);
             var foliage = CreateMaterial("Bitki", new Color(0.42f, 0.66f, 0.36f), grid);
             var wood = CreateMaterial("Ahsap", new Color(0.6f, 0.43f, 0.28f), grid);
@@ -310,7 +311,28 @@ namespace WorldKit.Editor
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
-        static Material CreateMaterial(string name, Color color, Texture2D grid)
+        /// <summary>Yüzey boyası katmanı yoksa hazır üç katman oluşturur: Patika, Koyu Çimen, Taş Yol.</summary>
+        public static void EnsureDefaultPaintLayers()
+        {
+            var settings = Settings;
+            if (settings.paintLayers.Count > 0)
+                return;
+
+            WorldKitSettings.EnsureFolder(MaterialsFolder);
+            void Add(string name, string file, Color color, float noise)
+            {
+                // Dokusuz düz renk: patika ve lekeler grid çizgisi taşımasın
+                var material = CreateMaterial(file, color, null);
+                settings.paintLayers.Add(new WorldKitSettings.PaintLayer { name = name, material = material, edgeNoise = noise });
+            }
+            Add("Patika", "Boya_Patika", new Color(0.86f, 0.62f, 0.33f), 0.55f);
+            Add("Koyu Çimen", "Boya_KoyuCimen", new Color(0.3f, 0.56f, 0.24f), 0.8f);
+            Add("Taş Yol", "Boya_TasYol", new Color(0.62f, 0.6f, 0.58f), 0.3f);
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
+        }
+
+        internal static Material CreateMaterial(string name, Color color, Texture2D grid)
         {
             var path = $"{MaterialsFolder}/GB_{name}.mat";
             var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
