@@ -506,6 +506,10 @@ namespace WorldKit
                 AddSideFaces(cell, data, vertices, uvs, triangles, false);
             }
 
+            // Yumuşak kenarda iç köşe kavisleri zeminin dışındaki boş hücrelere taşabilir: onları da işle
+            if (smoothEdges)
+                BuildSmoothRing(vertices, uvs, subMeshes);
+
             m_Mesh.Clear();
             m_Mesh.SetVertices(vertices);
             m_Mesh.SetUVs(0, uvs);
@@ -618,15 +622,39 @@ namespace WorldKit
             return covered / (4f * r * r);
         }
 
-        void BuildSmoothCell(Vector2Int cell, Cell data, List<Vector3> vertices, List<Vector2> uvs, List<List<int>> subMeshes)
+        /// <summary>
+        /// Zeminin çevresindeki boş hücreler: iç köşe kavisleri (ve duvarları) zeminin dışına taşabilir; bu hücreler de
+        /// "sanal" olarak işlenir (kendi yüzeyleri yok, yalnızca komşuların kavisi ve duvarı).
+        /// </summary>
+        void BuildSmoothRing(List<Vector3> vertices, List<Vector2> uvs, List<List<int>> subMeshes)
+        {
+            int window = Mathf.CeilToInt(Mathf.Clamp(edgeRadius, 0.05f, 1.5f));
+            var ring = new HashSet<Vector2Int>();
+            foreach (var pair in m_Map)
+            {
+                if (pair.Value.Height > m_MaxVisibleLevel)
+                    continue;
+                for (int dx = -window; dx <= window; dx++)
+                for (int dz = -window; dz <= window; dz++)
+                {
+                    var n = new Vector2Int(pair.Key.x + dx, pair.Key.y + dz);
+                    if (!m_Map.TryGetValue(n, out var d) || d.Height > m_MaxVisibleLevel)
+                        ring.Add(n);
+                }
+            }
+            foreach (var cell in ring)
+                BuildSmoothCell(cell, default, vertices, uvs, subMeshes, true);
+        }
+
+        void BuildSmoothCell(Vector2Int cell, Cell data, List<Vector3> vertices, List<Vector2> uvs, List<List<int>> subMeshes, bool isVirtual = false)
         {
             float size = CellSize;
             float lh = levelHeight;
-            int own = SubMeshOf(data);
+            int own = isVirtual ? 0 : SubMeshOf(data);
 
-            // Komşuluk: 3×3 pencerede yükseklikler. Hepsi aynı ve rampasızsa hızlı yol (tek dörtgen).
-            int minH = data.Height, maxH = data.Height;
-            bool uniform = true;
+            // Komşuluk: pencerede yükseklikler. Hepsi aynı ve rampasızsa hızlı yol (tek dörtgen).
+            int minH = isVirtual ? int.MaxValue : data.Height, maxH = isVirtual ? int.MinValue : data.Height;
+            bool uniform = !isVirtual;
             int window = Mathf.CeilToInt(Mathf.Clamp(edgeRadius, 0.05f, 1.5f));  // yarıçapa göre etkilenen komşuluk
             for (int dx = -window; dx <= window; dx++)
             for (int dz = -window; dz <= window; dz++)
@@ -644,7 +672,10 @@ namespace WorldKit
                     uniform = false;
             }
 
-            float ownOffset = TypeOffset(data.Type);
+            if (isVirtual && maxH == int.MinValue)
+                return;
+
+            float ownOffset = isVirtual ? 0f : TypeOffset(data.Type);
             if (uniform)
             {
                 float y = data.Height * lh + ownOffset;
@@ -656,9 +687,10 @@ namespace WorldKit
             }
 
             // Eğriyle üretilmeyen kenarlar (rampalı komşu, aynı katta tür/su farkı) köşeli kalır
-            AddSideFaces(cell, data, vertices, uvs, subMeshes[own], true);
+            if (!isVirtual)
+                AddSideFaces(cell, data, vertices, uvs, subMeshes[own], true);
 
-            int lowLevel = Mathf.Min(minH, Mathf.Min(data.Height, 0));
+            int lowLevel = isVirtual ? Mathf.Min(minH, 0) : Mathf.Min(minH, Mathf.Min(data.Height, 0));
             int highLevel = maxH;
             int res = Mathf.Clamp(edgeResolution, 2, 8);
             float r = Mathf.Clamp(edgeRadius, 0.05f, 1.5f);
@@ -788,7 +820,11 @@ namespace WorldKit
             var outside = mid + normal * (size * 0.02f);
             var inside = mid - normal * (size * 0.5f / res);
             var insideCell = new Vector2Int(Mathf.FloorToInt(inside.x / size), Mathf.FloorToInt(inside.z / size));
-            float topOffset = m_Map.TryGetValue(insideCell, out var insideData) && insideData.Height == level ? TypeOffset(insideData.Type) : 0f;
+            // Duvarın sahibi: içerideki hücre; kavis zeminin dışına (boş hücreye) taştıysa o kattaki en yakın hücre
+            bool hasOwner = m_Map.TryGetValue(insideCell, out var insideData) && insideData.Height <= m_MaxVisibleLevel && insideData.Height >= level;
+            if (!hasOwner)
+                hasOwner = TryNearestOwner(new Vector2(inside.x / size, inside.z / size), level, out insideData);
+            float topOffset = hasOwner && insideData.Height == level ? TypeOffset(insideData.Type) : 0f;
 
             float top = level * lh + topOffset;
             // Alt: dışarıda bir alt kat yüzeyi varsa ya da altında başka bir duvar sırası gelecekse bir kat aşağı;
@@ -797,7 +833,7 @@ namespace WorldKit
             float radius = Mathf.Clamp(edgeRadius, 0.05f, 1.5f);
             // Bir alt katın alanı dışarıda bu katınkinden fazlaysa orada gerçek bir alt yüzey var
             bool lowerSurface = Coverage(outsideCells, level - 1, radius) > Coverage(outsideCells, level, radius) + 0.01f;
-            bool stacked = level > Mathf.Min(0, insideData.Height);
+            bool stacked = level > Mathf.Min(0, hasOwner ? insideData.Height : level);
             float bottom = lowerSurface || stacked ? (level - 1) * lh : level * lh - thickness;
             if (top - bottom < 0.001f)
                 return;
@@ -809,9 +845,9 @@ namespace WorldKit
 
             // Dudak / çimen saçağı: üst kenardan dışarı taşan ince şerit (üstteki hücrenin materyaliyle)
             // Yalnızca gerçek üst kenarda (içerideki yüzey tam bu katta); üst üste binen uçurumun ortasında değil
-            if (edgeLip > 0f && m_Map.TryGetValue(insideCell, out var lipCell) && lipCell.Height == level)
+            if (edgeLip > 0f && hasOwner && insideData.Height == level)
             {
-                int lipSub = SubMeshOf(lipCell);
+                int lipSub = SubMeshOf(insideData);
                 while (subMeshes.Count <= lipSub)
                     subMeshes.Add(new List<int>());
                 var lipTris = subMeshes[lipSub];
@@ -852,6 +888,35 @@ namespace WorldKit
                 }
             }
             return any ? (SubMeshOf(found), TypeOffset(found.Type)) : (own, ownOffset);
+        }
+
+        /// <summary>
+        /// p noktasına (hücre birimi) en yakın, en az level katında görünür hücre (önce tam o kattakiler).
+        /// Zeminin dışına taşan iç köşe kavisinin sahibini bulmak için.
+        /// </summary>
+        bool TryNearestOwner(Vector2 p, int level, out Cell owner)
+        {
+            owner = default;
+            int window = Mathf.CeilToInt(Mathf.Clamp(edgeRadius, 0.05f, 1.5f)) + 1;
+            var center = new Vector2Int(Mathf.FloorToInt(p.x), Mathf.FloorToInt(p.y));
+            float best = float.MaxValue;
+            bool found = false;
+            for (int pass = 0; pass < 2 && !found; pass++)
+            for (int dx = -window; dx <= window; dx++)
+            for (int dz = -window; dz <= window; dz++)
+            {
+                var c = new Vector2Int(center.x + dx, center.y + dz);
+                if (!m_Map.TryGetValue(c, out var d) || d.Height > m_MaxVisibleLevel || (pass == 0 ? d.Height != level : d.Height < level))
+                    continue;
+                float distance = (new Vector2(c.x + 0.5f, c.y + 0.5f) - p).sqrMagnitude;
+                if (distance < best)
+                {
+                    best = distance;
+                    owner = d;
+                    found = true;
+                }
+            }
+            return found;
         }
 
         static float Bilinear(float[] f, int k0, int k1, int k2, int k3, float u, float v) =>

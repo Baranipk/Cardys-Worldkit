@@ -2,6 +2,20 @@
 
 Biçim [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), sürümleme [SemVer](https://semver.org/lang/tr/).
 
+## [0.25.0] - 2026-10-12
+
+### Düzeltildi
+- **Yumuşak kenarda girintiler ve duvar boşlukları:** İç köşe kavisi zeminin dışındaki boş hücrelere taşınca o kısımlar hiç
+  üretilmiyordu (kenarda dişler, duvarlar yalnızca çıkıntılarda "bacak" gibi). Zeminin çevresindeki boş hücreler de artık
+  işlenir; kavis ve duvarı tamamlanır. Duvarın sahibi (dudak, tür kayması) kavis zeminin dışındaysa en yakın hücreden alınır.
+
+### Değişti
+- **Örnek köy yeniden yapıldı** (40×40): doğal şekilli iki katlı tepe ve yumuşak rampalar (tepede kale kulesi), oval gölet,
+  taş döşeli meydan, meydandan çıkan kıvrımlı patikalar (yüzey boyası), koyu çimen lekeleri, çitli çiftlik ve ahır, meydan
+  çevresinde binalar, ormanlık alanlar ve yamaçta ağaçlar, yol kenarında fener/ot/çalı, NPC'ler, spawn/görev/tehlike bölgeleri.
+  Yerleşim doluluk haritasıyla yapılır (bina, ağaç ve süsler patikaya, suya, tepeye veya birbirine binmez); rampanın
+  çevresine kenar süsü konmaz.
+
 ## [0.24.1] - 2026-10-12
 
 ### Düzeltildi
